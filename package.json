@@ -1,0 +1,46 @@
+{
+  "name": "matlab-language-server",
+  "version": "0.0.1",
+  "description": "Language Server for MATLAB code",
+  "main": "./src/index.ts",
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack --mode development",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "test-compile": "tsc -p ./",
+    "test-watch": "tsc -watch -p ./",
+    "pretest": "npm run test-compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "repository": {
+    "url": "https://github.com/mathworks/MATLAB-language-server"
+  },
+  "author": "The MathWorks, Inc.",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "@types/which": "^2.0.1",
+    "@types/yargs": "^17.0.12",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
+    "eslint": "^8.23.0",
+    "eslint-config-standard-with-typescript": "^22.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.1",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.3",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "faye": "^1.4.0",
+    "vscode-languageserver": "^8.0.2",
+    "vscode-languageserver-textdocument": "^1.0.7",
+    "vscode-uri": "^3.0.6",
+    "which": "^2.0.2",
+    "yargs": "^17.5.1"
+  }
+}
