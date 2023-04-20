@@ -23,9 +23,11 @@ declare class MatlabCommunicationManager {
      * @param logDirectory The directory in which MATLAB should log data
      * @param certificateDirectory The directory in which a certificate should be generated.
      * If no directory is provided, a temporary directory will be created.
+     *
      * @returns Information about the new MATLAB process and the connection to it.
+     * Returns null if the MATLAB process cannot be started.
      */
-    connectToNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string, certificateDirectory?: string): Promise<MatlabProcessInfo>;
+    connectToNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string, certificateDirectory?: string): Promise<MatlabProcessInfo | null>;
     /**
      * Attempts to connect to an existing instance of MATLAB at the given URL.
      *

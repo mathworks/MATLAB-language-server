@@ -203,7 +203,6 @@ class LintingSupportProvider {
             return
         }
 
-        // return await new Promise<TextEdit[]>(resolve => {
         const responseSub = matlabConnection.subscribe(this.END_STATEMENT_RESPONSE_CHANNEL, message => {
             matlabConnection.unsubscribe(responseSub)
 
@@ -267,7 +266,6 @@ class LintingSupportProvider {
             lineNumber: range.start.line + 1,
             code: textDocument.getText()
         })
-        // })
     }
 
     async suppressDiagnostic_ (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): Promise<TextEdit[]> {
@@ -402,17 +400,21 @@ class LintingSupportProvider {
         ]
 
         return await new Promise<string[]>(resolve => {
-            execFile(
-                mlintExecutable,
-                mlintArgs,
-                (error: ExecFileException | null, stdout: string, stderr: string) => {
-                    if (error != null) {
-                        Logger.error(`Error from mlint executable: ${error.message}\n${error.stack ?? ''}`)
-                        resolve([])
+            try {
+                execFile(
+                    mlintExecutable,
+                    mlintArgs,
+                    (error: ExecFileException | null, stdout: string, stderr: string) => {
+                        if (error != null) {
+                            Logger.error(`Error from mlint executable: ${error.message}\n${error.stack ?? ''}`)
+                            resolve([])
+                        }
+                        resolve(stderr.split('\n')) // For some reason, mlint appears to output on stderr instead of stdout
                     }
-                    resolve(stderr.split('\n')) // For some reason, mlint appears to output on stderr instead of stdout
-                }
-            )
+                )
+            } catch (e) {
+                Logger.error(`Error executing mlint executable at ${mlintExecutable}`)
+            }
         })
     }
 

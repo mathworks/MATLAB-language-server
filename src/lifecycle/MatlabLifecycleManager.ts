@@ -337,7 +337,18 @@ class MatlabProcess {
 
         Logger.log('Launching MATLAB...')
 
-        const { matlabProcess, matlabConnection } = await MatlabCommunicationManager.connectToNewMatlab(command, args, ConfigurationManager.getArgument(Argument.MatlabCertificateDirectory))
+        const matlabProcessInfo = await MatlabCommunicationManager.connectToNewMatlab(command, args, ConfigurationManager.getArgument(Argument.MatlabCertificateDirectory))
+
+        if (matlabProcessInfo == null) {
+            Logger.error(`Error launching MATLAB with command: ${command}`)
+            this.isValid = false
+            LifecycleNotificationHelper.didMatlabLaunchFail = true
+            LifecycleNotificationHelper.notifyConnectionStatusChange(ConnectionState.DISCONNECTED)
+            NotificationService.sendNotification(Notification.MatlabLaunchFailed)
+            return
+        }
+
+        const { matlabProcess, matlabConnection } = matlabProcessInfo
 
         this._matlabProcess = matlabProcess
         this._matlabConnection = matlabConnection
