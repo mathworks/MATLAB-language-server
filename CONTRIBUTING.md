@@ -1,6 +1,6 @@
 # Contributing
 
->_If you believe you have discovered a security vulnerability, please **do not** open an issue or make a pull request.  Follow the instructions in the [SECURITY.MD](SECURITY.MD) file in this repository._
+>_If you believe you have discovered a security vulnerability, please **do not** open an issue or make a pull request.  Follow the instructions in the [SECURITY.MD](SECURITY.md) file in this repository._
 
 Thank you for your interest in contributing to a MathWorks repository!  We encourage contributions large and small to this repository.  
 
