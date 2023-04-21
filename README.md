@@ -13,10 +13,10 @@ MATLAB language server implements several Language Server Protocol features and 
 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:
-* Visual Studio&reg; Code — MATLAB extension for Visual Studio Code *(add link)*
+* Visual Studio&reg; Code — [MATLAB extension for Visual Studio Code](https://github.com/mathworks/MATLAB-extension-for-vscode)
 
 ## Release Notes
 ### 1.0.0
-Release date: *date*
+Release date: 2023-04-25
 
 * Initial release.
