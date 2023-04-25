@@ -494,7 +494,6 @@ class NavigationSupportProvider {
 
         const varInfoRanges = requestType === RequestType.Definition ? variableInfo.definitions : variableInfo.references
 
-        // TODO: How do we want to handle global variables?
         return varInfoRanges.map(range => {
             return Location.create(uri, range)
         })

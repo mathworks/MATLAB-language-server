@@ -271,8 +271,6 @@ class MatlabProcess {
             }
 
             fs.watchFile(outFile, () => {
-                // TODO: Do we need to ensure the file has finished being written by MATLAB?
-
                 Logger.log('Started MATLAB')
 
                 this._isReady = true
