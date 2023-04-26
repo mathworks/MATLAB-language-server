@@ -17,6 +17,6 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ## Release Notes
 ### 1.0.0
-Release date: 2023-04-25
+Release date: 2023-04-26
 
 * Initial release.
