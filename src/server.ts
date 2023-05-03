@@ -70,7 +70,8 @@ connection.onInitialize((params: InitializeParams) => {
             referencesProvider: true,
             signatureHelpProvider: {
                 triggerCharacters: ['(', ',']
-            }
+            },
+            documentSymbolProvider: true
         }
     }
 
@@ -162,6 +163,10 @@ connection.onDefinition(async params => {
 
 connection.onReferences(async params => {
     return await NavigationSupportProvider.handleDefOrRefRequest(params, documentManager, RequestType.References)
+})
+
+connection.onDocumentSymbol(async params => {
+    return await NavigationSupportProvider.handleDocumentSymbol(params, documentManager, RequestType.DocumentSymbol)
 })
 
 // Start listening to open/change/close text document events

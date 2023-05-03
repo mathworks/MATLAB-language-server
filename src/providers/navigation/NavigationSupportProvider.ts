@@ -1,6 +1,6 @@
 // Copyright 2022 - 2023 The MathWorks, Inc.
 
-import { DefinitionParams, Location, Position, Range, ReferenceParams, TextDocuments } from 'vscode-languageserver'
+import { DefinitionParams, DocumentSymbolParams, Location, Position, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import * as fs from 'fs/promises'
@@ -13,6 +13,7 @@ import PathResolver from './PathResolver'
 import { connection } from '../../server'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions, Actions, reportTelemetryAction } from '../../logging/TelemetryUtils'
+import { MatlabClassInfo } from '../../indexing/FileInfoIndex'
 
 /**
  * Represents a code expression, either a single identifier or a dotted expression.
@@ -59,7 +60,8 @@ class Expression {
 
 export enum RequestType {
     Definition,
-    References
+    References,
+    DocumentSymbol
 }
 
 function reportTelemetry (type: RequestType, errorCondition = '') {
@@ -111,6 +113,60 @@ class NavigationSupportProvider {
         } else {
             return this.findReferences(uri, params.position, expression)
         }
+    }
+
+    /**
+     *
+     * @param params Parameters for the document symbol request
+     * @param documentManager The text document manager
+     * @param requestType The type of request
+     * @returns Array of symbols found in the document
+     */
+    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
+        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection)
+        if (matlabConnection == null) {
+            LifecycleNotificationHelper.notifyMatlabRequirement()
+            reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
+            return []
+        }
+
+        const uri = params.textDocument.uri
+        const textDocument = documentManager.get(uri)
+
+        if (textDocument == null) {
+            reportTelemetry(requestType, 'No document')
+            return []
+        }
+        let codeData = FileInfoIndex.codeDataCache.get(uri);
+        if (codeData == null) {
+            reportTelemetry(requestType, 'No code data')
+            return []
+        }
+        // Result symbols in documented
+        let result: SymbolInformation[] = [];
+        // Avoid duplicates coming from different data sources
+        let visitedRanges: Set<Range> = new Set();
+        /**
+         * Push symbol info to result set
+         */
+        function pushSymbol(name: string, kind: SymbolKind, symbolRange: Range) {
+            if (!visitedRanges.has(symbolRange)) {
+                result.push(SymbolInformation.create(name, kind, symbolRange, uri));
+                visitedRanges.add(symbolRange);
+            }
+        }
+        if (codeData.isClassDef && codeData.classInfo != null) {
+            let classInfo = codeData.classInfo;
+            // TODO: When can this be null if we're in a classInfo case?
+            if (codeData.classInfo.range != null) {
+                pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range);
+            }
+            classInfo.methods.forEach((info,name) => pushSymbol(name, SymbolKind.Method, info.range));
+            classInfo.enumerations.forEach((info,name) => pushSymbol(name, SymbolKind.EnumMember, info.range));
+            classInfo.properties.forEach((info,name) => pushSymbol(name, SymbolKind.Property, info.range));
+        }
+        codeData.functions.forEach((info,name) => pushSymbol(name, SymbolKind.Function, info.range));
+        return result;
     }
 
     /**
