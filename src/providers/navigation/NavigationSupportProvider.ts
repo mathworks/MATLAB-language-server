@@ -121,10 +121,12 @@ class NavigationSupportProvider {
      * @param requestType The type of request
      * @returns Array of symbols found in the document
      */
-    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
-        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection)
+    async handleDocumentSymbol(params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
+        // We only get the connection since the documentSymbol (aka outline) request
+        // is called on nearly every edit. Calling getOrCreateMatlabConnection would
+        // effectively make the onDemand launch setting act as onStart.
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection();
         if (matlabConnection == null) {
-            LifecycleNotificationHelper.notifyMatlabRequirement()
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
             return []
         }
@@ -160,11 +162,11 @@ class NavigationSupportProvider {
             if (codeData.classInfo.range != null) {
                 pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range);
             }
-            classInfo.methods.forEach((info,name) => pushSymbol(name, SymbolKind.Method, info.range));
-            classInfo.enumerations.forEach((info,name) => pushSymbol(name, SymbolKind.EnumMember, info.range));
-            classInfo.properties.forEach((info,name) => pushSymbol(name, SymbolKind.Property, info.range));
+            classInfo.methods.forEach((info, name) => pushSymbol(name, SymbolKind.Method, info.range));
+            classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range));
+            classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range));
         }
-        codeData.functions.forEach((info,name) => pushSymbol(name, SymbolKind.Function, info.range));
+        codeData.functions.forEach((info, name) => pushSymbol(name, SymbolKind.Function, info.range));
         return result;
     }
 
@@ -286,7 +288,7 @@ class NavigationSupportProvider {
      * @param codeData The code data which is being searched
      * @returns The definition location(s), or null if no definition was found
      */
-    private findDefinitionInCodeData (uri: string, position: Position, expression: Expression, codeData: MatlabCodeData): Location[] | null {
+    private findDefinitionInCodeData(uri: string, position: Position, expression: Expression, codeData: MatlabCodeData): Location[] | null {
         // If first part of expression targeted - look for a local variable
         if (expression.selectedComponent === 0) {
             const containingFunction = codeData.findContainingFunction(position)
