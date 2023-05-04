@@ -13,7 +13,6 @@ import PathResolver from './PathResolver'
 import { connection } from '../../server'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions, Actions, reportTelemetryAction } from '../../logging/TelemetryUtils'
-import { MatlabClassInfo } from '../../indexing/FileInfoIndex'
 
 /**
  * Represents a code expression, either a single identifier or a dotted expression.
