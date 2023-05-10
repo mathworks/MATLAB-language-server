@@ -63,7 +63,7 @@ export enum RequestType {
     DocumentSymbol
 }
 
-function reportTelemetry (type: RequestType, errorCondition = '') {
+function reportTelemetry (type: RequestType, errorCondition = ''): void {
     reportTelemetryAction(type === RequestType.Definition ? Actions.GoToDefinition : Actions.GoToReference, errorCondition)
 }
 
@@ -121,11 +121,11 @@ class NavigationSupportProvider {
      * @param requestType The type of request
      * @returns Array of symbols found in the document
      */
-    async handleDocumentSymbol(params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
+    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
         // We only get the connection since the documentSymbol (aka outline) request
         // is called on nearly every edit. Calling getOrCreateMatlabConnection would
         // effectively make the onDemand launch setting act as onStart.
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection();
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
         if (matlabConnection == null) {
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
             return []
@@ -138,36 +138,36 @@ class NavigationSupportProvider {
             reportTelemetry(requestType, 'No document')
             return []
         }
-        let codeData = FileInfoIndex.codeDataCache.get(uri);
+        const codeData = FileInfoIndex.codeDataCache.get(uri)
         if (codeData == null) {
             reportTelemetry(requestType, 'No code data')
             return []
         }
         // Result symbols in documented
-        let result: SymbolInformation[] = [];
+        const result: SymbolInformation[] = []
         // Avoid duplicates coming from different data sources
-        let visitedRanges: Set<Range> = new Set();
+        const visitedRanges: Set<Range> = new Set()
         /**
          * Push symbol info to result set
          */
-        function pushSymbol(name: string, kind: SymbolKind, symbolRange: Range) {
+        function pushSymbol (name: string, kind: SymbolKind, symbolRange: Range): void {
             if (!visitedRanges.has(symbolRange)) {
-                result.push(SymbolInformation.create(name, kind, symbolRange, uri));
-                visitedRanges.add(symbolRange);
+                result.push(SymbolInformation.create(name, kind, symbolRange, uri))
+                visitedRanges.add(symbolRange)
             }
         }
         if (codeData.isClassDef && codeData.classInfo != null) {
-            let classInfo = codeData.classInfo;
+            const classInfo = codeData.classInfo
             // TODO: When can this be null if we're in a classInfo case?
             if (codeData.classInfo.range != null) {
-                pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range);
+                pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range)
             }
-            classInfo.methods.forEach((info, name) => pushSymbol(name, SymbolKind.Method, info.range));
-            classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range));
-            classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range));
+            classInfo.methods.forEach((info, name) => pushSymbol(name, SymbolKind.Method, info.range))
+            classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range))
+            classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
         }
-        codeData.functions.forEach((info, name) => pushSymbol(name, SymbolKind.Function, info.range));
-        return result;
+        codeData.functions.forEach((info, name) => pushSymbol(name, SymbolKind.Function, info.range))
+        return result
     }
 
     /**
@@ -288,7 +288,7 @@ class NavigationSupportProvider {
      * @param codeData The code data which is being searched
      * @returns The definition location(s), or null if no definition was found
      */
-    private findDefinitionInCodeData(uri: string, position: Position, expression: Expression, codeData: MatlabCodeData): Location[] | null {
+    private findDefinitionInCodeData (uri: string, position: Position, expression: Expression, codeData: MatlabCodeData): Location[] | null {
         // If first part of expression targeted - look for a local variable
         if (expression.selectedComponent === 0) {
             const containingFunction = codeData.findContainingFunction(position)
