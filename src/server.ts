@@ -166,14 +166,16 @@ connection.onReferences(async params => {
 })
 
 connection.onDocumentSymbol(async params => {
-    return await NavigationSupportProvider.handleDocumentSymbol(params, documentManager, RequestType.DocumentSymbol)
+    // We return an unawaited promise here to rate limit the number of open requests from the client
+    // eslint-disable-next-line @typescript-eslint/return-await
+    return NavigationSupportProvider.handleDocumentSymbol(params, documentManager, RequestType.DocumentSymbol)
 })
 
 // Start listening to open/change/close text document events
 documentManager.listen(connection)
 
 /** -------------------- Helper Functions -------------------- **/
-function reportFileOpened(document: TextDocument) {
+function reportFileOpened (document: TextDocument): void {
     const roughSize = Math.ceil(document.getText().length / 1024) // in KB
     reportTelemetryAction(Actions.OpenFile, roughSize.toString())
 }

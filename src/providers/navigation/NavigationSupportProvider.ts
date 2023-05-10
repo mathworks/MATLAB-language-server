@@ -134,10 +134,10 @@ class NavigationSupportProvider {
      * @returns Array of symbols found in the document
      */
     async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
-        // We only get the connection since the documentSymbol (aka outline) request
-        // is called on nearly every edit. Calling getOrCreateMatlabConnection would
-        // effectively make the onDemand launch setting act as onStart.
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        // Get or wait for MATLAB connection to handle files opened before MATLAB is ready.
+        // Calling getOrCreateMatlabConnection would effectively make the onDemand launch
+        // setting act as onStart.
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnectionAsync()
         if (matlabConnection == null) {
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
             return []
@@ -150,7 +150,13 @@ class NavigationSupportProvider {
             reportTelemetry(requestType, 'No document')
             return []
         }
-        const codeData = FileInfoIndex.codeDataCache.get(uri)
+        await Indexer.indexDocument(textDocument)
+        let codeData = FileInfoIndex.codeDataCache.get(uri)
+        if (codeData === null) {
+            // Ask to index file
+            await Indexer.indexDocument(textDocument)
+            codeData = FileInfoIndex.codeDataCache.get(uri)
+        }
         if (codeData == null) {
             reportTelemetry(requestType, 'No code data')
             return []
@@ -168,9 +174,8 @@ class NavigationSupportProvider {
                 visitedRanges.add(symbolRange)
             }
         }
-        if (codeData.isClassDef && codeData.classInfo != null) {
+        if (codeData.isMainClassDefDocument && codeData.classInfo != null) {
             const classInfo = codeData.classInfo
-            // TODO: When can this be null if we're in a classInfo case?
             if (codeData.classInfo.range != null) {
                 pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range)
             }
@@ -178,7 +183,7 @@ class NavigationSupportProvider {
             classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range))
             classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
         }
-        codeData.functions.forEach((info, name) => pushSymbol(name, SymbolKind.Function, info.range))
+        codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
         return result
     }
 

@@ -109,8 +109,9 @@ class FileInfoIndex {
 
         if (rawCodeData.classInfo.hasClassInfo) {
             let classInfo = this.classInfoCache.get(rawCodeData.classInfo.name)
-            if (classInfo == null) {
-                // Class not discovered yet - need to create info object
+            if (classInfo == null || rawCodeData.classInfo.isClassDef) {
+                // Class not discovered yet or we're parsing the main classdef file
+                // need to create info object
                 classInfo = new MatlabClassInfo(rawCodeData.classInfo, uri)
                 this.classInfoCache.set(classInfo.name, classInfo)
             } else {
@@ -364,6 +365,15 @@ export class MatlabCodeData {
      */
     get isClassDef (): boolean {
         return this.classInfo != null
+    }
+
+    /**
+     * Whether or not the code data represents a main classdef file.
+     * For @aclass/aclass.m this returns true
+     * For @aclass/amethod.m this returns false.
+     */
+    get isMainClassDefDocument (): boolean {
+        return this.isClassDef && this.uri === this.classInfo?.uri
     }
 
     /**
