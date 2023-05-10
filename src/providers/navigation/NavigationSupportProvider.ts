@@ -64,7 +64,19 @@ export enum RequestType {
 }
 
 function reportTelemetry (type: RequestType, errorCondition = ''): void {
-    reportTelemetryAction(type === RequestType.Definition ? Actions.GoToDefinition : Actions.GoToReference, errorCondition)
+    let action: Actions
+    switch (type) {
+        case RequestType.Definition:
+            action = Actions.GoToDefinition
+            break
+        case RequestType.References:
+            action = Actions.GoToReference
+            break
+        case RequestType.DocumentSymbol:
+            action = Actions.DocumentSymbol
+            break
+    }
+    reportTelemetryAction(action, errorCondition)
 }
 
 /**

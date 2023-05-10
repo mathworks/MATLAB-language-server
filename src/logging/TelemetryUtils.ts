@@ -13,7 +13,8 @@ export enum Actions {
     ShutdownMatlab = 'shutdownMATLAB',
     FormatDocument = 'formatDocument',
     GoToReference = 'goToReference',
-    GoToDefinition = 'goToDefinition'
+    GoToDefinition = 'goToDefinition',
+    DocumentSymbol = 'documentSymbol'
 }
 
 export enum ActionErrorConditions {
@@ -48,7 +49,7 @@ export function reportTelemetryAction(actionType: string, data = ''): void {
 
 /**
  * Reports telemetry about a settings change
- * 
+ *
  * @param settingName The setting's name
  * @param newValue The new value
  * @param oldValue The old value
