@@ -17,6 +17,11 @@ MATLAB language server supports these editors by installing the corresponding ex
 * Visual Studio&reg; Code — [MATLAB extension for Visual Studio Code](https://github.com/mathworks/MATLAB-extension-for-vscode)
 
 ## Release Notes
+### 1.1.0
+Release date: 2023-05-12
+
+* Add support for documentSymbol (outline).
+
 ### 1.0.0
 Release date: 2023-04-26
 
