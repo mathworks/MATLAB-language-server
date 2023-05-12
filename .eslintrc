@@ -3,6 +3,7 @@
         "node": true,
         "es6": true
     },
+    "root": true,
     "extends": [
         "standard-with-typescript",
         "plugin:@typescript-eslint/recommended"

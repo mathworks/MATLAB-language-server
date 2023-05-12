@@ -1,6 +1,6 @@
 // Copyright 2022 - 2023 The MathWorks, Inc.
 
-import { DefinitionParams, Location, Position, Range, ReferenceParams, TextDocuments } from 'vscode-languageserver'
+import { DefinitionParams, DocumentSymbolParams, Location, Position, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import * as fs from 'fs/promises'
@@ -59,11 +59,24 @@ class Expression {
 
 export enum RequestType {
     Definition,
-    References
+    References,
+    DocumentSymbol
 }
 
-function reportTelemetry (type: RequestType, errorCondition = '') {
-    reportTelemetryAction(type === RequestType.Definition ? Actions.GoToDefinition : Actions.GoToReference, errorCondition)
+function reportTelemetry (type: RequestType, errorCondition = ''): void {
+    let action: Actions
+    switch (type) {
+        case RequestType.Definition:
+            action = Actions.GoToDefinition
+            break
+        case RequestType.References:
+            action = Actions.GoToReference
+            break
+        case RequestType.DocumentSymbol:
+            action = Actions.DocumentSymbol
+            break
+    }
+    reportTelemetryAction(action, errorCondition)
 }
 
 /**
@@ -111,6 +124,66 @@ class NavigationSupportProvider {
         } else {
             return this.findReferences(uri, params.position, expression)
         }
+    }
+
+    /**
+     *
+     * @param params Parameters for the document symbol request
+     * @param documentManager The text document manager
+     * @param requestType The type of request
+     * @returns Array of symbols found in the document
+     */
+    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
+        // Get or wait for MATLAB connection to handle files opened before MATLAB is ready.
+        // Calling getOrCreateMatlabConnection would effectively make the onDemand launch
+        // setting act as onStart.
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnectionAsync()
+        if (matlabConnection == null) {
+            reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
+            return []
+        }
+
+        const uri = params.textDocument.uri
+        const textDocument = documentManager.get(uri)
+
+        if (textDocument == null) {
+            reportTelemetry(requestType, 'No document')
+            return []
+        }
+        let codeData = FileInfoIndex.codeDataCache.get(uri)
+        if (codeData == null) {
+            // Ask to index file
+            await Indexer.indexDocument(textDocument)
+            codeData = FileInfoIndex.codeDataCache.get(uri)
+        }
+        if (codeData == null) {
+            reportTelemetry(requestType, 'No code data')
+            return []
+        }
+        // Result symbols in documented
+        const result: SymbolInformation[] = []
+        // Avoid duplicates coming from different data sources
+        const visitedRanges: Set<Range> = new Set()
+        /**
+         * Push symbol info to result set
+         */
+        function pushSymbol (name: string, kind: SymbolKind, symbolRange: Range): void {
+            if (!visitedRanges.has(symbolRange)) {
+                result.push(SymbolInformation.create(name, kind, symbolRange, uri))
+                visitedRanges.add(symbolRange)
+            }
+        }
+        if (codeData.isMainClassDefDocument && codeData.classInfo != null) {
+            const classInfo = codeData.classInfo
+            if (codeData.classInfo.range != null) {
+                pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range)
+            }
+            classInfo.methods.forEach((info, name) => pushSymbol(name, SymbolKind.Method, info.range))
+            classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range))
+            classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
+        }
+        codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
+        return result
     }
 
     /**

@@ -179,6 +179,12 @@ export class MatlabClassInfo {
             this.baseClasses = rawClassInfo.baseClasses
             this.range = convertRange(rawClassInfo.range)
             this.declaration = convertRange(rawClassInfo.declaration)
+
+            // Since this is the classdef, we'll update all members. Clear them out here.
+            this.enumerations.clear()
+            this.properties.clear()
+            this.methods.clear()
+            this.parsePropertiesAndEnums(rawClassInfo)
         } else {
             // Data contains supplementary class info - nothing to do in this situation
         }
@@ -364,6 +370,15 @@ export class MatlabCodeData {
      */
     get isClassDef (): boolean {
         return this.classInfo != null
+    }
+
+    /**
+     * Whether or not the code data represents a main classdef file.
+     * For @aclass/aclass.m this returns true
+     * For @aclass/amethod.m this returns false.
+     */
+    get isMainClassDefDocument (): boolean {
+        return this.isClassDef && this.uri === this.classInfo?.uri
     }
 
     /**

@@ -4,6 +4,7 @@
         "target": "ES6",
         "rootDir": "./src",
         "outDir": "./out",
+        "sourceMap": true,
         "lib": [
             "ES6"
         ],
