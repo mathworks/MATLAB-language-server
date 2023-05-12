@@ -150,9 +150,8 @@ class NavigationSupportProvider {
             reportTelemetry(requestType, 'No document')
             return []
         }
-        await Indexer.indexDocument(textDocument)
         let codeData = FileInfoIndex.codeDataCache.get(uri)
-        if (codeData === null) {
+        if (codeData == null) {
             // Ask to index file
             await Indexer.indexDocument(textDocument)
             codeData = FileInfoIndex.codeDataCache.get(uri)
