@@ -109,9 +109,8 @@ class FileInfoIndex {
 
         if (rawCodeData.classInfo.hasClassInfo) {
             let classInfo = this.classInfoCache.get(rawCodeData.classInfo.name)
-            if (classInfo == null || rawCodeData.classInfo.isClassDef) {
-                // Class not discovered yet or we're parsing the main classdef file
-                // need to create info object
+            if (classInfo == null) {
+                // Class not discovered yet - need to create info object
                 classInfo = new MatlabClassInfo(rawCodeData.classInfo, uri)
                 this.classInfoCache.set(classInfo.name, classInfo)
             } else {
@@ -180,6 +179,12 @@ export class MatlabClassInfo {
             this.baseClasses = rawClassInfo.baseClasses
             this.range = convertRange(rawClassInfo.range)
             this.declaration = convertRange(rawClassInfo.declaration)
+
+            // Since this is the classdef, we'll update all members. Clear them out here.
+            this.enumerations.clear()
+            this.properties.clear()
+            this.methods.clear()
+            this.parsePropertiesAndEnums(rawClassInfo)
         } else {
             // Data contains supplementary class info - nothing to do in this situation
         }
