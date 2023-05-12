@@ -39,7 +39,7 @@ interface Settings {
 
 type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry'
 
-const SETTING_NAMES: SettingName[] = [ 
+const SETTING_NAMES: SettingName[] = [
     'installPath',
     'matlabConnectionTiming',
     'indexWorkspace',
@@ -93,7 +93,7 @@ class ConfigurationManager {
             void connection.client.register(DidChangeConfigurationNotification.type)
         }
 
-        connection.onDidChangeConfiguration(params => this.handleConfigurationChanged(params))
+        connection.onDidChangeConfiguration(params => { void this.handleConfigurationChanged(params) })
     }
 
     /**
