@@ -2,7 +2,6 @@
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import Indexer from './Indexer'
-import { text } from 'stream/consumers'
 import FileInfoIndex from './FileInfoIndex'
 
 const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to re-index the document

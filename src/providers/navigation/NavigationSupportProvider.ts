@@ -142,7 +142,7 @@ class NavigationSupportProvider {
      * @param requestType The type of request
      * @returns Array of symbols found in the document
      */
-    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[] | null> {
+    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
         // Get or wait for MATLAB connection to handle files opened before MATLAB is ready.
         // Calling getOrCreateMatlabConnection would effectively make the onDemand launch
         // setting act as onStart.
