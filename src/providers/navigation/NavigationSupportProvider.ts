@@ -13,6 +13,7 @@ import PathResolver from './PathResolver'
 import { connection } from '../../server'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions, Actions, reportTelemetryAction } from '../../logging/TelemetryUtils'
+import DocumentIndexer from '../../indexing/DocumentIndexer'
 
 /**
  * Represents a code expression, either a single identifier or a dotted expression.
@@ -127,6 +128,14 @@ class NavigationSupportProvider {
     }
 
     /**
+     * Caches document symbols for URIs to deal with the case when indexing
+     * temporarily fails while the user is in the middle of an edit. We might
+     * consider moving logic like this into the indexer logic later as clearing
+     * out index data in the middle of an edit will have other ill effects.
+     */
+    private readonly _documentSymbolCache = new Map<string, SymbolInformation[]>()
+
+    /**
      *
      * @param params Parameters for the document symbol request
      * @param documentManager The text document manager
@@ -150,12 +159,9 @@ class NavigationSupportProvider {
             reportTelemetry(requestType, 'No document')
             return []
         }
-        let codeData = FileInfoIndex.codeDataCache.get(uri)
-        if (codeData == null) {
-            // Ask to index file
-            await Indexer.indexDocument(textDocument)
-            codeData = FileInfoIndex.codeDataCache.get(uri)
-        }
+        // Ensure document index is up to date
+        await DocumentIndexer.ensureDocumentIndexIsUpdated(textDocument)
+        const codeData = FileInfoIndex.codeDataCache.get(uri)
         if (codeData == null) {
             reportTelemetry(requestType, 'No code data')
             return []
@@ -183,6 +189,18 @@ class NavigationSupportProvider {
             classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
         }
         codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
+        /**
+         * Handle a case when the indexer fails due to the user being in the middle of an edit.
+         * Here the documentSymbol cache has some symbols but the codeData cache has none. So we
+         * assume that the user will soon fix their code and just fall back to what we knew for now.
+         */
+        if (result.length === 0) {
+            const cached = this._documentSymbolCache.get(uri) ?? result
+            if (cached.length > 0) {
+                return cached
+            }
+        }
+        this._documentSymbolCache.set(uri, result)
         return result
     }
 

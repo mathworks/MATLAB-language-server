@@ -2,6 +2,7 @@
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import Indexer from './Indexer'
+import FileInfoIndex from './FileInfoIndex'
 
 const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to re-index the document
 
@@ -48,6 +49,24 @@ class DocumentIndexer {
         if (timerId != null) {
             clearTimeout(timerId)
             this.pendingFilesToIndex.delete(uri)
+        }
+    }
+
+    /**
+     * Ensure that @param textDocument is fully indexed and up to date by flushing any pending indexing tasks
+     * and then forcing an index. This is intended to service requests like documentSymbols where returning
+     * stale info could be confusing.
+     *
+     * @param textDocument The document to index
+     */
+    async ensureDocumentIndexIsUpdated (textDocument: TextDocument): Promise<void> {
+        const uri = textDocument.uri
+        if (this.pendingFilesToIndex.has(uri)) {
+            this.clearTimerForDocumentUri(uri)
+            await Indexer.indexDocument(textDocument)
+        }
+        if (!FileInfoIndex.codeDataCache.has(uri)) {
+            await Indexer.indexDocument(textDocument)
         }
     }
 }
