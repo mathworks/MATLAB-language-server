@@ -97,11 +97,10 @@ class MatlabLifecycleManager {
      * never.
      *
      * @returns The connection to MATLAB, or null if connection timing is never
+     * and MATLAB has not been manually launched.
      */
     async getMatlabConnectionAsync (): Promise<MatlabConnection | null> {
-        if (await this._isMatlabConnectionTimingNever()) {
-            return null
-        }
+        // If MATLAB is up and running return the connection
         const isMatlabReady = this._matlabProcess?.isMatlabReady() ?? false
         if (isMatlabReady) {
             const conn = this._matlabProcess?.getConnection()
@@ -109,6 +108,11 @@ class MatlabLifecycleManager {
                 return conn
             }
         }
+        // MATLAB isn't running and the user has said we shouldn't start it
+        if (await this._isMatlabConnectionTimingNever()) {
+            return null
+        }
+        // MATLAB might start later on. Return a promise to wait for it.
         const result = new Promise<MatlabConnection>((resolve, reject) => {
             this.addMatlabLifecycleListener((error, evt) => {
                 if (error !== null) {
