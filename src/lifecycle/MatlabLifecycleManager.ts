@@ -144,7 +144,7 @@ class MatlabLifecycleManager {
         }
 
         // No active connection - should create a connection if desired
-        if (await this._isMatlabConnectionTimingNever()) {
+        if (!(await this._isMatlabConnectionTimingNever())) {
             const matlabProcess = await this.connectToMatlab(connection)
             return matlabProcess.getConnection()
         }
