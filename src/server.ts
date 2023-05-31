@@ -114,6 +114,10 @@ documentManager.onDidOpen(params => {
     void DocumentIndexer.indexDocument(params.document)
 })
 
+documentManager.onDidClose(params => {
+    LintingSupportProvider.clearDiagnosticsForDocument(params.document)
+})
+
 // Handles files saved
 documentManager.onDidSave(params => {
     void LintingSupportProvider.lintDocument(params.document, connection)

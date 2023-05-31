@@ -122,6 +122,13 @@ class LintingSupportProvider {
         })
     }
 
+    clearDiagnosticsForDocument (textDocument: TextDocument): void {
+        void connection.sendDiagnostics({
+            uri: textDocument.uri,
+            diagnostics: []
+        })
+    }
+
     /**
      * Handles a request for code actions.
      *
