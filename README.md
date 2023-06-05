@@ -17,6 +17,20 @@ MATLAB language server supports these editors by installing the corresponding ex
 * Visual Studio&reg; Code — [MATLAB extension for Visual Studio Code](https://github.com/mathworks/MATLAB-extension-for-vscode)
 
 ## Release Notes
+
+### 1.1.2
+Release date: 2023-05-31
+
+Fixed:
+* Improves responsiveness of documentSymbol support
+* Clear linting diagnostics from closed files
+* MATLAB should launch with `onDemand` setting
+
+### 1.1.1
+Release date: 2023-05-12
+
+* Resolves linting errors
+
 ### 1.1.0
 Release date: 2023-05-12
 
