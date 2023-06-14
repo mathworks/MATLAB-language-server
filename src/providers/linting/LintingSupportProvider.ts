@@ -8,7 +8,6 @@ import ConfigurationManager from '../../lifecycle/ConfigurationManager'
 import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Logger from '../../logging/Logger'
-import * as TextDocumentUtils from '../../utils/TextDocumentUtils'
 import * as path from 'path'
 import which = require('which')
 import { MatlabLSCommands } from '../lspCommands/ExecuteCommandProvider'
@@ -20,8 +19,8 @@ interface RawLintResults {
     lintData: string[]
 }
 
-interface EndLineResults {
-    lineNumber: number
+interface DiagnosticSuppressionResults {
+    suppressionEdits: TextEdit[]
 }
 
 const LINT_DELAY = 500 // Delay (in ms) after keystroke before attempting to lint the document
@@ -31,13 +30,6 @@ const LINT_MESSAGE_REGEX = /L (\d+) \(C (\d+)-?(\d*)\): ([\dA-Za-z]+): ML(\d): (
 const FIX_FLAG_REGEX = /\(CAN FIX\)/
 const FIX_MESSAGE_REGEX = /----FIX MESSAGE<\w+>\s+<([^>]*)>/
 const FIX_CHANGE_REGEX = /----CHANGE MESSAGE L (\d+) \(C (\d+)\);\s+L (\d+) \(C (\d+)\):\s+<([^>]*)>/
-
-// Warning suppression constants
-const COMMENT_REGEX = /%.*/
-const PRAGMA_REGEX = /^%#ok<( *\*?[\w.]* *,? *)*>/
-const EMPTY_PRAGMA_REGEX = /%#ok< *>/
-const PRAGMA_START = '%#ok<'
-const PRAGMA_END = '>'
 
 /**
  * Handles requests for linting-related features.
@@ -50,8 +42,9 @@ const PRAGMA_END = '>'
 class LintingSupportProvider {
     private readonly LINTING_REQUEST_CHANNEL = '/matlabls/linting/request'
     private readonly LINTING_RESPONSE_CHANNEL = '/matlabls/linting/response'
-    private readonly END_STATEMENT_REQUEST_CHANNEL = '/matlabls/linting/findstatementend/request'
-    private readonly END_STATEMENT_RESPONSE_CHANNEL = '/matlabls/linting/findstatementend/response'
+
+    private readonly SUPPRESS_DIAGNOSTIC_REQUEST_CHANNEL = '/matlabls/linting/suppressdiagnostic/request'
+    private readonly SUPPRESS_DIAGNOSTIC_RESPONSE_CHANNEL = '/matlabls/linting/suppressdiagnostic/response'
 
     private readonly SEVERITY_MAP = {
         0: DiagnosticSeverity.Information,
@@ -210,58 +203,19 @@ class LintingSupportProvider {
             return
         }
 
-        const responseSub = matlabConnection.subscribe(this.END_STATEMENT_RESPONSE_CHANNEL, message => {
+        const responseSub = matlabConnection.subscribe(this.SUPPRESS_DIAGNOSTIC_RESPONSE_CHANNEL, message => {
             matlabConnection.unsubscribe(responseSub)
 
-            const lineToSuppress = (message as EndLineResults).lineNumber - 1 ?? range.start.line
-            const fixRange = TextDocumentUtils.getRangeUntilLineEnd(textDocument, lineToSuppress, 0)
-            const lineText = textDocument.getText(fixRange)
-
-            const idText = (shouldSuppressThroughoutFile ? '*' : '') + id
-
-            let insertIndex = -1
-            let insertText = ''
-
-            // Find comment on line, if one exists
-            const commentMatch = lineText.match(COMMENT_REGEX)
-            if (commentMatch == null) {
-                // Case 1: No comment - insert suppression at end of line
-                insertIndex = lineText.length
-                const preWhitespace = lineText.endsWith(' ') ? '' : ' '
-                insertText = preWhitespace + PRAGMA_START + idText + PRAGMA_END
-            } else {
-                const pragmaMatch = commentMatch[0].match(PRAGMA_REGEX)
-                insertIndex = commentMatch.index ?? (lineText.length - commentMatch[0].length)
-                if (pragmaMatch == null) {
-                    // Case 2: There is no existing suppression pragma on this line - insert suppression pragma before comment
-                    const preWhitespace = lineText.charAt(insertIndex - 1) === ' ' ? '' : ' '
-                    const postWhitespace = ' '
-                    insertText = preWhitespace + PRAGMA_START + idText + PRAGMA_END + postWhitespace
-                } else {
-                    // Case 3: There is an existing suppression pragma on this line - append to existing list
-                    insertIndex = insertIndex + PRAGMA_START.length
-                    const separator = pragmaMatch[0].match(EMPTY_PRAGMA_REGEX) != null ? '' : ','
-                    insertText = idText + separator
-                }
-            }
-
-            // Create and apply appropriate text edit
-            const edits = [TextEdit.insert(
-                Position.create(
-                    fixRange.end.line,
-                    insertIndex
-                ),
-                insertText
-            )]
+            const suppressionEdits: TextEdit[] = (message as DiagnosticSuppressionResults).suppressionEdits
 
             const edit: WorkspaceEdit = {
                 changes: {
-                    [textDocument.uri]: edits
+                    [textDocument.uri]: suppressionEdits
                 },
                 documentChanges: [
                     TextDocumentEdit.create(
                         VersionedTextDocumentIdentifier.create(textDocument.uri, textDocument.version),
-                        edits
+                        suppressionEdits
                     )
                 ]
             }
@@ -269,74 +223,11 @@ class LintingSupportProvider {
             void connection.workspace.applyEdit(edit)
         })
 
-        matlabConnection.publish(this.END_STATEMENT_REQUEST_CHANNEL, {
-            lineNumber: range.start.line + 1,
-            code: textDocument.getText()
-        })
-    }
-
-    async suppressDiagnostic_ (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): Promise<TextEdit[]> {
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
-            return []
-        }
-
-        return await new Promise<TextEdit[]>(resolve => {
-            const responseSub = matlabConnection.subscribe(this.END_STATEMENT_RESPONSE_CHANNEL, message => {
-                matlabConnection.unsubscribe(responseSub)
-
-                const lineToSuppress = (message as EndLineResults).lineNumber - 1 ?? range.start.line
-                const fixRange = TextDocumentUtils.getRangeUntilLineEnd(textDocument, lineToSuppress, 0)
-                const lineText = textDocument.getText(fixRange)
-                const suppressionTextStart = '%#ok<'
-                const suppressionIndex = lineText.indexOf(suppressionTextStart)
-
-                let insertIndex = -1
-                let insertText = ''
-
-                const idText = (shouldSuppressThroughoutFile ? '*' : '') + id
-
-                if (suppressionIndex === -1) {
-                    // No suppression already on line
-                    if (lineText.endsWith(' ')) {
-                        insertText = `${suppressionTextStart}${idText}>`
-                        insertIndex = lineText.trimEnd().length + 1
-                    } else {
-                        // Insert a space between end of line and suppression comment
-                        insertText = ` ${suppressionTextStart}${idText}>`
-                        insertIndex = lineText.trimEnd().length
-                    }
-                } else {
-                    // A suppression already exists on this line
-                    insertIndex = suppressionIndex + suppressionTextStart.length
-
-                    // Get past all existing IDs being suppressed
-                    while (insertIndex < lineText.length && /[*\da-zA-Z,]/.test(lineText[insertIndex])) {
-                        insertIndex++
-                    }
-                    insertText = idText
-
-                    // Handle %#ok<> edge case
-                    if (insertIndex > suppressionIndex + suppressionTextStart.length) {
-                        insertText = ',' + insertText
-                    }
-                }
-
-                resolve([
-                    TextEdit.insert(
-                        Position.create(
-                            fixRange.end.line,
-                            insertIndex
-                        ),
-                        insertText
-                    )
-                ])
-            })
-
-            matlabConnection.publish(this.END_STATEMENT_REQUEST_CHANNEL, {
-                lineNumber: range.start.line + 1,
-                code: textDocument.getText()
-            })
+        matlabConnection.publish(this.SUPPRESS_DIAGNOSTIC_REQUEST_CHANNEL, {
+            code: textDocument.getText(),
+            diagnosticId: id,
+            line: range.start.line + 1,
+            suppressInFile: shouldSuppressThroughoutFile
         })
     }
 

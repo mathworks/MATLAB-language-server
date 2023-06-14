@@ -18,6 +18,11 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ## Release Notes
 
+### Unreleased
+
+Fixed:
+* Diagnostic suppression should be placed at correct location when '%' is contained within string
+
 ### 1.1.2
 Release date: 2023-05-31
 
