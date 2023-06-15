@@ -22,7 +22,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 Fixed:
 * Diagnostic suppression should be placed at correct location when '%' is contained within string
-* Improved navigation to files within MATLAB packages within the VS Code workspace but not on the MATLAB path
+* Improved navigation to files inside MATLAB packages within the VS Code workspace but not on the MATLAB path
 * Prevented navigation to private/local functions from other files
 
 ### 1.1.2
