@@ -505,9 +505,7 @@ class NavigationSupportProvider {
      * @returns true if the function should be visible from the given URI; false otherwise
      */
     private isFunctionVisibleFromUri (uri: string, funcData: MatlabFunctionInfo): boolean {
-        const functionUri = funcData.uri
-
-        return uri === functionUri || funcData.visibility === FunctionVisibility.Public
+        return uri === funcData.uri || funcData.visibility === FunctionVisibility.Public
     }
 
     /**
