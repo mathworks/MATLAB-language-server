@@ -464,7 +464,9 @@ class NavigationSupportProvider {
             // Check functions
             for (const [funcName, funcData] of fileCodeData.functions) {
                 const funcMatch = (match === '') ? funcName : match + '.' + funcName
-                if (expressionToMatch === funcMatch) {
+
+                // Need to ensure that a function with a matching name should also be visible from the current file.
+                if (expressionToMatch === funcMatch && this.isFunctionVisibleFromUri(uri, funcData)) {
                     const range = funcData.declaration ?? Range.create(0, 0, 0, 0)
                     return [Location.create(funcData.uri, range)]
                 }
@@ -492,6 +494,18 @@ class NavigationSupportProvider {
         }
 
         return null
+    }
+
+    /**
+     * Determines whether the given function should be visible from the given file URI.
+     * The function is visible if it is contained within the same file, or is public.
+     *
+     * @param uri The file's URI
+     * @param funcData The function data
+     * @returns true if the function should be visible from the given URI; false otherwise
+     */
+    private isFunctionVisibleFromUri (uri: string, funcData: MatlabFunctionInfo): boolean {
+        return uri === funcData.uri || funcData.visibility === FunctionVisibility.Public
     }
 
     /**

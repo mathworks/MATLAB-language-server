@@ -29,6 +29,23 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
                 response.data{n} = struct(name = name, path = path);
             end
 
+            % For any names which are not found, try CDing to the context
+            % file's directory and searching again
+            sArray = [response.data{:}];
+            missingPaths = cellfun(@isempty, {sArray.path});
+            missingIndices = find(missingPaths);
+
+            if ~isempty(missingIndices)
+                returnDir = cd(fileparts(contextFile));
+                for n = missingIndices
+                    path = matlabls.internal.resolvePath(names{n}, contextFile);
+                    if ~isempty(path)
+                        response.data{n}.path = path;
+                    end
+                end
+                cd(returnDir);
+            end
+
             this.CommManager.publish(this.ResolvePathResponseChannel, response);
         end
     end
