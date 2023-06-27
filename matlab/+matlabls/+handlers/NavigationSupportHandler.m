@@ -36,7 +36,7 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
             missingIndices = find(missingPaths);
 
             if ~isempty(missingIndices)
-                returnDir = cd(fileparts(contextFile));
+                returnDir = cdToPackageRoot(contextFile);
                 for n = missingIndices
                     path = matlabls.internal.resolvePath(names{n}, contextFile);
                     if ~isempty(path)
@@ -49,4 +49,23 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
             this.CommManager.publish(this.ResolvePathResponseChannel, response);
         end
     end
+end
+
+function returnDir = cdToPackageRoot (filePath)
+    % Given a file path, CDs to the directory at the root-level of the
+    % file's package structure. If the file is not within a package,
+    % this CDs to the file's directory.
+
+    splitDirs = strsplit(fileparts(filePath), filesep);
+
+    % Determine how far up the path we need to CD
+    lastInd = numel(splitDirs);
+    while lastInd > 1
+        if ~startsWith(splitDirs(lastInd), '+')
+            break;
+        end
+        lastInd = lastInd - 1;
+    end
+
+    returnDir = cd(strjoin(splitDirs(1:lastInd), filesep));
 end
