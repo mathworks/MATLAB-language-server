@@ -5,9 +5,13 @@ import * as os from 'os'
 import * as path from 'path'
 import { RemoteConsole } from 'vscode-languageserver'
 
+const SERVER_LOG = 'languageServerLog.txt'
+const MATLAB_LOG = 'matlabLog.txt'
+
 class Logger {
     private readonly _logDir: string
-    private readonly _logFile: string
+    private readonly languageServerLogFile: string
+    private readonly matlabLogFile: string
     private _console: RemoteConsole | null = null
 
     constructor () {
@@ -22,7 +26,8 @@ class Logger {
         fs.mkdirSync(this._logDir)
 
         // Get name of log file
-        this._logFile = path.join(this._logDir, 'matlabLanguageServerLog.txt')
+        this.languageServerLogFile = path.join(this._logDir, SERVER_LOG)
+        this.matlabLogFile = path.join(this._logDir, MATLAB_LOG)
     }
 
     /**
@@ -43,7 +48,7 @@ class Logger {
     log (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls: ${message}`
         this._console?.log(msg)
-        this._writeToLogFile(msg)
+        this._writeToLogFile(msg, this.languageServerLogFile)
     }
 
     /**
@@ -54,7 +59,7 @@ class Logger {
     warn (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls - WARNING: ${message}`
         this._console?.warn(msg)
-        this._writeToLogFile(msg)
+        this._writeToLogFile(msg, this.languageServerLogFile)
     }
 
     /**
@@ -65,17 +70,27 @@ class Logger {
     error (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls - ERROR: ${message}`
         this._console?.error(msg)
-        this._writeToLogFile(msg)
+        this._writeToLogFile(msg, this.languageServerLogFile)
+    }
+
+    /**
+     * Log MATLAB application output to a log file on disk, separate from
+     * the language server logs.
+     *
+     * @param message The message
+     */
+    writeMatlabLog (message: string): void {
+        this._writeToLogFile(message, this.matlabLogFile)
     }
 
     public get logDir (): string {
         return this._logDir
     }
 
-    private _writeToLogFile (message: string): void {
+    private _writeToLogFile (message: string, filePath: string): void {
         // Log to file
         fs.writeFile(
-            this._logFile,
+            filePath,
             `${message}\n`,
             { flag: 'a+' },
             err => {
