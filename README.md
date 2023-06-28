@@ -24,6 +24,7 @@ Fixed:
 * Diagnostic suppression should be placed at correct location when '%' is contained within string
 * Improved navigation to files inside MATLAB packages within the VS Code workspace but not on the MATLAB path
 * Prevented navigation to private/local functions from other files
+* MATLAB sign-in is no longer blocked on Windows
 
 ### 1.1.2
 Release date: 2023-05-31

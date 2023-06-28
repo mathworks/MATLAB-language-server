@@ -398,14 +398,12 @@ class MatlabProcess {
         this._matlabProcess = matlabProcess
         this._matlabConnection = matlabConnection
 
-        // Handle errors from MATLAB's standard err
+        // Handle messages from MATLAB's standard err channel. Because MATLAB is launched
+        // with the -log flag, all of MATLAB's output is pushed through stderr. Write this
+        // to a log file.
         this._matlabProcess.stderr?.on('data', data => {
             const stderrStr: string = data.toString().trim()
-            if (stderrStr.startsWith('MEMORY MANAGEMENT')) { return }
-
-            const msg = `MATLAB command stderr: ${stderrStr}`
-            Logger.log(msg)
-            this._connection.window.showErrorMessage(msg)
+            Logger.writeMatlabLog(stderrStr)
         })
 
         /**
@@ -464,7 +462,6 @@ class MatlabProcess {
 
         const args = [
             '-log',
-            '-logfile', path.join(Logger.logDir, 'matlabls.log'), // Log file
             '-memmgr', 'release', // Memory manager
             '-noAppIcon', // Hide MATLAB application icon in taskbar/dock, if applicable
             '-nosplash', // Hide splash screen
