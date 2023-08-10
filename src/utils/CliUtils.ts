@@ -5,7 +5,6 @@ import { Argument } from '../lifecycle/ConfigurationManager'
 
 export interface CliArgs {
     [Argument.MatlabLaunchCommandArguments]?: string
-    [Argument.MatlabCertificateDirectory]?: string
     [Argument.MatlabInstallationPath]?: string
     [Argument.MatlabConnectionTiming]?: string
     [Argument.ShouldIndexWorkspace]?: boolean
@@ -22,9 +21,6 @@ function makeParser (): yargs.Argv<CliArgs> {
         description: 'Arguments passed to MATLAB when launching',
         type: 'string',
         requiresArg: true
-    }).option(Argument.MatlabCertificateDirectory, {
-        description: 'Location at which to look for a MATLAB certificate',
-        type: 'string'
     }).option(Argument.MatlabInstallationPath, {
         description: 'The full path to the top-level directory of the MATLAB installation. If not specified, the environment path will be checked for the location of the `matlab` executable.',
         type: 'string',

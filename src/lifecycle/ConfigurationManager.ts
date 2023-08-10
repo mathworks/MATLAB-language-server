@@ -8,7 +8,6 @@ import { getCliArgs } from '../utils/CliUtils'
 export enum Argument {
     // Basic arguments
     MatlabLaunchCommandArguments = 'matlabLaunchCommandArgs',
-    MatlabCertificateDirectory = 'matlabCertDir',
     MatlabInstallationPath = 'matlabInstallPath',
     MatlabConnectionTiming = 'matlabConnectionTiming',
 
@@ -24,9 +23,8 @@ export enum ConnectionTiming {
     Never = 'never'
 }
 
-interface CliArguments {
+interface CliArguments { 
     [Argument.MatlabLaunchCommandArguments]: string
-    [Argument.MatlabCertificateDirectory]: string
     [Argument.MatlabUrl]: string
 }
 
@@ -75,7 +73,6 @@ class ConfigurationManager {
 
         this.additionalArguments = {
             [Argument.MatlabLaunchCommandArguments]: cliArgs[Argument.MatlabLaunchCommandArguments] ?? '',
-            [Argument.MatlabCertificateDirectory]: cliArgs[Argument.MatlabCertificateDirectory] ?? '',
             [Argument.MatlabUrl]: cliArgs[Argument.MatlabUrl] ?? ''
         }
     }
@@ -119,7 +116,7 @@ class ConfigurationManager {
      * @param argument The argument
      * @returns The argument's value
      */
-    getArgument (argument: Argument.MatlabLaunchCommandArguments | Argument.MatlabCertificateDirectory | Argument.MatlabUrl): string {
+    getArgument (argument: Argument.MatlabLaunchCommandArguments | Argument.MatlabUrl): string {
         return this.additionalArguments[argument]
     }
 
