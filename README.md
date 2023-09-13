@@ -21,6 +21,12 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.1.5
+Release date: 2023-09-13
+
+Fixed:
+* Fixed issue connecting to MATLAB with Node.js&reg; version 18 and later.
+
 ### 1.1.4
 Release date: 2023-08-14
 
