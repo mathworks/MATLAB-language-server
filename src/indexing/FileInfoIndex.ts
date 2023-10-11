@@ -11,6 +11,7 @@ export interface RawCodeData {
     functionInfo: CodeDataFunctionInfo[]
     packageName: string
     references: CodeDataReference[]
+    sections: CodeDataSectionInfo[]
 }
 
 /**
@@ -26,6 +27,14 @@ interface CodeDataClassInfo {
     enumerations: CodeDataMemberInfo[]
     classDefFolder: string
     baseClasses: string[]
+}
+
+/**
+ * Section data of MATLAB. Sections are groupings formed in MATLAB using %% comments.
+ */
+interface CodeDataSectionInfo {
+    title: string,
+    range: CodeDataRange
 }
 
 /**
@@ -352,17 +361,18 @@ class MatlabVariableInfo {
 export class MatlabCodeData {
     readonly functions: Map<string, MatlabFunctionInfo>
     readonly references: Map<string, Range[]>
-
+    readonly sections: Map<string, Range[]>
     readonly packageName: string
 
     constructor (public uri: string, rawCodeData: RawCodeData, public classInfo?: MatlabClassInfo) {
         this.functions = new Map<string, MatlabFunctionInfo>()
         this.references = new Map<string, Range[]>()
-
+        this.sections = new Map<string, Range[]>()
         this.packageName = rawCodeData.packageName
 
         this.parseFunctions(rawCodeData.functionInfo)
         this.parseReferences(rawCodeData.references)
+        this.parseSectionInfo(rawCodeData.sections)
     }
 
     /**
@@ -442,6 +452,22 @@ export class MatlabCodeData {
                 this.references.set(funcName, [range])
             } else {
                 this.references.get(funcName)?.push(range)
+            }
+        })
+    }
+
+    /**
+     * Parse raw section info to the section and set to this.sections
+     * @param sectionsInfo Array of the section information of the file retrieved from MATLAB
+     */
+    private parseSectionInfo (sectionsInfo: CodeDataSectionInfo[]): void {
+        sectionsInfo.forEach((sectionInfo) => {
+            const { title, range: rangeSectionInfo } = sectionInfo
+            const range  = convertRange(rangeSectionInfo)
+            if (!this.sections.has(title)) {
+                this.sections.set(title, [range])
+            } else {
+                this.sections.get(title)?.push(range)
             }
         })
     }

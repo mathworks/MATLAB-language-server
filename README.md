@@ -21,6 +21,11 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.1.6
+Release date: 2023-10-11
+
+* Add support for MATLAB sections in the documentSymbol (outline).
+
 ### 1.1.5
 Release date: 2023-09-13
 

@@ -189,6 +189,12 @@ class NavigationSupportProvider {
             classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
         }
         codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
+        codeData.sections.forEach((range, title) => {
+            range.forEach(range => {
+                pushSymbol(title, SymbolKind.Module, range)
+            })
+        })
+
         /**
          * Handle a case when the indexer fails due to the user being in the middle of an edit.
          * Here the documentSymbol cache has some symbols but the codeData cache has none. So we
