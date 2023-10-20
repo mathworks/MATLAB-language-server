@@ -8,6 +8,7 @@ import ConfigurationManager from '../../lifecycle/ConfigurationManager'
 import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Logger from '../../logging/Logger'
+import * as fs from 'fs/promises'
 import * as path from 'path'
 import which = require('which')
 import { MatlabLSCommands } from '../lspCommands/ExecuteCommandProvider'
@@ -337,8 +338,9 @@ class LintingSupportProvider {
         } else {
             // Try to find the executable based on the location of the `matlab` executable
             try {
-                const resolvedPath = await which('matlab')
+                let resolvedPath = await which('matlab')
                 if (resolvedPath !== '') {
+                    resolvedPath = await fs.realpath(resolvedPath)
                     binPath = path.dirname(resolvedPath)
                 }
             } catch {
