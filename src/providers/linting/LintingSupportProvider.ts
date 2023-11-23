@@ -323,8 +323,8 @@ class LintingSupportProvider {
      * @returns The path to the mlint executable, or null if it cannot be determined
      */
     private async getMlintExecutable (): Promise<string | null> {
-        const platformDir = this.getBinDirectoryForPlatform()
-        if (platformDir == null) {
+        const platformDirs = this.getBinDirectoriesForPlatform()
+        if (platformDirs == null) {
             // Unable to determine platform
             return null
         }
@@ -352,13 +352,23 @@ class LintingSupportProvider {
             return null
         }
 
-        const mlintExecutablePath = path.normalize(path.join(
-            binPath,
-            platformDir,
-            'mlint'
-        ))
+        for (const platformDir of platformDirs) {
+            const mlintExecutablePath = path.normalize(path.join(
+                binPath,
+                platformDir,
+                'mlint'
+            ))
+            try {
+                await fs.access(mlintExecutablePath)
+                return mlintExecutablePath // return the first existing path
+            } catch {
+                // continue to the next iteration
+            }
+        }
 
-        return mlintExecutablePath
+        Logger.error(`Error finding mlint executable in ${binPath}`)
+
+        return null
     }
 
     /**
@@ -366,14 +376,14 @@ class LintingSupportProvider {
      *
      * @returns The binary directory name, or null if the platform is not recognized
      */
-    private getBinDirectoryForPlatform (): string | null {
+    private getBinDirectoriesForPlatform (): string[] | null {
         switch (process.platform) {
             case 'win32':
-                return 'win64'
+                return ['win64']
             case 'darwin':
-                return 'maci64'
+                return ['maci64', 'maca64']
             case 'linux':
-                return 'glnxa64'
+                return ['glnxa64']
             default:
                 return null
         }
