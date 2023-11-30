@@ -26,7 +26,10 @@ MATLAB language server supports these editors by installing the corresponding ex
 ### 1.1.7
 Release date: 2023-12-06
 
-* Fix code navigation for R2024a
+Fixed:
+* Fixed code navigation when using R2024a
+* Handle symbolic link to MATLAB when linting with mlint (Thanks @MoetaYuko!)
+* Handle maca64 architecture when linting with mlint (Thanks @tiagovla!)
 
 ### 1.1.6
 Release date: 2023-10-11
