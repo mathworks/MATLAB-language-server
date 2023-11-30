@@ -23,6 +23,11 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.1.7
+Release date: 2023-12-06
+
+* Fix code navigation for R2024a
+
 ### 1.1.6
 Release date: 2023-10-11
 

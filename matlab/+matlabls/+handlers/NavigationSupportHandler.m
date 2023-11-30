@@ -25,7 +25,7 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
             response.data = cell(1, numel(names));
             for n = 1:numel(names)
                 name = names{n};
-                path = matlabls.internal.resolvePath(name, contextFile);
+                path = resolvePath(name, contextFile);
                 response.data{n} = struct(name = name, path = path);
             end
 
@@ -38,7 +38,7 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
             if ~isempty(missingIndices)
                 returnDir = cdToPackageRoot(contextFile);
                 for n = missingIndices
-                    path = matlabls.internal.resolvePath(names{n}, contextFile);
+                    path = resolvePath(names{n}, contextFile);
                     if ~isempty(path)
                         response.data{n}.path = path;
                     end
@@ -48,6 +48,23 @@ classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
 
             this.CommManager.publish(this.ResolvePathResponseChannel, response);
         end
+    end
+end
+
+function path = resolvePath (name, contextFile)
+    if isMATLABReleaseOlderThan('R2023b')
+        % For usage in R2023b and earlier
+        [isFound, path] = matlabls.internal.resolvePath(name, contextFile);
+    elseif isMATLABReleaseOlderThan('R2024a')
+        % For usage in R2023b only
+        [isFound, path] = matlab.internal.language.introspective.resolveFile(name, []);
+    else
+        % For usage in R2024a and later
+        [isFound, path] = matlab.lang.internal.introspective.resolveFile(name, []);
+    end
+
+    if ~isFound
+        path = '';
     end
 end
 
