@@ -3,6 +3,7 @@
   "version": "1.1.6",
   "description": "Language Server for MATLAB code",
   "main": "./src/index.ts",
+  "bin": "./out/index.js",
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack --mode development",
