@@ -24,6 +24,8 @@ MATLAB language server supports these editors by installing the corresponding ex
 ## Release Notes
 
 ### Unreleased
+Fixed:
+* Fixed linting with mlint on Windows
 
 ### 1.1.7
 Release date: 2023-12-06

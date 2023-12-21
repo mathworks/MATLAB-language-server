@@ -356,7 +356,7 @@ class LintingSupportProvider {
             const mlintExecutablePath = path.normalize(path.join(
                 binPath,
                 platformDir,
-                'mlint'
+                process.platform === 'win32' ? 'mlint.exe' : 'mlint'
             ))
             try {
                 await fs.access(mlintExecutablePath)
