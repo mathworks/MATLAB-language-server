@@ -60,7 +60,8 @@ function path = resolvePath (name, contextFile)
         [isFound, path] = matlab.internal.language.introspective.resolveFile(name, []);
     else
         % For usage in R2024a and later
-        [isFound, path] = matlab.lang.internal.introspective.resolveFile(name, []);
+        ec = matlab.lang.internal.introspective.ExecutionContext;
+        [isFound, path] = matlab.lang.internal.introspective.resolveFile(name, ec);
     end
 
     if ~isFound
