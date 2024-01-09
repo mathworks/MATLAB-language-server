@@ -1,7 +1,7 @@
 classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
     % NAVIGATIONHANDLER The feature handler to support navigation workflows.
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     properties (Access = private)
         ResolvePathRequestChannel = '/matlabls/navigation/resolvePath/request'
