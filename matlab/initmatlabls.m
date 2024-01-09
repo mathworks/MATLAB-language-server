@@ -2,7 +2,7 @@ function initmatlabls (outFile)
     % Initializes a MATLAB® session to talk to a MATLAB language server.
     % Writes connection info to the outFile specified by the client
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     % Prevent clearing the workspace from cleaning up the MatlabLanguageServerHelper
     mlock
@@ -27,6 +27,8 @@ end
 function logConnectionData (outFile)
     c.matlabPid = feature("getpid");
     c.matlabRelease = ['R' version('-release')]
+    c.sessionKey = dduxinternal.getSessionKey();
+
     connectionData = jsonencode(c);
 
     disp(strcat("Printing connection data to file: ", newline, "    ", outFile))

@@ -326,12 +326,14 @@ class MatlabProcess {
                 const info = JSON.parse(data.toString())
 
                 this._matlabPid = info.matlabPid
-                const matlabRelease = info.matlabRelease as string // e.g. R2023a
+                const matlabRelease: string = info.matlabRelease // e.g. R2023a
+                const sessionKey: string = info.sessionKey
 
                 this._matlabConnection?.initialize().then(() => {
                     fs.unwatchFile(outFile)
                     LifecycleNotificationHelper.notifyConnectionStatusChange(ConnectionState.CONNECTED)
                     reportTelemetryAction(Actions.StartMatlab, matlabRelease)
+                    reportTelemetryAction(Actions.MatlabSessionKey, sessionKey)
                     resolve()
                 }).catch(() => {
                     Logger.error('Failed to connect to MATLAB')
