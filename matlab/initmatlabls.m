@@ -26,7 +26,7 @@ end
 
 function logConnectionData (outFile)
     c.matlabPid = feature("getpid");
-    c.matlabRelease = ['R' version('-release')]
+    c.matlabRelease = ['R' version('-release')];
     c.sessionKey = dduxinternal.getSessionKey();
 
     connectionData = jsonencode(c);
