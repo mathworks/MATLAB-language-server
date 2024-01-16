@@ -1,4 +1,4 @@
-// Copyright 2023 The MathWorks, Inc.
+// Copyright 2023-2024 The MathWorks, Inc.
 
 import NotificationService, { Notification } from '../notifications/NotificationService'
 
@@ -11,6 +11,7 @@ export enum Actions {
     OpenFile = 'openFile',
     StartMatlab = 'startMATLAB',
     ShutdownMatlab = 'shutdownMATLAB',
+    MatlabSessionKey = 'getMATLABSession',
     FormatDocument = 'formatDocument',
     GoToReference = 'goToReference',
     GoToDefinition = 'goToDefinition',

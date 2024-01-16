@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { execFile, ExecFileException } from 'child_process'
 import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentEdit, TextEdit, VersionedTextDocumentIdentifier, WorkspaceEdit, _Connection } from 'vscode-languageserver'
@@ -356,7 +356,7 @@ class LintingSupportProvider {
             const mlintExecutablePath = path.normalize(path.join(
                 binPath,
                 platformDir,
-                'mlint'
+                process.platform === 'win32' ? 'mlint.exe' : 'mlint'
             ))
             try {
                 await fs.access(mlintExecutablePath)

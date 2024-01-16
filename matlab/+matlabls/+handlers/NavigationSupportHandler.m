@@ -1,7 +1,7 @@
 classdef (Hidden) NavigationSupportHandler < matlabls.handlers.FeatureHandler
     % NAVIGATIONHANDLER The feature handler to support navigation workflows.
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     properties (Access = private)
         ResolvePathRequestChannel = '/matlabls/navigation/resolvePath/request'
@@ -60,7 +60,8 @@ function path = resolvePath (name, contextFile)
         [isFound, path] = matlab.internal.language.introspective.resolveFile(name, []);
     else
         % For usage in R2024a and later
-        [isFound, path] = matlab.lang.internal.introspective.resolveFile(name, []);
+        ec = matlab.lang.internal.introspective.ExecutionContext;
+        [isFound, path] = matlab.lang.internal.introspective.resolveFile(name, ec);
     end
 
     if ~isFound
