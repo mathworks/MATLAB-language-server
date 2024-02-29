@@ -11,7 +11,12 @@ function initmatlabls (outFile)
     fprintf("matlabls: matlabroot is \n%s\n", matlabroot)
 
     % Ensure the language server code is on the path
-    addpath(fileparts(mfilename("fullpath")))
+    folder = fileparts(mfilename("fullpath"));
+    addpath(folder)
+
+    if isMATLABReleaseOlderThan('R2023a')
+        addpath(fullfile(folder, 'shadows', 'clc'));
+    end
 
     % Create matlabls helper for calculating language server operations
     persistent matlablsHelper %#ok<PUSE>

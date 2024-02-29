@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { GenericNotificationHandler } from 'vscode-languageserver'
 import { connection } from '../server'
@@ -7,6 +7,21 @@ export enum Notification {
     // Connection Status Updates
     MatlabConnectionClientUpdate = 'matlab/connection/update/client',
     MatlabConnectionServerUpdate = 'matlab/connection/update/server',
+
+    // Execution
+    MatlabRequestInstance = 'matlab/request',
+
+    MVMEvalRequest = 'evalRequest',
+    MVMEvalComplete = 'evalRequest',
+    MVMFevalRequest = 'fevalRequest',
+    MVMFevalComplete = 'fevalRequest',
+
+    MVMText = 'text',
+    MVMClc = 'clc',
+
+    MVMInterruptRequest = 'interruptRequest',
+
+    MVMStateChange = 'mvmStateChange',
 
     // Errors
     MatlabLaunchFailed = 'matlab/launchfailed',

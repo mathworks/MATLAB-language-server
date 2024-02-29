@@ -46,6 +46,9 @@ declare class MatlabCommunicationManager {
      */
     private _makeApiKey;
 }
+declare type MessageData = {
+    [key: string]: unknown;
+};
 declare type LifecycleListenerCallback = (eventType: LifecycleEventType) => void;
 /**
  * Abstract class representing a connection with the MATLAB application.
@@ -54,6 +57,7 @@ export declare abstract class MatlabConnection {
     protected _client?: Client;
     protected _url?: string;
     protected _lifecycleCallback: LifecycleListenerCallback | null;
+    protected _channelIdCt: number;
     /**
      * Initializes the connection with MATLAB
      */
@@ -64,12 +68,20 @@ export declare abstract class MatlabConnection {
      */
     close(): void;
     /**
+     * Gets a unique channel ID which can be appended to channel names to
+     * make them unique if necessary. For example:
+     * /matlabls/formatDocument/response/132
+     *
+     * @returns A unique channel ID
+     */
+    getChannelId(): string;
+    /**
      * Publishes a message to the given channel.
      *
      * @param channel The channel to which the message is being published
      * @param message The message being published
      */
-    publish(channel: string, message: unknown): void;
+    publish(channel: string, message: MessageData): void;
     /**
      * Subscribe to messages published on the given channel. The messages will
      * be passed to hte given calback function.
