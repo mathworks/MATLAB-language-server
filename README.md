@@ -33,6 +33,7 @@ Added:
 
 Fixed:
 * Prevent responses from MATLAB being intercepted by the incorrect request callback
+* Fixed linting diagnostic suppression with MATLAB R2024a 
 
 ### 1.1.8
 Release date: 2024-01-16
