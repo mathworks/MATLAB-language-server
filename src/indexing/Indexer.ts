@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -16,12 +16,10 @@ interface WorkspaceFileIndexedResponse {
 
 class Indexer {
     private readonly INDEX_DOCUMENT_REQUEST_CHANNEL = '/matlabls/indexDocument/request'
-    private readonly INDEX_DOCUMENT_RESPONSE_CHANNEL = '/matlabls/indexDocument/response/' // Needs to be appended with requestId
+    private readonly INDEX_DOCUMENT_RESPONSE_CHANNEL = '/matlabls/indexDocument/response'
 
     private readonly INDEX_FOLDERS_REQUEST_CHANNEL = '/matlabls/indexFolders/request'
-    private readonly INDEX_FOLDERS_RESPONSE_CHANNEL = '/matlabls/indexFolders/response/' // Needs to be appended with requestId
-
-    private requestCt = 1
+    private readonly INDEX_FOLDERS_RESPONSE_CHANNEL = '/matlabls/indexFolders/response'
 
     /**
      * Indexes the given TextDocument and caches the data.
@@ -54,8 +52,9 @@ class Indexer {
             return
         }
 
-        const requestId = this.requestCt++
-        const responseSub = matlabConnection.subscribe(`${this.INDEX_FOLDERS_RESPONSE_CHANNEL}${requestId}`, message => {
+        const channelId = matlabConnection.getChannelId()
+        const channel = `${this.INDEX_FOLDERS_RESPONSE_CHANNEL}/${channelId}`
+        const responseSub = matlabConnection.subscribe(channel, message => {
             const fileResults = message as WorkspaceFileIndexedResponse
 
             if (fileResults.isDone) {
@@ -70,7 +69,7 @@ class Indexer {
 
         matlabConnection.publish(this.INDEX_FOLDERS_REQUEST_CHANNEL, {
             folders,
-            requestId
+            channelId
         })
     }
 
@@ -106,8 +105,9 @@ class Indexer {
         const filePath = URI.parse(uri).fsPath
 
         return await new Promise(resolve => {
-            const requestId = this.requestCt++
-            const responseSub = matlabConnection.subscribe(`${this.INDEX_DOCUMENT_RESPONSE_CHANNEL}${requestId}`, message => {
+            const channelId = matlabConnection.getChannelId()
+            const channel = `${this.INDEX_DOCUMENT_RESPONSE_CHANNEL}/${channelId}`
+            const responseSub = matlabConnection.subscribe(channel, message => {
                 matlabConnection.unsubscribe(responseSub)
 
                 resolve(message as RawCodeData)
@@ -116,7 +116,7 @@ class Indexer {
             matlabConnection.publish(this.INDEX_DOCUMENT_REQUEST_CHANNEL, {
                 code,
                 filePath,
-                requestId
+                channelId
             })
         })
     }

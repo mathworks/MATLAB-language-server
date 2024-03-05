@@ -25,6 +25,16 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.2.0
+Release date: 2024-03-05
+
+Added:
+* Code execution support
+
+Fixed:
+* Prevent responses from MATLAB being intercepted by the incorrect request callback
+* Fixed linting diagnostic suppression with MATLAB R2024a 
+
 ### 1.1.8
 Release date: 2024-01-16
 

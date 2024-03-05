@@ -2,14 +2,14 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
     % INDEXINGHANDLER The feature handler for indexing documents for variable,
     % function, and class references and definitions.
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     properties (Access = private)
         DocumentIndexingRequestChannel = '/matlabls/indexDocument/request'
-        DocumentIndexingResponseChannel = '/matlabls/indexDocument/response/' % Needs to be appended with requestId
+        DocumentIndexingResponseChannel = '/matlabls/indexDocument/response'
 
         FolderIndexingRequestChannel = '/matlabls/indexFolders/request'
-        FolderIndexingResponseChannel = '/matlabls/indexFolders/response/' % Needs to be appended with requestId
+        FolderIndexingResponseChannel = '/matlabls/indexFolders/response'
     end
 
     methods
@@ -26,11 +26,10 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
 
             code = msg.code;
             filePath = msg.filePath;
-            requestId = num2str(msg.requestId);
 
             codeData = matlabls.internal.computeCodeData(code, filePath);
 
-            responseChannel = strcat(this.DocumentIndexingResponseChannel, requestId);
+            responseChannel = strcat(this.DocumentIndexingResponseChannel, '/', msg.channelId);
             this.CommManager.publish(responseChannel, codeData)
         end
 
@@ -38,10 +37,9 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
             % Indexes M-files the provided folders
 
             folders = msg.folders;
-            requestId = num2str(msg.requestId);
 
             files = this.getAllMFilesToIndex(folders);
-            this.parseFiles(requestId, files)
+            this.parseFiles(msg.channelId, files)
         end
 
         function filesToIndex = getAllMFilesToIndex (~, folders)
@@ -127,7 +125,7 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
                 msg.isDone = false;
             end
 
-            responseChannel = strcat(this.FolderIndexingResponseChannel, requestId);
+            responseChannel = strcat(this.FolderIndexingResponseChannel, '/', requestId);
             this.CommManager.publish(responseChannel, msg);
         end
     end

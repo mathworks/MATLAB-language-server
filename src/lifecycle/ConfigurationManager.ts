@@ -23,7 +23,7 @@ export enum ConnectionTiming {
     Never = 'never'
 }
 
-interface CliArguments { 
+interface CliArguments {
     [Argument.MatlabLaunchCommandArguments]: string
     [Argument.MatlabUrl]: string
 }

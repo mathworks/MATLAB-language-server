@@ -2,7 +2,7 @@ classdef (Hidden) CompletionSupportHandler < matlabls.handlers.FeatureHandler
     % COMPLETIONSUPPORTHANDLER The feature handler for tab completion and function
     % signature support.
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     properties (Access = private)
         RequestChannel = "/matlabls/completions/request"
@@ -29,7 +29,8 @@ classdef (Hidden) CompletionSupportHandler < matlabls.handlers.FeatureHandler
             completionResultsStr = matlabls.internal.getCompletionsData(code, fileName, cursorPosition);
             filteredResults = this.filterCompletionResults(completionResultsStr);
 
-            message.publish(this.ResponseChannel, filteredResults)
+            responseChannel = strcat(this.ResponseChannel, '/', msg.channelId);
+            this.CommManager.publish(responseChannel, filteredResults)
         end
 
         function compResultsStruct = filterCompletionResults (this, completionResultsStr)

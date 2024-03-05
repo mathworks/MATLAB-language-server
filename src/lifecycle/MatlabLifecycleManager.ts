@@ -21,7 +21,7 @@ enum ConnectionState {
     DISCONNECTED = 'disconnected'
 }
 
-interface MatlabLifecycleEvent {
+export interface MatlabLifecycleEvent {
     matlabStatus: 'connected' | 'disconnected'
 }
 
@@ -73,6 +73,15 @@ class MatlabLifecycleManager {
      */
     isMatlabReady (): boolean {
         return Boolean(this._matlabProcess?.isMatlabReady())
+    }
+
+    /**
+     * Get MATLAB release. e.g. 'R2023a'
+     *
+     * @returns Whether or not MATLAB can be communicated with.
+     */
+    getMatlabRelease (): string | null {
+        return this._matlabProcess?.getRelease() ?? null;
     }
 
     /**
@@ -253,7 +262,8 @@ class MatlabLifecycleManager {
 class MatlabProcess {
     private _matlabProcess?: ChildProcess
     private _matlabConnection: MatlabConnection | null = null
-    private _matlabPid = 0
+    private _matlabPid: number = 0
+    private _matlabRelease: string | null = null
     private _isReady = false // Whether MATLAB is ready for communication
 
     isValid = true // Gets set to false when the process is terminated
@@ -276,6 +286,14 @@ class MatlabProcess {
      */
     isMatlabReady (): boolean {
         return this.isValid && this._isReady
+    }
+
+    /**
+     Gets whether or not MATLAB is ready for communication
+     * @returns True if MATLAB can be communicated with, false otherwise
+     */
+    getRelease (): string | null {
+        return this._matlabRelease;
     }
 
     /**
@@ -326,13 +344,13 @@ class MatlabProcess {
                 const info = JSON.parse(data.toString())
 
                 this._matlabPid = info.matlabPid
-                const matlabRelease: string = info.matlabRelease // e.g. R2023a
+                this._matlabRelease = info.matlabRelease // e.g. R2023a
                 const sessionKey: string = info.sessionKey
 
                 this._matlabConnection?.initialize().then(() => {
                     fs.unwatchFile(outFile)
                     LifecycleNotificationHelper.notifyConnectionStatusChange(ConnectionState.CONNECTED)
-                    reportTelemetryAction(Actions.StartMatlab, matlabRelease)
+                    reportTelemetryAction(Actions.StartMatlab, info.matlabRelease)
                     reportTelemetryAction(Actions.MatlabSessionKey, sessionKey)
                     resolve()
                 }).catch(() => {

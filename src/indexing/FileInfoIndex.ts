@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { Position, Range } from 'vscode-languageserver'
 import { isPositionGreaterThan, isPositionLessThanOrEqualTo } from '../utils/PositionUtils'
@@ -33,7 +33,7 @@ interface CodeDataClassInfo {
  * Section data of MATLAB. Sections are groupings formed in MATLAB using %% comments.
  */
 interface CodeDataSectionInfo {
-    title: string,
+    title: string
     range: CodeDataRange
 }
 
@@ -463,7 +463,7 @@ export class MatlabCodeData {
     private parseSectionInfo (sectionsInfo: CodeDataSectionInfo[]): void {
         sectionsInfo.forEach((sectionInfo) => {
             const { title, range: rangeSectionInfo } = sectionInfo
-            const range  = convertRange(rangeSectionInfo)
+            const range = convertRange(rangeSectionInfo)
             if (!this.sections.has(title)) {
                 this.sections.set(title, [range])
             } else {

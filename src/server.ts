@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { ClientCapabilities, createConnection, InitializeParams, InitializeResult, ProposedFeatures, TextDocuments } from 'vscode-languageserver/node'
@@ -14,6 +14,8 @@ import FormatSupportProvider from './providers/formatting/FormatSupportProvider'
 import LintingSupportProvider from './providers/linting/LintingSupportProvider'
 import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommands/ExecuteCommandProvider'
 import NavigationSupportProvider, { RequestType } from './providers/navigation/NavigationSupportProvider'
+import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
+import MVM from './mvm/MVM'
 
 // Create a connection for the server
 export const connection = createConnection(ProposedFeatures.all)
@@ -24,10 +26,15 @@ Logger.initialize(connection.console)
 // Create basic text document manager
 const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 
+let mvm: MVM | null
+let hasMatlabBeenRequested: boolean = false
+
 MatlabLifecycleManager.addMatlabLifecycleListener((error, lifecycleEvent) => {
     if (error != null) {
         Logger.error(`MATLAB Lifecycle Error: ${error.message}\n${error.stack ?? ''}`)
     }
+
+    hasMatlabBeenRequested = false
 
     if (lifecycleEvent.matlabStatus === 'connected') {
         // Handle things after MATLAB® has launched
@@ -84,6 +91,8 @@ connection.onInitialized(() => {
 
     WorkspaceIndexer.setupCallbacks(capabilities)
 
+    mvm = new MVM(NotificationService, MatlabLifecycleManager);
+
     void startMatlabIfOnStartLaunch()
 })
 
@@ -105,6 +114,21 @@ connection.onShutdown(() => {
 NotificationService.registerNotificationListener(
     Notification.MatlabConnectionClientUpdate,
     data => MatlabLifecycleManager.handleConnectionStatusChange(data as MatlabConnectionStatusParam)
+)
+
+// Set up MATLAB startup request listener
+NotificationService.registerNotificationListener(
+    Notification.MatlabRequestInstance,
+    async () => { // eslint-disable-line @typescript-eslint/no-misused-promises
+        if (hasMatlabBeenRequested) {
+            return;
+        }
+        hasMatlabBeenRequested = true;
+        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection);
+        if (matlabConnection === null) {
+            LifecycleNotificationHelper.notifyMatlabRequirement()
+        }
+    }
 )
 
 // Handles files opened
