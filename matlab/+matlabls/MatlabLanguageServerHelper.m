@@ -2,16 +2,15 @@ classdef (Hidden) MatlabLanguageServerHelper < handle
     % MATLABLANGUAGESERVERHELPER Class for managing the MATLAB®-side operations
     % which support the MATLAB Language Server.
 
-    % Copyright 2022 - 2023 The MathWorks, Inc.
+    % Copyright 2022 - 2024 The MathWorks, Inc.
 
     properties
-        CommManager (1,1) matlabls.internal.CommunicationManager
         FeatureHandlers (1,:) matlabls.handlers.FeatureHandler
     end
 
     methods
         function this = MatlabLanguageServerHelper ()
-            this.CommManager = matlabls.internal.CommunicationManager();
+            matlabls.internal.CommunicationManager.initialize();
             this.initializeFeatureHandlers()
         end
 
@@ -27,11 +26,11 @@ classdef (Hidden) MatlabLanguageServerHelper < handle
     methods (Access = private)
         function initializeFeatureHandlers (this)
             % Initialize all supported feature handlers
-            this.FeatureHandlers(end + 1) = matlabls.handlers.CompletionSupportHandler(this.CommManager);
-            this.FeatureHandlers(end + 1) = matlabls.handlers.FormatSupportHandler(this.CommManager);
-            this.FeatureHandlers(end + 1) = matlabls.handlers.IndexingHandler(this.CommManager);
-            this.FeatureHandlers(end + 1) = matlabls.handlers.LintingSupportHandler(this.CommManager);
-            this.FeatureHandlers(end + 1) = matlabls.handlers.NavigationSupportHandler(this.CommManager);
+            this.FeatureHandlers(end + 1) = matlabls.handlers.CompletionSupportHandler();
+            this.FeatureHandlers(end + 1) = matlabls.handlers.FormatSupportHandler();
+            this.FeatureHandlers(end + 1) = matlabls.handlers.IndexingHandler();
+            this.FeatureHandlers(end + 1) = matlabls.handlers.LintingSupportHandler();
+            this.FeatureHandlers(end + 1) = matlabls.handlers.NavigationSupportHandler();
         end
     end
 end

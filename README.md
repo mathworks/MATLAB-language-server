@@ -25,6 +25,12 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.2.1
+Release date: 2024-04-04
+
+Added:
+* Supports connecting to MATLAB when the New Desktop for MATLAB is enabled
+
 ### 1.2.0
 Release date: 2024-03-05
 

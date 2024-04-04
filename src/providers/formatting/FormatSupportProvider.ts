@@ -47,10 +47,10 @@ class FormatSupportProvider {
      */
     private async formatDocument (doc: TextDocument, options: FormattingOptions): Promise<TextEdit[]> {
         // For format, we try to instantiate MATLAB® if it is not already running
-        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection)
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection(true)
 
         // If MATLAB is not available, no-op
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+        if (matlabConnection == null) {
             LifecycleNotificationHelper.notifyMatlabRequirement()
             reportTelemetryAction(Actions.FormatDocument, ActionErrorConditions.MatlabUnavailable)
             return []

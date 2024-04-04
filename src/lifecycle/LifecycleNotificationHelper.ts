@@ -1,12 +1,7 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import NotificationService, { Notification } from '../notifications/NotificationService'
-
-export enum ConnectionState {
-    CONNECTING = 'connecting',
-    CONNECTED = 'connected',
-    DISCONNECTED = 'disconnected'
-}
+import { ConnectionState } from './MatlabSession'
 
 class LifecycleNotificationHelper {
     didMatlabLaunchFail = false

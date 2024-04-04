@@ -10,9 +10,8 @@ classdef (Hidden) FormatSupportHandler < matlabls.handlers.FeatureHandler
     end
 
     methods
-        function this = FormatSupportHandler (commManager)
-            this = this@matlabls.handlers.FeatureHandler(commManager);
-            this.RequestSubscriptions = this.CommManager.subscribe(this.RequestChannel, @this.handleFormatRequest);
+        function this = FormatSupportHandler ()
+            this.RequestSubscriptions = matlabls.internal.CommunicationManager.subscribe(this.RequestChannel, @this.handleFormatRequest);
         end
     end
 
@@ -33,7 +32,7 @@ classdef (Hidden) FormatSupportHandler < matlabls.handlers.FeatureHandler
 
             % Send formatted code
             responseChannel = strcat(this.ResponseChannel, '/', msg.channelId);
-            this.CommManager.publish(responseChannel, response)
+            matlabls.internal.CommunicationManager.publish(responseChannel, response)
         end
     end
 end

@@ -134,9 +134,9 @@ class CompletionProvider {
         const fileName = URI.parse(docUri).fsPath
         const cursorPosition = doc.offsetAt(position)
 
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
 
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+        if (matlabConnection == null) {
             return {}
         }
 

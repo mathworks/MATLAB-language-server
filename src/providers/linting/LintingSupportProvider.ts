@@ -1,7 +1,7 @@
 // Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { execFile, ExecFileException } from 'child_process'
-import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentEdit, TextEdit, VersionedTextDocumentIdentifier, WorkspaceEdit, _Connection } from 'vscode-languageserver'
+import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentEdit, TextEdit, VersionedTextDocumentIdentifier, WorkspaceEdit } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import ConfigurationManager from '../../lifecycle/ConfigurationManager'
@@ -55,7 +55,7 @@ class LintingSupportProvider {
         4: DiagnosticSeverity.Error
     }
 
-    private readonly _pendingFilesToLint = new Map<string, NodeJS.Timer>()
+    private readonly _pendingFilesToLint = new Map<string, NodeJS.Timeout>()
     private readonly _availableCodeActions = new Map<string, CodeAction[]>()
 
     /**
@@ -65,13 +65,13 @@ class LintingSupportProvider {
      * @param textDocument The document to be linted
      * @param connection The language server connection
      */
-    queueLintingForDocument (textDocument: TextDocument, connection: _Connection): void {
+    queueLintingForDocument (textDocument: TextDocument): void {
         const uri = textDocument.uri
         this.clearTimerForDocumentUri(uri)
         this._pendingFilesToLint.set(
             uri,
             setTimeout(() => {
-                void this.lintDocument(textDocument, connection)
+                void this.lintDocument(textDocument)
             }, LINT_DELAY) // Specify timeout for debouncing, to avoid re-linting every keystroke while a user types
         )
     }
@@ -82,13 +82,13 @@ class LintingSupportProvider {
      * @param textDocument The document being linted
      * @param connection The language server connection
      */
-    async lintDocument (textDocument: TextDocument, connection: _Connection): Promise<void> {
+    async lintDocument (textDocument: TextDocument): Promise<void> {
         const uri = textDocument.uri
         this.clearTimerForDocumentUri(uri)
         this.clearCodeActionsForDocumentUri(uri)
 
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
-        const isMatlabAvailable = (matlabConnection != null) && MatlabLifecycleManager.isMatlabReady()
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const isMatlabAvailable = matlabConnection != null
 
         const fileName = URI.parse(uri).fsPath
 
@@ -143,7 +143,7 @@ class LintingSupportProvider {
             return params.context.diagnostics.some(diag => this.isSameDiagnostic(diagnostic, diag))
         })
 
-        if (!MatlabLifecycleManager.isMatlabReady()) {
+        if (!MatlabLifecycleManager.isMatlabConnected()) {
             // Cannot suppress warnings without MATLAB
             return codeActions
         }
@@ -198,9 +198,9 @@ class LintingSupportProvider {
      * @param id The diagnostic's ID
      * @param shouldSuppressThroughoutFile Whether or not to suppress the diagnostic throughout the entire file
      */
-    suppressDiagnostic (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): void {
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+    async suppressDiagnostic (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): Promise<void> {
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        if (matlabConnection == null) {
             return
         }
 

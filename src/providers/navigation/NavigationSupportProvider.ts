@@ -96,7 +96,7 @@ class NavigationSupportProvider {
      * @returns An array of locations
      */
     async handleDefOrRefRequest (params: DefinitionParams | ReferenceParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<Location[]> {
-        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection)
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection(true)
         if (matlabConnection == null) {
             LifecycleNotificationHelper.notifyMatlabRequirement()
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
@@ -143,10 +143,22 @@ class NavigationSupportProvider {
      * @returns Array of symbols found in the document
      */
     async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
-        // Get or wait for MATLAB connection to handle files opened before MATLAB is ready.
-        // Calling getOrCreateMatlabConnection would effectively make the onDemand launch
-        // setting act as onStart.
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnectionAsync()
+        // Get or wait for the MATLAB connection to handle files opened before MATLAB is ready.
+        // We do not want to trigger MATLAB to launch due to the frequency of this callback.
+        // However, simply returning [] in this case could cause a delay between MATLAB started
+        // and the symbols being identified.
+        const matlabConnection = await new Promise<MatlabConnection | null>(async resolve => {
+            if (MatlabLifecycleManager.isMatlabConnected()) {
+                resolve(await MatlabLifecycleManager.getMatlabConnection())
+            } else {
+                // MATLAB is not already connected, so wait until it has connected to
+                // resolve the connection.
+                MatlabLifecycleManager.eventEmitter.once('connected', async () => {
+                    resolve(await MatlabLifecycleManager.getMatlabConnection())
+                })
+            }
+        })
+
         if (matlabConnection == null) {
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
             return []

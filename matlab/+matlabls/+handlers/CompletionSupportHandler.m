@@ -12,9 +12,8 @@ classdef (Hidden) CompletionSupportHandler < matlabls.handlers.FeatureHandler
     end
 
     methods
-        function this = CompletionSupportHandler (commManager)
-            this = this@matlabls.handlers.FeatureHandler(commManager);
-            this.RequestSubscriptions = this.CommManager.subscribe(this.RequestChannel, @this.handleCompletionRequest);
+        function this = CompletionSupportHandler ()
+            this.RequestSubscriptions = matlabls.internal.CommunicationManager.subscribe(this.RequestChannel, @this.handleCompletionRequest);
         end
     end
 
@@ -30,7 +29,7 @@ classdef (Hidden) CompletionSupportHandler < matlabls.handlers.FeatureHandler
             filteredResults = this.filterCompletionResults(completionResultsStr);
 
             responseChannel = strcat(this.ResponseChannel, '/', msg.channelId);
-            this.CommManager.publish(responseChannel, filteredResults)
+            matlabls.internal.CommunicationManager.publish(responseChannel, filteredResults)
         end
 
         function compResultsStruct = filterCompletionResults (this, completionResultsStr)

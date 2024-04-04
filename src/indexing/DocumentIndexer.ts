@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import Indexer from './Indexer'
@@ -11,7 +11,7 @@ const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to
  * functions, and variables.
  */
 class DocumentIndexer {
-    private readonly pendingFilesToIndex = new Map<string, NodeJS.Timer>()
+    private readonly pendingFilesToIndex = new Map<string, NodeJS.Timeout>()
 
     /**
      * Queues a document to be indexed. This handles debouncing so that
