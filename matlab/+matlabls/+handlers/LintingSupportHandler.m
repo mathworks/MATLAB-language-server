@@ -12,10 +12,9 @@ classdef (Hidden) LintingSupportHandler < matlabls.handlers.FeatureHandler
     end
 
     methods
-        function this = LintingSupportHandler (commManager)
-            this = this@matlabls.handlers.FeatureHandler(commManager);
-            this.RequestSubscriptions(1) = this.CommManager.subscribe(this.LintingRequestChannel, @this.handleLintingRequest);
-            this.RequestSubscriptions(2) = this.CommManager.subscribe(this.SuppressDiagnosticRequestChannel, @this.handleDiagnosticSuppressionRequest);
+        function this = LintingSupportHandler ()
+            this.RequestSubscriptions(1) = matlabls.internal.CommunicationManager.subscribe(this.LintingRequestChannel, @this.handleLintingRequest);
+            this.RequestSubscriptions(2) = matlabls.internal.CommunicationManager.subscribe(this.SuppressDiagnosticRequestChannel, @this.handleDiagnosticSuppressionRequest);
         end
     end
 
@@ -31,7 +30,7 @@ classdef (Hidden) LintingSupportHandler < matlabls.handlers.FeatureHandler
             response.lintData(cellfun(@isempty, response.lintData)) = [];
 
             responseChannel = strcat(this.LintingResponseChannel, '/', msg.channelId);
-            this.CommManager.publish(responseChannel, response)
+            matlabls.internal.CommunicationManager.publish(responseChannel, response)
         end
 
         function handleDiagnosticSuppressionRequest (this, msg)
@@ -49,7 +48,7 @@ classdef (Hidden) LintingSupportHandler < matlabls.handlers.FeatureHandler
             response.suppressionEdits = matlabls.internal.getDiagnosticSuppressionEdits(code, diagnosticId, diagnosticLine);
 
             responseChannel = strcat(this.SuppressDiagnosticResponseChannel, '/', msg.channelId);
-            this.CommManager.publish(responseChannel, response);
+            matlabls.internal.CommunicationManager.publish(responseChannel, response);
         end
     end
 end

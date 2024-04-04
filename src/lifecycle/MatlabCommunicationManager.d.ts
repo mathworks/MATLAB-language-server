@@ -25,7 +25,7 @@ declare class MatlabCommunicationManager {
      * @returns Information about the new MATLAB process and the connection to it.
      * Returns null if the MATLAB process cannot be started.
      */
-    connectToNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string): Promise<MatlabProcessInfo | null>;
+    launchNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string): MatlabProcessInfo | null;
     /**
      * Attempts to connect to an existing instance of MATLAB at the given URL.
      *
@@ -33,18 +33,6 @@ declare class MatlabCommunicationManager {
      * @returns The connection to MATLAB
      */
     connectToExistingMatlab(url: string): Promise<MatlabConnection>;
-    /**
-     * Gets a random available TCP port.
-     *
-     * @returns A random available TCP port, as a string
-     */
-    private _getAvailablePort;
-    /**
-     * Gets a random API key for MATLAB.
-     *
-     * @returns A random API key
-     */
-    private _makeApiKey;
 }
 declare type MessageData = {
     [key: string]: unknown;
@@ -61,7 +49,7 @@ export declare abstract class MatlabConnection {
     /**
      * Initializes the connection with MATLAB
      */
-    abstract initialize(): Promise<void>;
+    abstract initialize(port?: number, certPath?: string): Promise<void>;
     /**
      * Closes the connection with MATLAB.
      * Does not attempt to close MATLAB.

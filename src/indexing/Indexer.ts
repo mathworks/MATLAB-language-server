@@ -27,9 +27,9 @@ class Indexer {
      * @param textDocument The document being indexed
      */
     async indexDocument (textDocument: TextDocument): Promise<void> {
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
 
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+        if (matlabConnection == null) {
             return
         }
 
@@ -45,10 +45,10 @@ class Indexer {
      *
      * @param folders A list of folder URIs to be indexed
      */
-    indexFolders (folders: string[]): void {
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
+    async indexFolders (folders: string[]): Promise<void> {
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
 
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+        if (matlabConnection == null) {
             return
         }
 
@@ -79,9 +79,9 @@ class Indexer {
      * @param uri The URI for the file being indexed
      */
     async indexFile (uri: string): Promise<void> {
-        const matlabConnection = MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
 
-        if (matlabConnection == null || !MatlabLifecycleManager.isMatlabReady()) {
+        if (matlabConnection == null) {
             return
         }
 

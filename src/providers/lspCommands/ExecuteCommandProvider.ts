@@ -26,11 +26,11 @@ class ExecuteCommandProvider {
      * @param documentManager The text document manager
      * @param connection The language server connection
      */
-    async handleExecuteCommand (params: ExecuteCommandParams, documentManager: TextDocuments<TextDocument>, connection: _Connection): Promise<void> {
+    async handleExecuteCommand (params: ExecuteCommandParams, documentManager: TextDocuments<TextDocument>): Promise<void> {
         switch (params.command) {
             case MatlabLSCommands.MLINT_SUPPRESS_ON_LINE:
             case MatlabLSCommands.MLINT_SUPPRESS_IN_FILE:
-                void this.handleLintingSuppression(params, documentManager, connection)
+                void this.handleLintingSuppression(params, documentManager)
         }
     }
 
@@ -41,7 +41,7 @@ class ExecuteCommandProvider {
      * @param documentManager The text document manager
      * @param connection The language server connection
      */
-    private async handleLintingSuppression (params: ExecuteCommandParams, documentManager: TextDocuments<TextDocument>, connection: _Connection): Promise<void> {
+    private async handleLintingSuppression (params: ExecuteCommandParams, documentManager: TextDocuments<TextDocument>): Promise<void> {
         const args = params.arguments?.[0] as LintSuppressionArgs
         const range = args.range
         const uri = args.uri
@@ -52,7 +52,7 @@ class ExecuteCommandProvider {
         }
 
         const shouldSuppressThroughoutFile = params.command === MatlabLSCommands.MLINT_SUPPRESS_IN_FILE
-        LintingSupportProvider.suppressDiagnostic(doc, range, args.id, shouldSuppressThroughoutFile)
+        void LintingSupportProvider.suppressDiagnostic(doc, range, args.id, shouldSuppressThroughoutFile)
     }
 }
 

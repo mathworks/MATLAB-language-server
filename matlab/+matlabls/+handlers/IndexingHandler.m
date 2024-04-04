@@ -13,10 +13,9 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
     end
 
     methods
-        function this = IndexingHandler (commManager)
-            this = this@matlabls.handlers.FeatureHandler(commManager);
-            this.RequestSubscriptions(end + 1) = this.CommManager.subscribe(this.DocumentIndexingRequestChannel, @this.handleDocumentIndexRequest);
-            this.RequestSubscriptions(end + 1) = this.CommManager.subscribe(this.FolderIndexingRequestChannel, @this.handleFolderIndexRequest);
+        function this = IndexingHandler ()
+            this.RequestSubscriptions(end + 1) = matlabls.internal.CommunicationManager.subscribe(this.DocumentIndexingRequestChannel, @this.handleDocumentIndexRequest);
+            this.RequestSubscriptions(end + 1) = matlabls.internal.CommunicationManager.subscribe(this.FolderIndexingRequestChannel, @this.handleFolderIndexRequest);
         end
     end
 
@@ -30,7 +29,7 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
             codeData = matlabls.internal.computeCodeData(code, filePath);
 
             responseChannel = strcat(this.DocumentIndexingResponseChannel, '/', msg.channelId);
-            this.CommManager.publish(responseChannel, codeData)
+            matlabls.internal.CommunicationManager.publish(responseChannel, codeData)
         end
 
         function handleFolderIndexRequest (this, msg)
@@ -126,7 +125,7 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
             end
 
             responseChannel = strcat(this.FolderIndexingResponseChannel, '/', requestId);
-            this.CommManager.publish(responseChannel, msg);
+            matlabls.internal.CommunicationManager.publish(responseChannel, msg);
         end
     end
 end

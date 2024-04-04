@@ -45,7 +45,7 @@ class WorkspaceIndexer {
             return
         }
 
-        Indexer.indexFolders(folders.map(folder => folder.uri))
+        void Indexer.indexFolders(folders.map(folder => folder.uri))
     }
 
     /**
@@ -58,7 +58,7 @@ class WorkspaceIndexer {
             return
         }
 
-        Indexer.indexFolders(folders.map(folder => folder.uri))
+        void Indexer.indexFolders(folders.map(folder => folder.uri))
     }
 
     /**

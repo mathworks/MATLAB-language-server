@@ -5,7 +5,7 @@ import { ClientCapabilities, createConnection, InitializeParams, InitializeResul
 import DocumentIndexer from './indexing/DocumentIndexer'
 import WorkspaceIndexer from './indexing/WorkspaceIndexer'
 import ConfigurationManager, { ConnectionTiming } from './lifecycle/ConfigurationManager'
-import MatlabLifecycleManager, { MatlabConnectionStatusParam } from './lifecycle/MatlabLifecycleManager'
+import MatlabLifecycleManager from './lifecycle/MatlabLifecycleManager'
 import Logger from './logging/Logger'
 import { Actions, reportTelemetryAction } from './logging/TelemetryUtils'
 import NotificationService, { Notification } from './notifications/NotificationService'
@@ -27,26 +27,20 @@ Logger.initialize(connection.console)
 const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 
 let mvm: MVM | null
-let hasMatlabBeenRequested: boolean = false
 
-MatlabLifecycleManager.addMatlabLifecycleListener((error, lifecycleEvent) => {
-    if (error != null) {
-        Logger.error(`MATLAB Lifecycle Error: ${error.message}\n${error.stack ?? ''}`)
-    }
+MatlabLifecycleManager.eventEmitter.on('connected', () => {
+    // Handle things after MATLAB® has launched
 
-    hasMatlabBeenRequested = false
+    // Initiate workspace indexing
+    void WorkspaceIndexer.indexWorkspace()
 
-    if (lifecycleEvent.matlabStatus === 'connected') {
-        // Handle things after MATLAB® has launched
+    documentManager.all().forEach(textDocument => {
+        // Lint the open documents
+        void LintingSupportProvider.lintDocument(textDocument)
 
-        // Initiate workspace indexing
-        void WorkspaceIndexer.indexWorkspace()
-
-        documentManager.all().forEach(textDocument => {
-            void LintingSupportProvider.lintDocument(textDocument, connection)
-            void DocumentIndexer.indexDocument(textDocument)
-        })
-    }
+        // Index the open document
+        void DocumentIndexer.indexDocument(textDocument)
+    })
 })
 
 let capabilities: ClientCapabilities
@@ -100,7 +94,9 @@ async function startMatlabIfOnStartLaunch (): Promise<void> {
     // Launch MATLAB if it should be launched early
     const connectionTiming = (await ConfigurationManager.getConfiguration()).matlabConnectionTiming
     if (connectionTiming === ConnectionTiming.OnStart) {
-        void MatlabLifecycleManager.connectToMatlab(connection)
+        void MatlabLifecycleManager.connectToMatlab().catch(reason => {
+            Logger.error(`MATLAB onStart connection failed: ${reason}`)
+        })
     }
 }
 
@@ -110,21 +106,31 @@ connection.onShutdown(() => {
     MatlabLifecycleManager.disconnectFromMatlab()
 })
 
+interface MatlabConnectionStatusParam {
+    connectionAction: 'connect' | 'disconnect'
+}
+
 // Set up connection notification listeners
 NotificationService.registerNotificationListener(
     Notification.MatlabConnectionClientUpdate,
-    data => MatlabLifecycleManager.handleConnectionStatusChange(data as MatlabConnectionStatusParam)
+    (data: MatlabConnectionStatusParam) => {
+        switch (data.connectionAction) {
+            case 'connect':
+                void MatlabLifecycleManager.connectToMatlab().catch(reason => {
+                    Logger.error(`Connection request failed: ${reason}`)
+                })
+                break
+            case 'disconnect':
+                MatlabLifecycleManager.disconnectFromMatlab()
+        }
+    }
 )
 
 // Set up MATLAB startup request listener
 NotificationService.registerNotificationListener(
     Notification.MatlabRequestInstance,
     async () => { // eslint-disable-line @typescript-eslint/no-misused-promises
-        if (hasMatlabBeenRequested) {
-            return;
-        }
-        hasMatlabBeenRequested = true;
-        const matlabConnection = await MatlabLifecycleManager.getOrCreateMatlabConnection(connection);
+        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection(true);
         if (matlabConnection === null) {
             LifecycleNotificationHelper.notifyMatlabRequirement()
         }
@@ -134,7 +140,7 @@ NotificationService.registerNotificationListener(
 // Handles files opened
 documentManager.onDidOpen(params => {
     reportFileOpened(params.document)
-    void LintingSupportProvider.lintDocument(params.document, connection)
+    void LintingSupportProvider.lintDocument(params.document)
     void DocumentIndexer.indexDocument(params.document)
 })
 
@@ -144,21 +150,21 @@ documentManager.onDidClose(params => {
 
 // Handles files saved
 documentManager.onDidSave(params => {
-    void LintingSupportProvider.lintDocument(params.document, connection)
+    void LintingSupportProvider.lintDocument(params.document)
 })
 
 // Handles changes to the text document
 documentManager.onDidChangeContent(params => {
-    if (MatlabLifecycleManager.isMatlabReady()) {
+    if (MatlabLifecycleManager.isMatlabConnected()) {
         // Only want to lint on content changes when linting is being backed by MATLAB
-        LintingSupportProvider.queueLintingForDocument(params.document, connection)
+        LintingSupportProvider.queueLintingForDocument(params.document)
         DocumentIndexer.queueIndexingForDocument(params.document)
     }
 })
 
 // Handle execute command requests
 connection.onExecuteCommand(params => {
-    void ExecuteCommandProvider.handleExecuteCommand(params, documentManager, connection)
+    void ExecuteCommandProvider.handleExecuteCommand(params, documentManager)
 })
 
 /** -------------------- COMPLETION SUPPORT -------------------- **/
