@@ -5,7 +5,9 @@ const path = require('path')
 const config = {
     target: 'node',
     mode: 'none',
-
+    node: {
+        __dirname: false
+    },
     entry: './src/index.ts',
     output: {
         path: path.resolve(__dirname, 'out'),
@@ -26,6 +28,10 @@ const config = {
                         loader: 'ts-loader'
                     }
                 ]
+            },
+            {
+                test: /\.node$/,
+                loader: 'node-loader'
             }
         ]
     }

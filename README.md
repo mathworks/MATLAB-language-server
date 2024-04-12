@@ -25,6 +25,9 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+Fixed:
+* Resolved packaging failure on Mac
+
 ### 1.2.1
 Release date: 2024-04-04
 
