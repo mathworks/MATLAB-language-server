@@ -44,7 +44,8 @@ export async function launchNewMatlab (): Promise<MatlabSession> {
         const outFile = path.join(Logger.logDir, 'matlabls_conn.json')
 
         const watcher = chokidar.watch(outFile, {
-            persistent: true
+            persistent: true,
+            useFsEvents: false
         })
 
         // This callback will be triggered when MATLAB has launched and writes the watched file.

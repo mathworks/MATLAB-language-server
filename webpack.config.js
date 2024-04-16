@@ -5,9 +5,9 @@ const path = require('path')
 const config = {
     target: 'node',
     mode: 'none',
-    // node: {
-    //     __dirname: false
-    // },
+    node: {
+        __dirname: false
+    },
     entry: './src/index.ts',
     output: {
         path: path.resolve(__dirname, 'out'),
