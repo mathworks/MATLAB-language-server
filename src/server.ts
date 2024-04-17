@@ -16,6 +16,8 @@ import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommand
 import NavigationSupportProvider, { RequestType } from './providers/navigation/NavigationSupportProvider'
 import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
 import MVM from './mvm/MVM'
+import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
+import { FoldingRange } from 'vscode-languageserver'
 
 // Create a connection for the server
 export const connection = createConnection(ProposedFeatures.all)
@@ -68,6 +70,7 @@ connection.onInitialize((params: InitializeParams) => {
             executeCommandProvider: {
                 commands: Object.values(MatlabLSCommands)
             },
+            foldingRangeProvider: true,
             referencesProvider: true,
             signatureHelpProvider: {
                 triggerCharacters: ['(', ',']
@@ -176,6 +179,14 @@ connection.onCompletion(async params => {
 connection.onSignatureHelp(async params => {
     // Gather a list of possible function signatures to be displayed by the IDE
     return await CompletionProvider.handleSignatureHelpRequest(params, documentManager)
+})
+
+/** -------------------- FOLDING SUPPORT -------------------- **/
+connection.onFoldingRanges(async params => {
+    // Retrieve the folding ranges
+    // If there are valid folding ranges, hand them back to the IDE
+    // Else, return null, so the IDE falls back to indent-based folding
+    return await FoldingSupportProvider.handleFoldingRangeRequest(params, documentManager)  
 })
 
 /** -------------------- FORMATTING SUPPORT -------------------- **/
