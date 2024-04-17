@@ -26,6 +26,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 ### Unreleased
 
 Fixed:
+* Resolved packaging failure on Mac
 * General bug fixes
 
 ### 1.2.1
