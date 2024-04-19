@@ -27,6 +27,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 Fixed:
 * Resolved packaging failure on Mac
+* Resolved connecting to MATLAB in proxy environment
 * General bug fixes
 
 ### 1.2.1
