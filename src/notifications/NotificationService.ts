@@ -28,6 +28,9 @@ export enum Notification {
     MatlabFeatureUnavailable = 'feature/needsmatlab',
     MatlabFeatureUnavailableNoMatlab = 'feature/needsmatlab/nomatlab',
 
+    // MATLAB Version Deprecation
+    MatlabVersionDeprecation = 'matlab/version/deprecation',
+
     // Telemetry
     LogTelemetryData = 'telemetry/logdata'
 }
