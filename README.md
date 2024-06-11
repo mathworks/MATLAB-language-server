@@ -28,7 +28,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 ### Unreleased
 
 ### 1.2.3
-Release date: 2024-06-11
+Release date: 2024-06-12
 
 Notice:
 * The MATLAB language server will no longer support MATLAB R2021a in a future release. To make use of the advanced features of the extension or run MATLAB code, you will need to have MATLAB R2021b or later installed.
