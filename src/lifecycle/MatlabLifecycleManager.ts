@@ -2,7 +2,7 @@
 
 import { EventEmitter } from 'events'
 
-import ConfigurationManager, { Argument } from "./ConfigurationManager"
+import ConfigurationManager, { Argument, ConnectionTiming } from "./ConfigurationManager"
 import { MatlabConnection } from "./MatlabCommunicationManager"
 import MatlabSession, { launchNewMatlab, connectToMatlab } from './MatlabSession'
 
@@ -39,7 +39,9 @@ class MatlabLifecycleManager {
         }
 
         // No connection currently established or establishing. Attempt to connect to MATLAB if desired.
-        if (startMatlab) {
+        const matlabConnectionTiming = (await ConfigurationManager.getConfiguration()).matlabConnectionTiming
+        const shouldStartMatlab = startMatlab && matlabConnectionTiming !== ConnectionTiming.Never
+        if (shouldStartMatlab) {
             try {
                 const matlabSession = await this.connectToMatlab()
                 return matlabSession.getConnection()
