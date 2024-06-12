@@ -5,7 +5,7 @@ MATLAB&reg; language server implements the Microsoft&reg; [Language Server Proto
 
 MATLAB language server requires MATLAB version R2021a or later.
 
-**Note:** This extension will no longer support MATLAB R2021a in a future release. To make use of the advanced features of the extension or run MATLAB code, you will need to have MATLAB R2021b or later installed.
+**Note:** This language server will no longer support MATLAB R2021a in a future release. To use advanced features or run MATLAB code, you will need to have MATLAB R2021b or later installed.
 
 ## Features Implemented
 MATLAB language server implements several Language Server Protocol features and their related services:
