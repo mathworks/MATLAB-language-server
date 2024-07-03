@@ -4,7 +4,17 @@ import NotificationService, { Notification } from '../notifications/Notification
 import { ConnectionState } from './MatlabSession'
 
 class LifecycleNotificationHelper {
+    private static instance: LifecycleNotificationHelper
+
     didMatlabLaunchFail = false
+
+    public static getInstance (): LifecycleNotificationHelper {
+        if (LifecycleNotificationHelper.instance == null) {
+            LifecycleNotificationHelper.instance = new LifecycleNotificationHelper()
+        }
+
+        return LifecycleNotificationHelper.instance
+    }
 
     /**
      * Sends notification to the language client of a change in the MATLAB® connection state.
@@ -27,4 +37,4 @@ class LifecycleNotificationHelper {
     }
 }
 
-export default new LifecycleNotificationHelper()
+export default LifecycleNotificationHelper.getInstance()

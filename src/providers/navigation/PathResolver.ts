@@ -64,4 +64,4 @@ class PathResolver {
     }
 }
 
-export default new PathResolver()
+export default PathResolver

@@ -12,7 +12,7 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import which = require('which')
 import { MatlabLSCommands } from '../lspCommands/ExecuteCommandProvider'
-import { connection } from '../../server'
+import ClientConnection from '../../ClientConnection'
 
 type mlintSeverity = '0' | '1' | '2' | '3' | '4'
 
@@ -58,6 +58,8 @@ class LintingSupportProvider {
     private readonly _pendingFilesToLint = new Map<string, NodeJS.Timeout>()
     private readonly _availableCodeActions = new Map<string, CodeAction[]>()
 
+    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+
     /**
      * Queues a document to be linted. This handles debouncing so
      * that linting is not performed on every keystroke.
@@ -87,7 +89,7 @@ class LintingSupportProvider {
         this.clearTimerForDocumentUri(uri)
         this.clearCodeActionsForDocumentUri(uri)
 
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
         const isMatlabAvailable = matlabConnection != null
 
         const fileName = URI.parse(uri).fsPath
@@ -110,14 +112,14 @@ class LintingSupportProvider {
         this._availableCodeActions.set(uri, lintResults.codeActions)
 
         // Report diagnostics
-        void connection.sendDiagnostics({
+        void ClientConnection.getConnection().sendDiagnostics({
             uri,
             diagnostics
         })
     }
 
     clearDiagnosticsForDocument (textDocument: TextDocument): void {
-        void connection.sendDiagnostics({
+        void ClientConnection.getConnection().sendDiagnostics({
             uri: textDocument.uri,
             diagnostics: []
         })
@@ -143,7 +145,7 @@ class LintingSupportProvider {
             return params.context.diagnostics.some(diag => this.isSameDiagnostic(diagnostic, diag))
         })
 
-        if (!MatlabLifecycleManager.isMatlabConnected()) {
+        if (!this.matlabLifecycleManager.isMatlabConnected()) {
             // Cannot suppress warnings without MATLAB
             return codeActions
         }
@@ -199,7 +201,7 @@ class LintingSupportProvider {
      * @param shouldSuppressThroughoutFile Whether or not to suppress the diagnostic throughout the entire file
      */
     async suppressDiagnostic (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): Promise<void> {
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
         if (matlabConnection == null) {
             return
         }
@@ -223,7 +225,7 @@ class LintingSupportProvider {
                 ]
             }
 
-            void connection.workspace.applyEdit(edit)
+            void ClientConnection.getConnection().workspace.applyEdit(edit)
         })
 
         matlabConnection.publish(this.SUPPRESS_DIAGNOSTIC_REQUEST_CHANNEL, {
@@ -528,4 +530,4 @@ class LintingSupportProvider {
     }
 }
 
-export default new LintingSupportProvider()
+export default LintingSupportProvider

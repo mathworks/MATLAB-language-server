@@ -1,16 +1,18 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent } from 'vscode-languageserver'
 import ConfigurationManager from '../lifecycle/ConfigurationManager'
-import { connection } from '../server'
 import Indexer from './Indexer'
+import ClientConnection from '../ClientConnection'
 
 /**
  * Handles indexing files in the user's workspace to gather data about classes,
  * functions, and variables.
  */
-class WorkspaceIndexer {
+export default class WorkspaceIndexer {
     private isWorkspaceIndexingSupported = false
+
+    constructor (private indexer: Indexer) {}
 
     /**
      * Sets up workspace change listeners, if supported.
@@ -26,7 +28,7 @@ class WorkspaceIndexer {
             return
         }
 
-        connection.workspace.onDidChangeWorkspaceFolders((params: WorkspaceFoldersChangeEvent) => {
+        ClientConnection.getConnection().workspace.onDidChangeWorkspaceFolders((params: WorkspaceFoldersChangeEvent) => {
             void this.handleWorkspaceFoldersAdded(params.added)
         })
     }
@@ -39,13 +41,13 @@ class WorkspaceIndexer {
             return
         }
 
-        const folders = await connection.workspace.getWorkspaceFolders()
+        const folders = await ClientConnection.getConnection().workspace.getWorkspaceFolders()
 
         if (folders == null) {
             return
         }
 
-        void Indexer.indexFolders(folders.map(folder => folder.uri))
+        void this.indexer.indexFolders(folders.map(folder => folder.uri))
     }
 
     /**
@@ -58,7 +60,7 @@ class WorkspaceIndexer {
             return
         }
 
-        void Indexer.indexFolders(folders.map(folder => folder.uri))
+        void this.indexer.indexFolders(folders.map(folder => folder.uri))
     }
 
     /**
@@ -73,5 +75,3 @@ class WorkspaceIndexer {
         return this.isWorkspaceIndexingSupported && shouldIndexWorkspace
     }
 }
-
-export default new WorkspaceIndexer()

@@ -1,7 +1,11 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 // Start up the LSP server
-import { connection } from './server'
+import ClientConnection from './ClientConnection'
+import * as server from './server'
 
-// Listen on the connection
-connection.listen()
+// Start up the language server
+server.startServer()
+
+// Listen on the client connection
+ClientConnection.getConnection().listen()

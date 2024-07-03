@@ -78,9 +78,11 @@ const MatlabCompletionToKind: { [index: string]: CompletionItemKind } = {
  * Handles requests for completion-related features.
  * Currently, this handles auto-completion as well as function signature help.
  */
-class CompletionProvider {
+class CompletionSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/completions/request'
     private readonly RESPONSE_CHANNEL = '/matlabls/completions/response'
+
+    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
 
     /**
      * Handles a request for auto-completion choices.
@@ -134,7 +136,7 @@ class CompletionProvider {
         const fileName = URI.parse(docUri).fsPath
         const cursorPosition = doc.offsetAt(position)
 
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
 
         if (matlabConnection == null) {
             return {}
@@ -333,4 +335,4 @@ class CompletionProvider {
     }
 }
 
-export default new CompletionProvider()
+export default CompletionSupportProvider

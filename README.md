@@ -27,6 +27,16 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.2.4 
+Release date: 2024-06-12
+
+Added:
+* Improvements to code folding (requires MATLAB R2024b or later)
+
+Fixed:
+* Allow connection to MATLAB when a single quote appears in the extension installation path
+* Resolve error with code navigation when using with MATLAB R2024b
+
 ### 1.2.3
 Release date: 2024-06-14
 

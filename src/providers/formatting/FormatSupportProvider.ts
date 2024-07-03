@@ -5,7 +5,6 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import { ActionErrorConditions, Actions, reportTelemetryAction } from '../../logging/TelemetryUtils'
-import { connection } from '../../server'
 import * as TextDocumentUtils from '../../utils/TextDocumentUtils'
 
 interface FormatDocumentResponse {
@@ -20,6 +19,8 @@ interface FormatDocumentResponse {
 class FormatSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/formatDocument/request'
     private readonly RESPONSE_CHANNEL = '/matlabls/formatDocument/response'
+
+    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
 
     /**
      * Handles a request for document formatting.
@@ -47,7 +48,7 @@ class FormatSupportProvider {
      */
     private async formatDocument (doc: TextDocument, options: FormattingOptions): Promise<TextEdit[]> {
         // For format, we try to instantiate MATLAB® if it is not already running
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection(true)
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection(true)
 
         // If MATLAB is not available, no-op
         if (matlabConnection == null) {
@@ -81,4 +82,4 @@ class FormatSupportProvider {
     }
 }
 
-export default new FormatSupportProvider()
+export default FormatSupportProvider

@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { ExecuteCommandParams, Range, TextDocuments, _Connection } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -19,6 +19,8 @@ export const MatlabLSCommands = {
  * Handles requests to execute commands
  */
 class ExecuteCommandProvider {
+    constructor (private lintingSupportProvider: LintingSupportProvider) {}
+
     /**
      * Handles command execution requests.
      *
@@ -52,8 +54,8 @@ class ExecuteCommandProvider {
         }
 
         const shouldSuppressThroughoutFile = params.command === MatlabLSCommands.MLINT_SUPPRESS_IN_FILE
-        void LintingSupportProvider.suppressDiagnostic(doc, range, args.id, shouldSuppressThroughoutFile)
+        void this.lintingSupportProvider.suppressDiagnostic(doc, range, args.id, shouldSuppressThroughoutFile)
     }
 }
 
-export default new ExecuteCommandProvider()
+export default ExecuteCommandProvider

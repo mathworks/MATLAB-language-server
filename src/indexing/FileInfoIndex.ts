@@ -95,6 +95,8 @@ export enum FunctionVisibility {
  * Serves as an cache of data extracted from files
  */
 class FileInfoIndex {
+    private static instance: FileInfoIndex
+
     /**
      * Maps document URI to the code data
      */
@@ -104,6 +106,14 @@ class FileInfoIndex {
      * Maps class name to class info
      */
     readonly classInfoCache = new Map<string, MatlabClassInfo>()
+
+    public static getInstance (): FileInfoIndex {
+        if (FileInfoIndex.instance == null) {
+            FileInfoIndex.instance = new FileInfoIndex()
+        }
+
+        return FileInfoIndex.instance
+    }
 
     /**
      * Parses the raw data into a more usable form. Caches the resulting data
@@ -489,4 +499,4 @@ function convertRange (codeDataRange: CodeDataRange): Range {
     )
 }
 
-export default new FileInfoIndex()
+export default FileInfoIndex.getInstance()

@@ -11,15 +11,17 @@ class FoldingSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/foldDocument/request'
     private readonly RESPONSE_CHANNEL = '/matlabls/foldDocument/response'
 
+    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+
     async handleFoldingRangeRequest (params: FoldingRangeParams, documentManager: TextDocuments<TextDocument>): Promise<FoldingRange[] | null> {
         const docToFold = documentManager.get(params.textDocument.uri)
         if (docToFold == null) {
             return null
         }
 
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
         const isMatlabAvailable = (matlabConnection != null)
-        const matlabRelease = MatlabLifecycleManager.getMatlabRelease()
+        const matlabRelease = this.matlabLifecycleManager.getMatlabRelease()
 
         // check for connection and release
         if (!isMatlabAvailable || (matlabRelease == null) || (matlabRelease < 'R2024b')) {
@@ -79,4 +81,4 @@ class FoldingSupportProvider {
     }
 }
 
-export default new FoldingSupportProvider()
+export default FoldingSupportProvider
