@@ -1,7 +1,7 @@
 // Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { GenericNotificationHandler } from 'vscode-languageserver'
-import { connection } from '../server'
+import ClientConnection from '../ClientConnection'
 
 export enum Notification {
     // Connection Status Updates
@@ -36,6 +36,16 @@ export enum Notification {
 }
 
 class NotificationService {
+    private static instance: NotificationService
+
+    public static getInstance (): NotificationService {
+        if (NotificationService.instance == null) {
+            NotificationService.instance = new NotificationService()
+        }
+
+        return NotificationService.instance
+    }
+
     /**
      * Sends a notification to the language client
      *
@@ -43,7 +53,7 @@ class NotificationService {
      * @param params Any parameters to send with the notification
      */
     sendNotification (name: string, params?: unknown): void {
-        void connection.sendNotification(name, params)
+        void ClientConnection.getConnection().sendNotification(name, params)
     }
 
     /**
@@ -53,8 +63,8 @@ class NotificationService {
      * @param callback The callback
      */
     registerNotificationListener (name: string, callback: GenericNotificationHandler): void {
-        connection.onNotification(name, callback)
+        ClientConnection.getConnection().onNotification(name, callback)
     }
 }
 
-export default new NotificationService()
+export default NotificationService.getInstance()

@@ -1,4 +1,4 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { DefinitionParams, DocumentSymbolParams, Location, Position, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -10,7 +10,6 @@ import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import { getTextOnLine } from '../../utils/TextDocumentUtils'
 import PathResolver from './PathResolver'
-import { connection } from '../../server'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions, Actions, reportTelemetryAction } from '../../logging/TelemetryUtils'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
@@ -87,6 +86,13 @@ function reportTelemetry (type: RequestType, errorCondition = ''): void {
 class NavigationSupportProvider {
     private readonly DOTTED_IDENTIFIER_REGEX = /[\w.]+/
 
+    constructor (
+        private matlabLifecycleManager: MatlabLifecycleManager,
+        private indexer: Indexer,
+        private documentIndexer: DocumentIndexer,
+        private pathResolver: PathResolver
+    ) {}
+
     /**
      * Handles requests for definitions or references.
      *
@@ -96,7 +102,7 @@ class NavigationSupportProvider {
      * @returns An array of locations
      */
     async handleDefOrRefRequest (params: DefinitionParams | ReferenceParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<Location[]> {
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection(true)
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection(true)
         if (matlabConnection == null) {
             LifecycleNotificationHelper.notifyMatlabRequirement()
             reportTelemetry(requestType, ActionErrorConditions.MatlabUnavailable)
@@ -148,13 +154,13 @@ class NavigationSupportProvider {
         // However, simply returning [] in this case could cause a delay between MATLAB started
         // and the symbols being identified.
         const matlabConnection = await new Promise<MatlabConnection | null>(async resolve => {
-            if (MatlabLifecycleManager.isMatlabConnected()) {
-                resolve(await MatlabLifecycleManager.getMatlabConnection())
+            if (this.matlabLifecycleManager.isMatlabConnected()) {
+                resolve(await this.matlabLifecycleManager.getMatlabConnection())
             } else {
                 // MATLAB is not already connected, so wait until it has connected to
                 // resolve the connection.
-                MatlabLifecycleManager.eventEmitter.once('connected', async () => {
-                    resolve(await MatlabLifecycleManager.getMatlabConnection())
+                this.matlabLifecycleManager.eventEmitter.once('connected', async () => {
+                    resolve(await this.matlabLifecycleManager.getMatlabConnection())
                 })
             }
         })
@@ -172,7 +178,7 @@ class NavigationSupportProvider {
             return []
         }
         // Ensure document index is up to date
-        await DocumentIndexer.ensureDocumentIndexIsUpdated(textDocument)
+        await this.documentIndexer.ensureDocumentIndexIsUpdated(textDocument)
         const codeData = FileInfoIndex.codeDataCache.get(uri)
         if (codeData == null) {
             reportTelemetry(requestType, 'No code data')
@@ -405,7 +411,7 @@ class NavigationSupportProvider {
      * @returns The definition location(s), or null if no definition was found
      */
     private async findDefinitionOnPath (uri: string, position: Position, expression: Expression, matlabConnection: MatlabConnection): Promise<Location[] | null> {
-        const resolvedPath = await PathResolver.resolvePaths([expression.targetExpression], uri, matlabConnection)
+        const resolvedPath = await this.pathResolver.resolvePaths([expression.targetExpression], uri, matlabConnection)
         const resolvedUri = resolvedPath[0].uri
 
         if (resolvedUri === '') {
@@ -421,7 +427,7 @@ class NavigationSupportProvider {
 
         if (!FileInfoIndex.codeDataCache.has(resolvedUri)) {
             // Index target file, if necessary
-            await Indexer.indexFile(resolvedUri)
+            await this.indexer.indexFile(resolvedUri)
         }
 
         const codeData = FileInfoIndex.codeDataCache.get(resolvedUri)
@@ -655,4 +661,4 @@ class NavigationSupportProvider {
     }
 }
 
-export default new NavigationSupportProvider()
+export default NavigationSupportProvider

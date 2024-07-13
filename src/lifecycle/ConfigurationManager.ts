@@ -1,9 +1,9 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import { ClientCapabilities, DidChangeConfigurationNotification, DidChangeConfigurationParams } from 'vscode-languageserver'
 import { reportTelemetrySettingsChange } from '../logging/TelemetryUtils'
-import { connection } from '../server'
 import { getCliArgs } from '../utils/CliUtils'
+import ClientConnection from '../ClientConnection'
 
 export enum Argument {
     // Basic arguments
@@ -45,6 +45,8 @@ const SETTING_NAMES: SettingName[] = [
 ]
 
 class ConfigurationManager {
+    private static instance: ConfigurationManager
+
     private configuration: Settings | null = null
     private readonly defaultConfiguration: Settings
     private globalSettings: Settings
@@ -77,12 +79,22 @@ class ConfigurationManager {
         }
     }
 
+    public static getInstance (): ConfigurationManager {
+        if (ConfigurationManager.instance == null) {
+            ConfigurationManager.instance = new ConfigurationManager
+        }
+
+        return ConfigurationManager.instance
+    }
+
     /**
      * Sets up the configuration manager
      *
      * @param capabilities The client capabilities
      */
     setup (capabilities: ClientCapabilities): void {
+        const connection = ClientConnection.getConnection()
+
         this.hasConfigurationCapability = capabilities.workspace?.configuration != null
 
         if (this.hasConfigurationCapability) {
@@ -101,6 +113,7 @@ class ConfigurationManager {
     async getConfiguration (): Promise<Settings> {
         if (this.hasConfigurationCapability) {
             if (this.configuration == null) {
+                const connection = ClientConnection.getConnection()
                 this.configuration = await connection.workspace.getConfiguration('MATLAB') as Settings
             }
 
@@ -164,4 +177,4 @@ class ConfigurationManager {
     }
 }
 
-export default new ConfigurationManager()
+export default ConfigurationManager.getInstance()

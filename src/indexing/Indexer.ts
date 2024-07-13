@@ -14,12 +14,14 @@ interface WorkspaceFileIndexedResponse {
     codeData: RawCodeData
 }
 
-class Indexer {
+export default class Indexer {
     private readonly INDEX_DOCUMENT_REQUEST_CHANNEL = '/matlabls/indexDocument/request'
     private readonly INDEX_DOCUMENT_RESPONSE_CHANNEL = '/matlabls/indexDocument/response'
 
     private readonly INDEX_FOLDERS_REQUEST_CHANNEL = '/matlabls/indexFolders/request'
     private readonly INDEX_FOLDERS_RESPONSE_CHANNEL = '/matlabls/indexFolders/response'
+
+    constructor (private matlabLifecycleManager: MatlabLifecycleManager, private pathResolver: PathResolver) {}
 
     /**
      * Indexes the given TextDocument and caches the data.
@@ -27,7 +29,7 @@ class Indexer {
      * @param textDocument The document being indexed
      */
     async indexDocument (textDocument: TextDocument): Promise<void> {
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
 
         if (matlabConnection == null) {
             return
@@ -46,7 +48,7 @@ class Indexer {
      * @param folders A list of folder URIs to be indexed
      */
     async indexFolders (folders: string[]): Promise<void> {
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
 
         if (matlabConnection == null) {
             return
@@ -79,7 +81,7 @@ class Indexer {
      * @param uri The URI for the file being indexed
      */
     async indexFile (uri: string): Promise<void> {
-        const matlabConnection = await MatlabLifecycleManager.getMatlabConnection()
+        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
 
         if (matlabConnection == null) {
             return
@@ -143,7 +145,7 @@ class Indexer {
         // Find and queue indexing for parent classes
         const baseClasses = parsedCodeData.classInfo.baseClasses
 
-        const resolvedBaseClasses = await PathResolver.resolvePaths(baseClasses, uri, matlabConnection)
+        const resolvedBaseClasses = await this.pathResolver.resolvePaths(baseClasses, uri, matlabConnection)
 
         resolvedBaseClasses.forEach(resolvedBaseClass => {
             const uri = resolvedBaseClass.uri
@@ -153,5 +155,3 @@ class Indexer {
         })
     }
 }
-
-export default new Indexer()

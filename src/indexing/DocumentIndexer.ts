@@ -10,8 +10,10 @@ const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to
  * Handles indexing a currently open document to gather data about classes,
  * functions, and variables.
  */
-class DocumentIndexer {
+export default class DocumentIndexer {
     private readonly pendingFilesToIndex = new Map<string, NodeJS.Timeout>()
+
+    constructor (private indexer: Indexer) {}
 
     /**
      * Queues a document to be indexed. This handles debouncing so that
@@ -36,7 +38,7 @@ class DocumentIndexer {
      * @param textDocument The document being indexed
      */
     indexDocument (textDocument: TextDocument): void {
-        void Indexer.indexDocument(textDocument)
+        void this.indexer.indexDocument(textDocument)
     }
 
     /**
@@ -63,12 +65,10 @@ class DocumentIndexer {
         const uri = textDocument.uri
         if (this.pendingFilesToIndex.has(uri)) {
             this.clearTimerForDocumentUri(uri)
-            await Indexer.indexDocument(textDocument)
+            await this.indexer.indexDocument(textDocument)
         }
         if (!FileInfoIndex.codeDataCache.has(uri)) {
-            await Indexer.indexDocument(textDocument)
+            await this.indexer.indexDocument(textDocument)
         }
     }
 }
-
-export default new DocumentIndexer()

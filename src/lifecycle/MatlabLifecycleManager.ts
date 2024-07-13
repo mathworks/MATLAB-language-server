@@ -6,7 +6,7 @@ import ConfigurationManager, { Argument, ConnectionTiming } from "./Configuratio
 import { MatlabConnection } from "./MatlabCommunicationManager"
 import MatlabSession, { launchNewMatlab, connectToMatlab } from './MatlabSession'
 
-class MatlabLifecycleManager {
+export default class MatlabLifecycleManager {
     eventEmitter = new EventEmitter()
 
     private matlabSession: MatlabSession | null = null
@@ -182,5 +182,3 @@ function shouldConnectToRemoteMatlab (): boolean {
     // Assume we should connect to existing MATLAB if the matlabUrl startup flag has been provided
     return Boolean(ConfigurationManager.getArgument(Argument.MatlabUrl))
 }
-
-export default new MatlabLifecycleManager()

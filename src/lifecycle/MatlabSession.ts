@@ -398,7 +398,7 @@ async function getMatlabLaunchCommand (outFile: string): Promise<{ command: stri
         '-memmgr', 'release', // Memory manager
         '-noAppIcon', // Hide MATLAB application icon in taskbar/dock, if applicable
         '-nosplash', // Hide splash screen
-        '-r', `addpath(fullfile('${__dirname}', '..', 'matlab')); initmatlabls('${outFile}')`, // Startup command
+        '-r', getMatlabStartupCommand(outFile), // Startup command
         '-useStartupFolderPref', // Startup folder flag
         '-nodesktop' // Hide the MATLAB desktop
     ]
@@ -417,4 +417,24 @@ async function getMatlabLaunchCommand (outFile: string): Promise<{ command: stri
         command,
         args
     }
+}
+
+/**
+ * Gets the MATLAB command which the MATLAB application should run at startup.
+ * 
+ * Note: This will sanitize the file paths so that they can be safely used within
+ * character vectors in MATLAB. This is done by replacing all single-quote characters
+ * with double single-quotes.
+ * 
+ * @param outFile The file in which MATLAB should output connection details
+ * @returns The MATLAB startup command
+ */
+function getMatlabStartupCommand (outFile: string): string {
+    // Sanitize file paths for MATLAB:
+    // Replace single-quotes in the file path with double single-quotes 
+    // to preserve the quote when used within a MATLAB character vector.
+    const extensionInstallationDir = __dirname.replace(/'/g, "''")
+    const outFilePath = outFile.replace(/'/g, "''")
+
+    return `addpath(fullfile('${extensionInstallationDir}', '..', 'matlab')); initmatlabls('${outFilePath}')`
 }

@@ -1,43 +1,50 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2024 The MathWorks, Inc.
 
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 import { RemoteConsole } from 'vscode-languageserver'
+import ClientConnection from '../ClientConnection'
 
 const SERVER_LOG = 'languageServerLog.txt'
 const MATLAB_LOG = 'matlabLog.txt'
 
 class Logger {
-    private readonly _logDir: string
+    private static instance: Logger
+
+    public readonly logDir: string
     private readonly languageServerLogFile: string
     private readonly matlabLogFile: string
-    private _console: RemoteConsole | null = null
+
+    private readonly console: RemoteConsole
 
     constructor () {
         // Create Log Directory
         const pid = process.pid
-        this._logDir = path.join(os.tmpdir(), `matlabls_${pid}`)
-        if (fs.existsSync(this._logDir)) {
+        this.logDir = path.join(os.tmpdir(), `matlabls_${pid}`)
+        if (fs.existsSync(this.logDir)) {
             let i = 1
-            while (fs.existsSync(`${this._logDir}_${i}`)) { i++ }
-            this._logDir = `${this._logDir}_${i}`
+            while (fs.existsSync(`${this.logDir}_${i}`)) { i++ }
+            this.logDir = `${this.logDir}_${i}`
         }
-        fs.mkdirSync(this._logDir)
+        fs.mkdirSync(this.logDir)
 
         // Get name of log file
-        this.languageServerLogFile = path.join(this._logDir, SERVER_LOG)
-        this.matlabLogFile = path.join(this._logDir, MATLAB_LOG)
+        this.languageServerLogFile = path.join(this.logDir, SERVER_LOG)
+        this.matlabLogFile = path.join(this.logDir, MATLAB_LOG)
+
+        // Get log console
+        this.console = ClientConnection.getConnection().console
+        
+        this.log(`Log Directory: ${this.logDir}`)
     }
 
-    /**
-     * Initializes the logger with an output console.
-     *
-     * @param console The console which the Logger should output to
-     */
-    initialize (console: RemoteConsole): void {
-        this._console = console
-        this.log(`Log Directory: ${this._logDir}`)
+    public static getInstance (): Logger {
+        if (Logger.instance == null) {
+            Logger.instance = new Logger()
+        }
+
+        return Logger.instance
     }
 
     /**
@@ -47,7 +54,7 @@ class Logger {
      */
     log (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls: ${message}`
-        this._console?.log(msg)
+        this.console?.log(msg)
         this._writeToLogFile(msg, this.languageServerLogFile)
     }
 
@@ -58,7 +65,7 @@ class Logger {
      */
     warn (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls - WARNING: ${message}`
-        this._console?.warn(msg)
+        this.console?.warn(msg)
         this._writeToLogFile(msg, this.languageServerLogFile)
     }
 
@@ -69,7 +76,7 @@ class Logger {
      */
     error (message: string): void {
         const msg = `(${getCurrentTimeString()}) matlabls - ERROR: ${message}`
-        this._console?.error(msg)
+        this.console?.error(msg)
         this._writeToLogFile(msg, this.languageServerLogFile)
     }
 
@@ -83,10 +90,6 @@ class Logger {
         this._writeToLogFile(message, this.matlabLogFile)
     }
 
-    public get logDir (): string {
-        return this._logDir
-    }
-
     private _writeToLogFile (message: string, filePath: string): void {
         // Log to file
         fs.writeFile(
@@ -95,7 +98,7 @@ class Logger {
             { flag: 'a+' },
             err => {
                 if (err !== null) {
-                    this._console?.error('Failed to write to log file')
+                    this.console?.error('Failed to write to log file')
                 }
             }
         )
@@ -108,4 +111,4 @@ function getCurrentTimeString (): string {
     return `${strFormatter(d.getHours())}:${strFormatter(d.getMinutes())}:${strFormatter(d.getSeconds())}`
 }
 
-export default new Logger()
+export default Logger.getInstance()
