@@ -14,6 +14,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { EventEmitter } from 'events'
 import { checkIfMatlabDeprecated } from "../utils/DeprecationUtils";
+import { getProxyEnvironmentVariables } from "../utils/ProxyUtils";
 
 interface MatlabStartupInfo {
     pid: number
@@ -84,7 +85,10 @@ export async function launchNewMatlab (): Promise<MatlabSession> {
         // Launch MATLAB process
         Logger.log('Launching MATLAB...')
         const { command, args } = await getMatlabLaunchCommand(outFile)
-        const matlabProcessInfo = MatlabCommunicationManager.launchNewMatlab(command, args, Logger.logDir)
+        const envVars: NodeJS.ProcessEnv = {
+            ...getProxyEnvironmentVariables()
+        } 
+        const matlabProcessInfo = MatlabCommunicationManager.launchNewMatlab(command, args, Logger.logDir, envVars)
 
         if (matlabProcessInfo == null) {
             // Error occurred while spawning MATLAB process
@@ -387,7 +391,7 @@ async function getMatlabLaunchCommand (outFile: string): Promise<{ command: stri
     let command = 'matlab'
     if (matlabInstallPath !== '') {
         command = path.normalize(path.join(
-            matlabInstallPath,
+            matlabInstallPath.trim(),
             'bin',
             'matlab'
         ))

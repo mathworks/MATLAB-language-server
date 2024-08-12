@@ -20,8 +20,11 @@ import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
 import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
 import Indexer from './indexing/Indexer'
+import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
 
 export async function startServer () {
+    cacheAndClearProxyEnvironmentVariables()
+
     // Create a connection for the server
     const connection = ClientConnection.getConnection()
 
