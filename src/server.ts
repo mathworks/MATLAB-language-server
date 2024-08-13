@@ -13,13 +13,15 @@ import CompletionSupportProvider from './providers/completion/CompletionSupportP
 import FormatSupportProvider from './providers/formatting/FormatSupportProvider'
 import LintingSupportProvider from './providers/linting/LintingSupportProvider'
 import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommands/ExecuteCommandProvider'
-import NavigationSupportProvider, { RequestType } from './providers/navigation/NavigationSupportProvider'
+import NavigationSupportProvider from './providers/navigation/NavigationSupportProvider'
 import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
 import MVM from './mvm/MVM'
 import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
 import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
 import Indexer from './indexing/Indexer'
+import RenameSymbolProvider from './providers/rename/RenameSymbolProvider'
+import { RequestType } from './indexing/SymbolSearchService'
 import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
 
 export async function startServer () {
@@ -42,6 +44,7 @@ export async function startServer () {
     const executeCommandProvider = new ExecuteCommandProvider(lintingSupportProvider)
     const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager)
     const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, indexer, documentIndexer, pathResolver)
+    const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer)
 
     // Create basic text document manager
     const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
@@ -93,7 +96,10 @@ export async function startServer () {
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',']
                 },
-                documentSymbolProvider: true
+                documentSymbolProvider: true,
+                renameProvider: {
+                    prepareProvider: true
+                },
             }
         }
 
@@ -234,6 +240,15 @@ export async function startServer () {
 
     // Start listening to open/change/close text document events
     documentManager.listen(connection)
+
+    /** --------------------  RENAME SUPPORT   -------------------- **/
+    connection.onPrepareRename(async params => {
+        return await renameSymbolProvider.prepareRename(params, documentManager)
+    })
+
+    connection.onRenameRequest(async params => {
+        return await renameSymbolProvider.handleRenameRequest(params, documentManager)
+    })
 }
 
 /** -------------------- Helper Functions -------------------- **/
