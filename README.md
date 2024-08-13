@@ -17,6 +17,7 @@ MATLAB language server implements several Language Server Protocol features and 
 * Go to definition — [definitionProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition)
 * Go to references — [referencesProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references)
 * Document symbols — [documentSymbol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol)
+* Symbol rename - [renameProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename)
 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:
@@ -29,6 +30,9 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### 1.2.5
 Release date: 2024-08-16
+
+Added:
+* Symbol rename support
 
 Fixed:
 * Leading or trailing whitespace in `installPath` setting is ignored when connecting to MATLAB
