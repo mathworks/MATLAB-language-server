@@ -14,6 +14,14 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
  */
 export function getRangeUntilLineEnd (doc: TextDocument, line: number, char: number): Range {
     const lineText = getTextOnLine(doc, line)
+    const endChar = lineText.length
+
+    // Note: Range will throw when provided a negative character number,
+    // so we do not need to explicitly capture that case ourselves
+    if (char > endChar) {
+        throw new Error(`Start character exceeds line length (${char} > ${endChar})`)
+    }
+
     return Range.create(line, char, line, lineText.length)
 }
 
@@ -25,5 +33,11 @@ export function getRangeUntilLineEnd (doc: TextDocument, line: number, char: num
  * @returns The text on the line
  */
 export function getTextOnLine (doc: TextDocument, line: number): string {
-    return doc.getText().split('\n')[line]
+    const textLines = doc.getText().split('\n')
+
+    if (line < 0 || line >= textLines.length) {
+        throw new Error('Cannot get text for nonexistent line')
+    }
+
+    return textLines[line]
 }

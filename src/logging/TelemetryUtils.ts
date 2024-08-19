@@ -15,7 +15,8 @@ export enum Actions {
     FormatDocument = 'formatDocument',
     GoToReference = 'goToReference',
     GoToDefinition = 'goToDefinition',
-    DocumentSymbol = 'documentSymbol'
+    DocumentSymbol = 'documentSymbol',
+    RenameSymbol = 'renameSymbol'
 }
 
 export enum ActionErrorConditions {

@@ -9,6 +9,14 @@
             "ES6"
         ],
         "strict": true,
-        "composite": true
-    }
+        "composite": true,
+        "esModuleInterop": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "tests/**/*"
+    ]
 }

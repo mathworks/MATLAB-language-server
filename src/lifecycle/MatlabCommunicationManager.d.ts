@@ -21,11 +21,12 @@ declare class MatlabCommunicationManager {
      * @param launchCommand The command with which MATLAB is launched
      * @param launchArguments The arguments with which MATLAB is launched
      * @param logDirectory The directory in which MATLAB should log data
+     * @param environmentVariables The additional set of environment variables which needs to be passed to the MATLAB process
      *
      * @returns Information about the new MATLAB process and the connection to it.
      * Returns null if the MATLAB process cannot be started.
      */
-    launchNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string): MatlabProcessInfo | null;
+    launchNewMatlab(launchCommand: string, launchArguments: string[], logDirectory: string, environmentVariables?: NodeJS.ProcessEnv): MatlabProcessInfo | null;
     /**
      * Attempts to connect to an existing instance of MATLAB at the given URL.
      *
