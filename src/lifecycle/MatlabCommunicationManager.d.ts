@@ -1,4 +1,5 @@
 /// <reference types="node" />
+/// <reference types="node" />
 import { ChildProcess } from 'child_process';
 declare const Faye: any;
 declare type Client = typeof Faye.Client;

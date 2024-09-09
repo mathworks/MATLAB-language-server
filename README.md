@@ -29,6 +29,9 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+Fixed:
+* Patches CVE-2024-43788
+
 ### 1.2.5
 Release date: 2024-08-16
 
