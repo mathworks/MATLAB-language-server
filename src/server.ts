@@ -30,6 +30,9 @@ export async function startServer () {
     // Create a connection for the server
     const connection = ClientConnection.getConnection()
 
+    // Initialize Logger
+    Logger.initialize(connection.console)
+
     // Instantiate services
     const pathResolver = new PathResolver()
     const matlabLifecycleManager = new MatlabLifecycleManager()

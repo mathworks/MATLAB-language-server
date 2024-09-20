@@ -4,6 +4,8 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Position } from 'vscode-languageserver'
 import { getTextOnLine } from './TextDocumentUtils'
 
+const DOTTED_IDENTIFIER_REGEX = /\b(?:[a-zA-Z][\w]*)(?:\.[a-zA-Z][\w]*)*\b/ // Matches a word followed by optional dotted words
+
 /**
  * Represents a code expression, either a single identifier or a dotted expression.
  * For example, "plot" or "pkg.Class.func".
@@ -82,7 +84,6 @@ export function getExpressionAtPosition (textDocument: TextDocument, position: P
  * @returns An object containing the string identifier at the position, as well as the column number at which the identifier starts.
  */
 function getIdentifierAtPosition (textDocument: TextDocument, position: Position): { identifier: string, start: number } {
-    const DOTTED_IDENTIFIER_REGEX = /[\w.]+/
     let lineText = getTextOnLine(textDocument, position.line)
 
     const result = {
@@ -94,12 +95,19 @@ function getIdentifierAtPosition (textDocument: TextDocument, position: Position
     let offset = 0
 
     while (matchResults != null) {
-        if (matchResults.index == null || matchResults.index > position.character) {
-            // Already passed the cursor - no match found
+        if (matchResults.index == null) {
+            // No result found
             break
         }
 
         const startChar = offset + matchResults.index
+
+        if (startChar > position.character) {
+            // Passed the cursor - no match found
+            break
+        }
+
+        
         if (startChar + matchResults[0].length >= position.character) {
             // Found overlapping identifier
             result.identifier = matchResults[0]

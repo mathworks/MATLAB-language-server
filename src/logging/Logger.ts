@@ -16,7 +16,7 @@ class Logger {
     private readonly languageServerLogFile: string
     private readonly matlabLogFile: string
 
-    private readonly console: RemoteConsole
+    private console?: RemoteConsole
 
     constructor () {
         // Create Log Directory
@@ -32,9 +32,10 @@ class Logger {
         // Get name of log file
         this.languageServerLogFile = path.join(this.logDir, SERVER_LOG)
         this.matlabLogFile = path.join(this.logDir, MATLAB_LOG)
+    }
 
-        // Get log console
-        this.console = ClientConnection.getConnection().console
+    public initialize (console: RemoteConsole): void {
+        this.console = console
         
         this.log(`Log Directory: ${this.logDir}`)
     }
