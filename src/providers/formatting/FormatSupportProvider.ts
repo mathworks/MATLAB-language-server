@@ -17,8 +17,8 @@ interface FormatDocumentResponse {
  * include formatting a range witin the documemt.
  */
 class FormatSupportProvider {
-    private readonly REQUEST_CHANNEL = '/matlabls/formatDocument/request'
-    private readonly RESPONSE_CHANNEL = '/matlabls/formatDocument/response'
+    readonly REQUEST_CHANNEL = '/matlabls/formatDocument/request'
+    readonly RESPONSE_CHANNEL = '/matlabls/formatDocument/response'
 
     constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
 
