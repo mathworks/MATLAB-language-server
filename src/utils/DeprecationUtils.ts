@@ -1,7 +1,7 @@
 // Copyright 2024 The MathWorks, Inc.
 
-import Logger from "../logging/Logger"
-import NotificationService, { Notification } from "../notifications/NotificationService"
+import Logger from '../logging/Logger'
+import NotificationService, { Notification } from '../notifications/NotificationService'
 
 const ORIGINAL_MIN_RELEASE = 'R2021a'
 const CURRENT_MIN_RELEASE = 'R2021a'

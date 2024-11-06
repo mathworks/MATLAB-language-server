@@ -1,5 +1,5 @@
 // Copyright 2024 The MathWorks, Inc.
-import { _Connection, createConnection, ProposedFeatures } from "vscode-languageserver/node"
+import { _Connection, createConnection, ProposedFeatures } from 'vscode-languageserver/node'
 
 export type Connection = _Connection
 

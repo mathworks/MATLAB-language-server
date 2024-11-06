@@ -24,7 +24,11 @@ import RenameSymbolProvider from './providers/rename/RenameSymbolProvider'
 import { RequestType } from './indexing/SymbolSearchService'
 import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
 
-export async function startServer () {
+import { stopLicensingServer } from './licensing/server'
+import { setInstallPath } from './licensing/config'
+import { handleInstallPathSettingChanged, handleSignInChanged, setupLicensingNotificationListenersAndUpdateClient } from './utils/LicensingUtils'
+
+export async function startServer (): Promise<void> {
     cacheAndClearProxyEnvironmentVariables()
 
     // Create a connection for the server
@@ -102,7 +106,7 @@ export async function startServer () {
                 documentSymbolProvider: true,
                 renameProvider: {
                     prepareProvider: true
-                },
+                }
             }
         }
 
@@ -110,8 +114,25 @@ export async function startServer () {
     })
 
     // Handles the initialized notification
-    connection.onInitialized(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    connection.onInitialized(async () => {
         ConfigurationManager.setup(capabilities)
+
+        // Add callbacks when settings change.
+        ConfigurationManager.addSettingCallback('signIn', handleSignInChanged)
+        ConfigurationManager.addSettingCallback('installPath', handleInstallPathSettingChanged)
+
+        const configuration = await ConfigurationManager.getConfiguration()
+
+        // If "signIn" setting is checked, setup notification listeners for it.
+        if (configuration.signIn) {
+            await setupLicensingNotificationListenersAndUpdateClient(matlabLifecycleManager)
+
+            // If installPath setting is not empty, update installPath in licensing config required for its workflows.
+            if (configuration.installPath !== '') {
+                setInstallPath(configuration.installPath)
+            }
+        }
 
         workspaceIndexer.setupCallbacks(capabilities)
 
@@ -131,9 +152,14 @@ export async function startServer () {
     }
 
     // Handles a shutdown request
-    connection.onShutdown(() => {
+    connection.onShutdown(async () => {
         // Shut down MATLAB
         matlabLifecycleManager.disconnectFromMatlab()
+
+        // If licensing workflows are enabled, shutdown the licensing server too.
+        if ((await ConfigurationManager.getConfiguration()).signIn) {
+            stopLicensingServer();
+        }
     })
 
     interface MatlabConnectionStatusParam {
@@ -213,7 +239,7 @@ export async function startServer () {
         // Retrieve the folding ranges
         // If there are valid folding ranges, hand them back to the IDE
         // Else, return null, so the IDE falls back to indent-based folding
-        return await foldingSupportProvider.handleFoldingRangeRequest(params, documentManager)  
+        return await foldingSupportProvider.handleFoldingRangeRequest(params, documentManager)
     })
 
     /** -------------------- FORMATTING SUPPORT -------------------- **/

@@ -7,6 +7,7 @@ import MatlabLifecycleManager from '../lifecycle/MatlabLifecycleManager'
 import FileInfoIndex, { MatlabCodeData, RawCodeData } from './FileInfoIndex'
 import * as fs from 'fs/promises'
 import PathResolver from '../providers/navigation/PathResolver'
+import ConfigurationManager from '../lifecycle/ConfigurationManager'
 
 interface WorkspaceFileIndexedResponse {
     isDone: boolean
@@ -69,9 +70,12 @@ export default class Indexer {
             FileInfoIndex.parseAndStoreCodeData(fileUri, fileResults.codeData)
         })
 
+        const analysisLimit = (await ConfigurationManager.getConfiguration()).maxFileSizeForAnalysis
+
         matlabConnection.publish(this.INDEX_FOLDERS_REQUEST_CHANNEL, {
             folders,
-            channelId
+            channelId,
+            analysisLimit
         })
     }
 
@@ -106,7 +110,7 @@ export default class Indexer {
     private async getCodeData (code: string, uri: string, matlabConnection: MatlabConnection): Promise<RawCodeData> {
         const filePath = URI.parse(uri).fsPath
 
-        return await new Promise(resolve => {
+        return await new Promise(async resolve => {
             const channelId = matlabConnection.getChannelId()
             const channel = `${this.INDEX_DOCUMENT_RESPONSE_CHANNEL}/${channelId}`
             const responseSub = matlabConnection.subscribe(channel, message => {
@@ -115,10 +119,13 @@ export default class Indexer {
                 resolve(message as RawCodeData)
             })
 
+            const analysisLimit = (await ConfigurationManager.getConfiguration()).maxFileSizeForAnalysis
+
             matlabConnection.publish(this.INDEX_DOCUMENT_REQUEST_CHANNEL, {
                 code,
                 filePath,
-                channelId
+                channelId,
+                analysisLimit
             })
         })
     }
