@@ -1,7 +1,6 @@
 // Copyright 2024 The MathWorks, Inc.
 
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useSelector, useDispatch } from 'react-redux';
 import Linkify from 'react-linkify';
 import {
@@ -13,7 +12,7 @@ import {
     selectIsAuthenticated,
     selectAuthToken
 } from '../../selectors';
-import { updateAuthStatus, getAuthToken } from '../../actionCreators';
+import { updateAuthStatus } from '../../actionCreators';
 import './Information.css';
 
 function Information () {
@@ -24,7 +23,7 @@ function Information () {
     const [token, setToken] = useState('');
     const authEnabled = useSelector(selectAuthEnabled);
     const isAuthenticated = useSelector(selectIsAuthenticated);
-    const authToken = useSelector(selectAuthToken);
+    const authToken = useSelector(selectAuthToken); // eslint-disable-line no-unused-vars
     const dispatch = useDispatch();
     const tokenInput = useRef();
 
