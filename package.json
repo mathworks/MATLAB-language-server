@@ -14,6 +14,7 @@
     "pretest": "npm run test-compile",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
+    "postinstall": "cd src/licensing/gui && npm install && cd ../../..",
     "test": "mocha"
   },
   "repository": {
