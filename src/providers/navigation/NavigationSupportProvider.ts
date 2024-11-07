@@ -12,6 +12,7 @@ import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Indexer from '../../indexing/Indexer'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
 import PathResolver from './PathResolver'
+import NotificationService, { Notification } from '../../notifications/NotificationService'
 
 class NavigationSupportProvider {
     constructor (
@@ -141,19 +142,30 @@ class NavigationSupportProvider {
             })
         })
 
+
         /**
          * Handle a case when the indexer fails due to the user being in the middle of an edit.
          * Here the documentSymbol cache has some symbols but the codeData cache has none. So we
          * assume that the user will soon fix their code and just fall back to what we knew for now.
          */
-        if (result.length === 0) {
+        if (result.length === 0 && codeData.errorMessage !== undefined) {
             const cached = this._documentSymbolCache.get(uri) ?? result
             if (cached.length > 0) {
                 return cached
             }
         }
         this._documentSymbolCache.set(uri, result)
+        this._sendSectionRangesForHighlighting(result, uri)
         return result
+    }
+
+    private _sendSectionRangesForHighlighting(result: SymbolInformation[], uri: string) {
+        const sections = result.filter(result => result.kind === SymbolKind.Module)
+        const sectionRanges: Range[] = []
+        sections.forEach((section) => {
+            sectionRanges.push(section.location.range)
+        })
+        NotificationService.sendNotification(Notification.MatlabSections, { uri, sectionRanges })
     }
 }
 

@@ -2,8 +2,8 @@
 
 import { EventEmitter } from 'events'
 
-import ConfigurationManager, { Argument, ConnectionTiming } from "./ConfigurationManager"
-import { MatlabConnection } from "./MatlabCommunicationManager"
+import ConfigurationManager, { Argument, ConnectionTiming } from './ConfigurationManager'
+import { MatlabConnection } from './MatlabCommunicationManager'
 import MatlabSession, { launchNewMatlab, connectToMatlab } from './MatlabSession'
 
 export default class MatlabLifecycleManager {
@@ -14,7 +14,7 @@ export default class MatlabLifecycleManager {
 
     /**
      * Gets the current connection to MATLAB.
-     * 
+     *
      * @param startMatlab If no existing MATLAB connection exists, this determines whether
      * a new connection should be established. If true, this will attempt to establish a
      * new connection. If false, it will not and will return null.
@@ -56,7 +56,7 @@ export default class MatlabLifecycleManager {
     /**
      * Attempt to connect to MATLAB. This will not create a second connection to MATLAB
      * if a session already exists.
-     * 
+     *
      * @returns The active MATLAB session
      */
     async connectToMatlab (): Promise<MatlabSession> {
@@ -87,7 +87,7 @@ export default class MatlabLifecycleManager {
 
     /**
      * Terminate the current MATLAB session.
-     * 
+     *
      * Emits a 'disconnected' event.
      */
     disconnectFromMatlab (): void {
@@ -125,7 +125,7 @@ export default class MatlabLifecycleManager {
      * @returns The new MATLAB session
      */
     private async connectToLocalMatlab (): Promise<MatlabSession> {
-        this.connectionPromise = launchNewMatlab()
+        this.connectionPromise = launchNewMatlab(this)
 
         return new Promise<MatlabSession>((resolve, reject) => {
             this.connectionPromise?.then(matlabSession => {

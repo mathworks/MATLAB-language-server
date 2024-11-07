@@ -25,8 +25,9 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
 
             code = msg.code;
             filePath = msg.filePath;
+            analysisLimit = msg.analysisLimit;
 
-            codeData = matlabls.internal.computeCodeData(code, filePath);
+            codeData = matlabls.internal.computeCodeData(code, filePath, analysisLimit);
 
             responseChannel = strcat(this.DocumentIndexingResponseChannel, '/', msg.channelId);
             matlabls.internal.CommunicationManager.publish(responseChannel, codeData)
@@ -36,9 +37,10 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
             % Indexes M-files the provided folders
 
             folders = msg.folders;
+            analysisLimit = msg.analysisLimit;
 
             files = this.getAllMFilesToIndex(folders);
-            this.parseFiles(msg.channelId, files)
+            this.parseFiles(msg.channelId, files, analysisLimit)
         end
 
         function filesToIndex = getAllMFilesToIndex (~, folders)
@@ -56,30 +58,30 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
             end
         end
 
-        function parseFiles (this, requestId, files)
+        function parseFiles (this, requestId, files, analysisLimit)
             % Processes the given list of files and sends the data back to the language server.
 
             if isMATLABReleaseOlderThan('R2021b')
                 % If backgroundPool doesn't exist, leverage a timer to avoid blocking thread
-                this.doParseFilesWithTimer(this, requestId, files);
+                this.doParseFilesWithTimer(this, requestId, files, analysisLimit);
             else
-                parfeval(backgroundPool, @this.doParseFiles, 0, requestId, files);
+                parfeval(backgroundPool, @this.doParseFiles, 0, requestId, files, analysisLimit);
             end
         end
 
-        function doParseFilesWithTimer (this, requestId, files, index)
+        function doParseFilesWithTimer (this, requestId, files, analysisLimit, index)
             % This leverages a timer to achieve an "asynchronous" looping effect, allowing
             % other operations to take place between parsing each file. This prevents the MATLAB®
             % thread from becomming blocked for an extended period of time.
 
-            if nargin == 3
+            if nargin == 4
                 index = 1;
             end
 
             filePath = files(index);
             isLastFile = index == numel(files);
 
-            this.parseFile(requestId, filePath, isLastFile);
+            this.parseFile(requestId, filePath, isLastFile, analysisLimit);
 
             if ~isLastFile
                 % More files - queue next file to parse
@@ -93,26 +95,26 @@ classdef (Hidden) IndexingHandler < matlabls.handlers.FeatureHandler
                 t.delete();
 
                 % Parse next file
-                this.parseFiles(requestId, files, index + 1);
+                this.doParseFilesWithTimer(requestId, files, analysisLimit, index + 1);
             end
         end
 
-        function doParseFiles (this, requestId, files)
+        function doParseFiles (this, requestId, files, analysisLimit)
             % This can be executed in a separate thread (e.g. parfeval) to avoid blocking the
             % MATLAB thread.
 
             for n = 1:numel(files)
                 filePath = files{n};
                 isLastFile = n == numel(files);
-                this.parseFile(requestId, filePath, isLastFile);
+                this.parseFile(requestId, filePath, isLastFile, analysisLimit);
             end
         end
 
-        function parseFile (this, requestId, filePath, isLastFile)
+        function parseFile (this, requestId, filePath, isLastFile, analysisLimit)
             % Parses the given file and sends its data back to the language server
 
             code = fileread(filePath);
-            codeData = matlabls.internal.computeCodeData(code, filePath);
+            codeData = matlabls.internal.computeCodeData(code, filePath, analysisLimit);
 
             % Send data for this file
             msg.filePath = filePath;

@@ -28,6 +28,13 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.2.7
+Release date: 2024-11-07
+
+Added:
+* Allow specifying the maximum file size for code analysis through the `maxFileSizeForAnalysis` setting
+* Linting support in untitled files and in MATLAB files with different file extensions
+
 ### 1.2.6
 Release date: 2024-09-20
 

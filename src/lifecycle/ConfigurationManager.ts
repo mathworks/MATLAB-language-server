@@ -28,20 +28,27 @@ interface CliArguments {
     [Argument.MatlabUrl]: string
 }
 
-interface Settings {
+export interface Settings {
     installPath: string
     matlabConnectionTiming: ConnectionTiming
     indexWorkspace: boolean
     telemetry: boolean
+    maxFileSizeForAnalysis: number
+    signIn: boolean
 }
 
-type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry'
+type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry' | 'maxFileSizeForAnalysis' | 'signIn'
+
+    
+
 
 const SETTING_NAMES: SettingName[] = [
     'installPath',
     'matlabConnectionTiming',
     'indexWorkspace',
-    'telemetry'
+    'telemetry',
+    'maxFileSizeForAnalysis',
+    'signIn'
 ]
 
 class ConfigurationManager {
@@ -56,6 +63,9 @@ class ConfigurationManager {
 
     private hasConfigurationCapability = false
 
+    // Map to keep track of callbacks to execute when a specific setting changes
+    private settingChangeCallbacks: Map<SettingName, (configuration: Settings) => void> = new Map();
+
     constructor () {
         const cliArgs = getCliArgs()
 
@@ -63,14 +73,18 @@ class ConfigurationManager {
             installPath: '',
             matlabConnectionTiming: ConnectionTiming.OnStart,
             indexWorkspace: false,
-            telemetry: true
+            telemetry: true,
+            maxFileSizeForAnalysis: 0,
+            signIn: false
         }
 
         this.globalSettings = {
             installPath: cliArgs[Argument.MatlabInstallationPath] ?? this.defaultConfiguration.installPath,
             matlabConnectionTiming: cliArgs[Argument.MatlabConnectionTiming] as ConnectionTiming ?? this.defaultConfiguration.matlabConnectionTiming,
             indexWorkspace: cliArgs[Argument.ShouldIndexWorkspace] ?? this.defaultConfiguration.indexWorkspace,
-            telemetry: this.defaultConfiguration.telemetry
+            telemetry: this.defaultConfiguration.telemetry,
+            maxFileSizeForAnalysis: this.defaultConfiguration.maxFileSizeForAnalysis,
+            signIn: this.defaultConfiguration.signIn
         }
 
         this.additionalArguments = {
@@ -81,7 +95,7 @@ class ConfigurationManager {
 
     public static getInstance (): ConfigurationManager {
         if (ConfigurationManager.instance == null) {
-            ConfigurationManager.instance = new ConfigurationManager
+            ConfigurationManager.instance = new ConfigurationManager()
         }
 
         return ConfigurationManager.instance
@@ -103,6 +117,19 @@ class ConfigurationManager {
         }
 
         connection.onDidChangeConfiguration(params => { void this.handleConfigurationChanged(params) })
+    }
+
+    /**
+     * Registers a callback for setting changes.
+     *
+     * @param settingName - The setting to listen for.
+     * @param onSettingChangeCallback - The callback invoked on setting change.
+     * @throws {Error} For invalid setting names.
+     */
+    addSettingCallback (settingName: SettingName, onSettingChangeCallback: (configuration: Settings) => void | Promise<void>): void {
+        if (this.settingChangeCallbacks.get(settingName) == null) {
+            this.settingChangeCallbacks.set(settingName, onSettingChangeCallback)
+        }
     }
 
     /**
@@ -172,6 +199,12 @@ class ConfigurationManager {
 
             if (oldValue !== newValue) {
                 reportTelemetrySettingsChange(settingName, newValue.toString(), oldValue.toString())
+
+                // As the setting changed, execute the corresponding callback for it.
+                const callback = this.settingChangeCallbacks.get(settingName);
+                if (callback != null) {
+                    callback(newConfiguration)
+                }
             }
         }
     }

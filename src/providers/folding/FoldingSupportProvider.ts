@@ -1,11 +1,10 @@
 // Copyright 2024 The MathWorks, Inc.
 
-import { FoldingRangeParams, TextDocuments, FoldingRange} from 'vscode-languageserver'
+import { FoldingRangeParams, TextDocuments, FoldingRange } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
-
 
 class FoldingSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/foldDocument/request'

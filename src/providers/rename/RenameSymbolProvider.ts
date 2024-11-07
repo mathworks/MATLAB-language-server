@@ -7,14 +7,14 @@ import { getTextOnLine } from '../../utils/TextDocumentUtils'
 import FileInfoIndex from '../../indexing/FileInfoIndex'
 import { ActionErrorConditions } from '../../logging/TelemetryUtils'
 import { getExpressionAtPosition } from '../../utils/ExpressionUtils'
-import SymbolSearchService, { RequestType, reportTelemetry} from '../../indexing/SymbolSearchService'
+import SymbolSearchService, { RequestType, reportTelemetry } from '../../indexing/SymbolSearchService'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
 
 class RenameSymbolProvider {
     constructor (
         protected matlabLifecycleManager: MatlabLifecycleManager,
-        protected documentIndexer: DocumentIndexer,
+        protected documentIndexer: DocumentIndexer
     ) {}
 
     /**
@@ -24,17 +24,17 @@ class RenameSymbolProvider {
      * @param documentManager The text document manager
      * @returns A range and placeholder text
      */
-    async prepareRename (params: PrepareRenameParams, documentManager: TextDocuments<TextDocument>): Promise<{ range: Range; placeholder: string } | null> {
+    async prepareRename (params: PrepareRenameParams, documentManager: TextDocuments<TextDocument>): Promise<{ range: Range, placeholder: string } | null> {
         const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection(true)
         if (matlabConnection == null) {
             LifecycleNotificationHelper.notifyMatlabRequirement()
             reportTelemetry(RequestType.RenameSymbol, ActionErrorConditions.MatlabUnavailable)
             return null
         }
-        
+
         const uri = params.textDocument.uri
         const textDocument = documentManager.get(uri)
-        
+
         if (textDocument == null) {
             reportTelemetry(RequestType.RenameSymbol, 'No document')
             return null
@@ -142,35 +142,35 @@ class RenameSymbolProvider {
             }
 
             if (expression.components.length > 1 && expression.selectedComponent !== 0) {
-                let newName = expression.components.slice()
+                const newName = expression.components.slice()
                 newName[expression.selectedComponent] = params.newName
                 const newEdit: TextEdit = {
-                    range: range,
+                    range,
                     newText: newName.join('.')
                 }
-                if (location.uri === uri && workspaceEdit.changes) {
+                if (location.uri === uri && (workspaceEdit.changes != null)) {
                     workspaceEdit.changes[uri].push(newEdit)
                 }
             } else {
                 const newEdit: TextEdit = {
-                    range: range,
+                    range,
                     newText: params.newName
                 }
-                if (location.uri === uri && workspaceEdit.changes) {
+                if (location.uri === uri && (workspaceEdit.changes != null)) {
                     workspaceEdit.changes[uri].push(newEdit)
                 }
             }
         })
 
         // Check if there is a class definition and rename as necessary
-        if (codeData.isClassDef && codeData.classInfo && codeData.classInfo.declaration) {
+        if (codeData.isClassDef && (codeData.classInfo != null) && (codeData.classInfo.declaration != null)) {
             const lineNumber = codeData.classInfo.declaration.start.line
             const declaration = getTextOnLine(textDocument, lineNumber)
             if (declaration.split(/\s+/).includes(expression.unqualifiedTarget)) {
                 const range: Range = {
                     start: {
                         line: lineNumber,
-                        character: 9  // Offset by 9 to get past classdef_
+                        character: 9 // Offset by 9 to get past classdef_
                     },
                     end: {
                         line: lineNumber,
@@ -178,23 +178,23 @@ class RenameSymbolProvider {
                     }
                 }
                 const newEdit: TextEdit = {
-                    range: range,
+                    range,
                     newText: params.newName
                 }
-                if (workspaceEdit.changes) {
+                if (workspaceEdit.changes != null) {
                     workspaceEdit.changes[uri].push(newEdit)
                 }
             }
         }
 
         // Checks if properties need to be renamed
-        let propertyInfo = SymbolSearchService.getPropertyDeclaration(codeData, expression.unqualifiedTarget)
+        const propertyInfo = SymbolSearchService.getPropertyDeclaration(codeData, expression.unqualifiedTarget)
         if (propertyInfo != null && expression.components.length > 1) {
             const newEdit: TextEdit = {
                 range: propertyInfo.range,
                 newText: params.newName
             }
-            if (workspaceEdit.changes) {
+            if (workspaceEdit.changes != null) {
                 workspaceEdit.changes[uri].push(newEdit)
             }
         }

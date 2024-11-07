@@ -12,6 +12,12 @@ export interface RawCodeData {
     packageName: string
     references: CodeDataReference[]
     sections: CodeDataSectionInfo[]
+    errorInfo: CodeDataErrorInfo | undefined
+}
+
+
+interface CodeDataErrorInfo {
+    message: string
 }
 
 /**
@@ -373,16 +379,25 @@ export class MatlabCodeData {
     readonly references: Map<string, Range[]>
     readonly sections: Map<string, Range[]>
     readonly packageName: string
+    errorMessage: string | undefined
 
     constructor (public uri: string, rawCodeData: RawCodeData, public classInfo?: MatlabClassInfo) {
         this.functions = new Map<string, MatlabFunctionInfo>()
         this.references = new Map<string, Range[]>()
         this.sections = new Map<string, Range[]>()
         this.packageName = rawCodeData.packageName
-
+        this.errorMessage = undefined
         this.parseFunctions(rawCodeData.functionInfo)
         this.parseReferences(rawCodeData.references)
         this.parseSectionInfo(rawCodeData.sections)
+        this.parseErrorInfo(rawCodeData.errorInfo)
+    }
+    parseErrorInfo (errorInfo: CodeDataErrorInfo | undefined) {
+        if(errorInfo == undefined) {
+            this.errorMessage = undefined
+            return
+        }
+        this.errorMessage = errorInfo.message
     }
 
     /**
