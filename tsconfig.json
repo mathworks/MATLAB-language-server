@@ -6,7 +6,8 @@
         "outDir": "./out",
         "sourceMap": true,
         "lib": [
-            "ES6"
+            "ES6",
+            "DOM"
         ],
         "strict": true,
         "composite": true,
