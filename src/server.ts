@@ -15,7 +15,7 @@ import LintingSupportProvider from './providers/linting/LintingSupportProvider'
 import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommands/ExecuteCommandProvider'
 import NavigationSupportProvider from './providers/navigation/NavigationSupportProvider'
 import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
-import MVM from './mvm/MVM'
+import MVM from './mvm/impl/MVM'
 import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
 import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
@@ -23,6 +23,9 @@ import Indexer from './indexing/Indexer'
 import RenameSymbolProvider from './providers/rename/RenameSymbolProvider'
 import { RequestType } from './indexing/SymbolSearchService'
 import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
+import MatlabDebugAdaptorServer from './debug/MatlabDebugAdaptorServer'
+import { DebugServices } from './debug/DebugServices'
+import MVMServer from './mvm/MVMServer'
 
 import { stopLicensingServer } from './licensing/server'
 import { setInstallPath } from './licensing/config'
@@ -57,9 +60,16 @@ export async function startServer (): Promise<void> {
     const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 
     let mvm: MVM | null
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let mvmServer: MVMServer | null
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let matlabDebugAdaptor: MatlabDebugAdaptorServer | null
+    let hasMatlabBeenRequested: boolean = false
 
     matlabLifecycleManager.eventEmitter.on('connected', () => {
         // Handle things after MATLAB® has launched
+
+        hasMatlabBeenRequested = false
 
         // Initiate workspace indexing
         void workspaceIndexer.indexWorkspace()
@@ -136,7 +146,9 @@ export async function startServer (): Promise<void> {
 
         workspaceIndexer.setupCallbacks(capabilities)
 
-        mvm = new MVM(NotificationService, matlabLifecycleManager);
+        mvm = new MVM(matlabLifecycleManager);
+        mvmServer = new MVMServer(mvm, NotificationService);
+        matlabDebugAdaptor = new MatlabDebugAdaptorServer(mvm, new DebugServices(mvm));
 
         void startMatlabIfOnStartLaunch()
     })
@@ -146,6 +158,7 @@ export async function startServer (): Promise<void> {
         const connectionTiming = (await ConfigurationManager.getConfiguration()).matlabConnectionTiming
         if (connectionTiming === ConnectionTiming.OnStart) {
             void matlabLifecycleManager.connectToMatlab().catch(reason => {
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 Logger.error(`MATLAB onStart connection failed: ${reason}`)
             })
         }
@@ -173,6 +186,7 @@ export async function startServer (): Promise<void> {
             switch (data.connectionAction) {
                 case 'connect':
                     void matlabLifecycleManager.connectToMatlab().catch(reason => {
+                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                         Logger.error(`Connection request failed: ${reason}`)
                     })
                     break
@@ -186,6 +200,10 @@ export async function startServer (): Promise<void> {
     NotificationService.registerNotificationListener(
         Notification.MatlabRequestInstance,
         async () => { // eslint-disable-line @typescript-eslint/no-misused-promises
+            if (hasMatlabBeenRequested) {
+                return;
+            }
+            hasMatlabBeenRequested = true;
             const matlabConnection = await matlabLifecycleManager.getMatlabConnection(true);
             if (matlabConnection === null) {
                 LifecycleNotificationHelper.notifyMatlabRequirement()

@@ -82,6 +82,7 @@ class NavigationSupportProvider {
         // We do not want to trigger MATLAB to launch due to the frequency of this callback.
         // However, simply returning [] in this case could cause a delay between MATLAB started
         // and the symbols being identified.
+        // eslint-disable-next-line no-async-promise-executor
         const matlabConnection = await new Promise<MatlabConnection | null>(async resolve => {
             if (this.matlabLifecycleManager.isMatlabConnected()) {
                 resolve(await this.matlabLifecycleManager.getMatlabConnection())

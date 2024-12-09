@@ -13,7 +13,7 @@ const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to
 export default class DocumentIndexer {
     private readonly pendingFilesToIndex = new Map<string, NodeJS.Timeout>()
 
-    constructor (private indexer: Indexer) {}
+    constructor (private readonly indexer: Indexer) {}
 
     /**
      * Queues a document to be indexed. This handles debouncing so that

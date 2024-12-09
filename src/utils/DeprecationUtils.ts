@@ -40,8 +40,8 @@ export function checkIfMatlabDeprecated (matlabRelease: string): void {
         return
     }
 
-    let message = {
-        deprecationType: deprecationType,
+    const message = {
+        deprecationType,
         deprecationInfo: {
             matlabVersion: matlabRelease,
             minVersion: CURRENT_MIN_RELEASE,

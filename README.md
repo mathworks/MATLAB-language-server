@@ -28,6 +28,17 @@ MATLAB language server supports these editors by installing the corresponding ex
 
 ### Unreleased
 
+### 1.3.0
+Release date: 2024-12-18
+
+Added:
+* Debugging support
+* Include snippets defined within MATLAB (requires MATLAB R2025a or later)
+
+Fixed:
+* Use default values when settings are missing from configuration
+* Patches CVE-2024-52798
+
 ### 1.2.7
 Release date: 2024-11-07
 

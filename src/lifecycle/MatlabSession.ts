@@ -2,7 +2,6 @@
 
 import { ChildProcess } from 'child_process';
 import Logger from '../logging/Logger';
-
 import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils';
 import NotificationService, { Notification } from '../notifications/NotificationService';
 import ConfigurationManager, { Argument } from './ConfigurationManager';
@@ -104,7 +103,7 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
             Logger.log(`Started MATLAB (session ${matlabSession.sessionId})`)
 
             // First change detected - close watcher
-            watcher.close()
+            void watcher.close()
 
             // Read startup info from file
             const connectionInfo = await readStartupInfo(outFile)
@@ -143,14 +142,14 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
         if (matlabProcessInfo == null) {
             // Error occurred while spawning MATLAB process
             matlabSession.shutdown('Error spawning MATLAB process')
-            watcher.close()
+            void watcher.close()
 
             Logger.error(`Error launching MATLAB with command: ${command}`)
 
             LifecycleNotificationHelper.didMatlabLaunchFail = true
             NotificationService.sendNotification(Notification.MatlabLaunchFailed)
 
-            reject('Failed to launch local MATLAB')
+            reject(new Error('Failed to launch local MATLAB'))
             return
         }
 
@@ -160,11 +159,11 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
 
         // Handles additional errors with launching the MATLAB process
         matlabProcess?.on('error', error => {
-            reject('Error from MATLAB child process')
+            reject(new Error('Error from MATLAB child process'))
 
             // Error occurred in child process
             matlabSession.shutdown('Error launching MATLAB')
-            watcher.close()
+            void watcher.close()
 
             Logger.error(`Error launching MATLAB: (${error.name}) ${error.message}`)
             if (error.stack != null) {
@@ -179,7 +178,7 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
         // This could include the user killing the process.
         matlabProcess.on('close', () => {
             // Close connection
-            reject('MATLAB process terminated unexpectedly')
+            reject(new Error('MATLAB process terminated unexpectedly'))
 
             Logger.log(`MATLAB process (session ${matlabSession.sessionId}) terminated`)
             matlabSession.shutdown()
@@ -312,10 +311,10 @@ class LocalMatlabSession extends AbstractMatlabSession {
 
         if (this.matlabConnection == null) {
             Logger.error('Attempting to start connection to MATLAB without first initializing')
-            return Promise.reject('LocalMatlabSession not initialized')
+            return await Promise.reject(new Error('LocalMatlabSession not initialized'))
         }
 
-        return this.matlabConnection.initialize(port, certFile)
+        return await this.matlabConnection.initialize(port, certFile)
     }
 
     shutdown (shutdownMessage?: string): void {
@@ -385,10 +384,10 @@ class RemoteMatlabSession extends AbstractMatlabSession {
     async startConnection (): Promise<void> {
         if (this.matlabConnection == null) {
             Logger.error('Attempting to start connection to MATLAB without first initializing')
-            return Promise.reject('RemoteMatlabSession not initialized')
+            return await Promise.reject(new Error('RemoteMatlabSession not initialized'))
         }
 
-        return this.matlabConnection?.initialize()
+        return await this.matlabConnection?.initialize()
     }
 
     shutdown (shutdownMessage?: string): void {

@@ -58,7 +58,7 @@ class LintingSupportProvider {
     private readonly _pendingFilesToLint = new Map<string, NodeJS.Timeout>()
     private readonly _availableCodeActions = new Map<string, CodeAction[]>()
 
-    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
 
     /**
      * Queues a document to be linted. This handles debouncing so

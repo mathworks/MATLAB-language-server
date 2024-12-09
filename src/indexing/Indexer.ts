@@ -22,7 +22,7 @@ export default class Indexer {
     private readonly INDEX_FOLDERS_REQUEST_CHANNEL = '/matlabls/indexFolders/request'
     private readonly INDEX_FOLDERS_RESPONSE_CHANNEL = '/matlabls/indexFolders/response'
 
-    constructor (private matlabLifecycleManager: MatlabLifecycleManager, private pathResolver: PathResolver) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager, private readonly pathResolver: PathResolver) {}
 
     /**
      * Indexes the given TextDocument and caches the data.
@@ -146,7 +146,7 @@ export default class Indexer {
         // Queue indexing for other files in @ class directory
         const classDefFolder = parsedCodeData.classInfo.classDefFolder
         if (classDefFolder !== '') {
-            this.indexFolders([classDefFolder])
+            void this.indexFolders([classDefFolder])
         }
 
         // Find and queue indexing for parent classes

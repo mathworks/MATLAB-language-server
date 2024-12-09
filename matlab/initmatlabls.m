@@ -22,6 +22,11 @@ function initmatlabls (outFile)
         disp('Error while attempting to add shadow directory to path')
         disp(ME.message)
     end
+    
+    try
+        s = settings;
+        s.matlab.editor.OpenFileAtBreakpoint.TemporaryValue = false;
+    end
 
     % Create matlabls helper for calculating language server operations
     persistent matlablsHelper %#ok<PUSE>

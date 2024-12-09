@@ -9,6 +9,7 @@ export interface CliArgs {
     [Argument.MatlabConnectionTiming]?: string
     [Argument.ShouldIndexWorkspace]?: boolean
     [Argument.MatlabUrl]?: string
+    [Argument.SnippetIgnoreList]?: string
 }
 
 /**
@@ -39,6 +40,10 @@ function makeParser (): yargs.Argv<CliArgs> {
         type: 'string',
         description: 'URL for communicating with an existing MATLAB instance',
         requiresArg: true
+    }).option(Argument.SnippetIgnoreList, {
+        type: 'string',
+        description: 'A semi-colon separated list of MATLAB code snippets to ignore',
+        default: ''
     }).usage(
         'Usage: $0 {--node-ipc | --stdio | --socket=socket} options\n' +
         '\n' +

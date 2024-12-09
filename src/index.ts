@@ -5,7 +5,7 @@ import ClientConnection from './ClientConnection'
 import * as server from './server'
 
 // Start up the language server
-server.startServer()
+void server.startServer()
 
 // Listen on the client connection
 ClientConnection.getConnection().listen()

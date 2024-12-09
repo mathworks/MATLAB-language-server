@@ -3,6 +3,7 @@ import { _Connection, createConnection, ProposedFeatures } from 'vscode-language
 
 export type Connection = _Connection
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export default class ClientConnection {
     private static connection: Connection | undefined
 

@@ -1,9 +1,10 @@
 // Copyright 2022 - 2024 The MathWorks, Inc.
 
-import { CompletionItem, CompletionItemKind, CompletionList, CompletionParams, ParameterInformation, Position, SignatureHelp, SignatureHelpParams, SignatureInformation, TextDocuments } from 'vscode-languageserver'
+import { CompletionItem, CompletionItemKind, CompletionList, CompletionParams, ParameterInformation, Position, SignatureHelp, SignatureHelpParams, SignatureInformation, TextDocuments, InsertTextFormat } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
+import ConfigurationManager, { Argument } from '../../lifecycle/ConfigurationManager'
 
 interface MCompletionData {
     widgetData?: MWidgetData
@@ -71,7 +72,8 @@ const MatlabCompletionToKind: { [index: string]: CompletionItemKind } = {
     enumeration: CompletionItemKind.EnumMember,
     messageId: CompletionItemKind.Text,
     keyword: CompletionItemKind.Keyword,
-    attribute: CompletionItemKind.Keyword
+    attribute: CompletionItemKind.Keyword,
+    codeSnippet: CompletionItemKind.Snippet
 }
 
 /**
@@ -82,7 +84,7 @@ class CompletionSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/completions/request'
     private readonly RESPONSE_CHANNEL = '/matlabls/completions/response'
 
-    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
 
     /**
      * Handles a request for auto-completion choices.
@@ -169,7 +171,7 @@ class CompletionSupportProvider {
     private parseCompletionItems (completionData: MCompletionData): CompletionList {
         const completionItems: CompletionItem[] = []
 
-        const completionsMap = new Map<string, { kind: CompletionItemKind, doc: string }>()
+        const completionsMap = new Map<string, { kind: CompletionItemKind, doc: string, insertText: string }>()
 
         // Gather completions from top-level object. This should find function completions.
         this.gatherCompletions(completionData, completionsMap)
@@ -203,6 +205,10 @@ class CompletionSupportProvider {
             completionItem.detail = completionData.doc
             completionItem.data = index++
             completionItem.sortText = sortText
+            if (completionData.kind === CompletionItemKind.Snippet) {
+                completionItem.insertText = completionData.insertText
+                completionItem.insertTextFormat = InsertTextFormat.Snippet
+            }
             completionItems.push(completionItem)
         })
 
@@ -215,13 +221,15 @@ class CompletionSupportProvider {
      * @param completionDataObj Raw completion or argument data
      * @param completionMap A map in which to store info about possible completions
      */
-    private gatherCompletions (completionDataObj: MCompletionData | MArgumentData, completionMap: Map<string, { kind: CompletionItemKind, doc: string }>): void {
+    private gatherCompletions (completionDataObj: MCompletionData | MArgumentData, completionMap: Map<string, { kind: CompletionItemKind, doc: string, insertText: string }>): void {
         let choices = completionDataObj.widgetData?.choices
         if (choices == null) {
             return
         }
 
         choices = Array.isArray(choices) ? choices : [choices]
+
+        choices = this.filterSnippetChoices(choices);
 
         choices.forEach(choice => {
             let completion: string = choice.completion
@@ -238,16 +246,22 @@ class CompletionSupportProvider {
                     // Remove quotes from completion
                     completion = (choice.displayString ?? '').replace(/['"]/g, '')
                     break
+                case 'codeSnippet':
+                    completion = choice.displayString ?? ''
+                    break
             }
 
-            const dotIdx = choice.completion.lastIndexOf('.')
-            if (dotIdx > 0 && !isPath) {
-                completion = completion.slice(dotIdx + 1)
+            if (choice.matchType !== 'codeSnippet') {
+                const dotIdx = choice.completion.lastIndexOf('.')
+                if (dotIdx > 0 && !isPath) {
+                    completion = completion.slice(dotIdx + 1)
+                }
             }
 
             completionMap.set(completion, {
                 kind: MatlabCompletionToKind[choice.matchType] ?? CompletionItemKind.Function,
-                doc: choice.purpose
+                doc: choice.purpose,
+                insertText: choice.completion ?? ''
             })
         })
     }
@@ -332,6 +346,20 @@ class CompletionSupportProvider {
         })
 
         return signatureHelp
+    }
+
+    /**
+     * Filters out the snippet choices from the list of choices based on the configured snippet ignore list.
+     * 
+     * @param choices The list of completion choices to filter
+     * @returns The list of completion choices with snippet choices filtered out based on the configured snippet ignore list
+     */
+    private filterSnippetChoices(choices: MCompletionChoice[]): MCompletionChoice[] {
+        // Get the snippet ignore list from the configuration manager
+        const snippetIgnoreList = ConfigurationManager.getArgument(Argument.SnippetIgnoreList).split(';');
+        return choices.filter(choice => {
+            return choice.matchType !== 'codeSnippet' || (choice.displayString !== undefined && !snippetIgnoreList.includes(choice.displayString));
+        });
     }
 }
 
