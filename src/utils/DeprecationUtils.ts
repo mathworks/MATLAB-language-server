@@ -4,7 +4,7 @@ import Logger from '../logging/Logger'
 import NotificationService, { Notification } from '../notifications/NotificationService'
 
 const ORIGINAL_MIN_RELEASE = 'R2021a'
-const CURRENT_MIN_RELEASE = 'R2021a'
+const CURRENT_MIN_RELEASE = 'R2021b'
 const FUTURE_MIN_RELEASE = 'R2021b'
 
 enum DeprecationType {
