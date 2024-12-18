@@ -10,7 +10,7 @@ class FoldingSupportProvider {
     private readonly REQUEST_CHANNEL = '/matlabls/foldDocument/request'
     private readonly RESPONSE_CHANNEL = '/matlabls/foldDocument/response'
 
-    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
 
     async handleFoldingRangeRequest (params: FoldingRangeParams, documentManager: TextDocuments<TextDocument>): Promise<FoldingRange[] | null> {
         const docToFold = documentManager.get(params.textDocument.uri)
@@ -69,10 +69,10 @@ class FoldingSupportProvider {
      * @returns An array of FoldingRanges
      */
     private processFoldingRanges (frArray: number[]): FoldingRange[] {
-        let fRangeArray: FoldingRange[] = []
+        const fRangeArray: FoldingRange[] = []
 
-        for(let i = 0; i < frArray.length; i = i+2) {
-            let fRange = FoldingRange.create(frArray[i] - 1, frArray[i+1] - 1)
+        for (let i = 0; i < frArray.length; i = i + 2) {
+            const fRange = FoldingRange.create(frArray[i] - 1, frArray[i + 1] - 1)
             fRangeArray.push(fRange)
         }
 

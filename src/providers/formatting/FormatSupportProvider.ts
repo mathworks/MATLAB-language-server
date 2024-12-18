@@ -20,7 +20,7 @@ class FormatSupportProvider {
     readonly REQUEST_CHANNEL = '/matlabls/formatDocument/request'
     readonly RESPONSE_CHANNEL = '/matlabls/formatDocument/response'
 
-    constructor (private matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
 
     /**
      * Handles a request for document formatting.

@@ -29,8 +29,9 @@ export default class MatlabLifecycleManager {
 
         // If MATLAB is actively connecting, wait for the connection to be established
         if (this.connectionPromise != null) {
-            return new Promise<MatlabConnection | null>(resolve => {
-                this.connectionPromise!.then(matlabSession => {
+            const connectionPromise = this.connectionPromise;
+            return await new Promise<MatlabConnection | null>(resolve => {
+                connectionPromise.then(matlabSession => {
                     resolve(matlabSession.getConnection())
                 }).catch(() => {
                     resolve(null)
@@ -67,9 +68,10 @@ export default class MatlabLifecycleManager {
 
         // If MATLAB is actively connecting, wait and return that session
         if (this.connectionPromise != null) {
+            const connectionPromise = this.connectionPromise;
             // MATLAB is actively connecting
-            return new Promise<MatlabSession>((resolve, reject) => {
-                this.connectionPromise!.then(matlabSession => {
+            return await new Promise<MatlabSession>((resolve, reject) => {
+                connectionPromise.then(matlabSession => {
                     resolve(matlabSession)
                 }).catch(reason => {
                     reject(reason)
@@ -79,9 +81,9 @@ export default class MatlabLifecycleManager {
 
         // Start a new session
         if (shouldConnectToRemoteMatlab()) {
-            return this.connectToRemoteMatlab()
+            return await this.connectToRemoteMatlab()
         } else {
-            return this.connectToLocalMatlab()
+            return await this.connectToLocalMatlab()
         }
     }
 
@@ -127,7 +129,7 @@ export default class MatlabLifecycleManager {
     private async connectToLocalMatlab (): Promise<MatlabSession> {
         this.connectionPromise = launchNewMatlab(this)
 
-        return new Promise<MatlabSession>((resolve, reject) => {
+        return await new Promise<MatlabSession>((resolve, reject) => {
             this.connectionPromise?.then(matlabSession => {
                 this.matlabSession = matlabSession
                 this.matlabSession.eventEmitter.on('shutdown', () => {
@@ -153,7 +155,7 @@ export default class MatlabLifecycleManager {
         const url = ConfigurationManager.getArgument(Argument.MatlabUrl)
         this.connectionPromise = connectToMatlab(url)
 
-        return new Promise<MatlabSession>((resolve, reject) => {
+        return await new Promise<MatlabSession>((resolve, reject) => {
             this.connectionPromise?.then(matlabSession => {
                 this.matlabSession = matlabSession
                 this.matlabSession.eventEmitter.on('shutdown', () => {

@@ -1,6 +1,6 @@
 // Copyright 2022 - 2024 The MathWorks, Inc.
 
-import { ExecuteCommandParams, Range, TextDocuments, _Connection } from 'vscode-languageserver'
+import { ExecuteCommandParams, Range, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import LintingSupportProvider from '../linting/LintingSupportProvider'
 
@@ -19,7 +19,7 @@ export const MatlabLSCommands = {
  * Handles requests to execute commands
  */
 class ExecuteCommandProvider {
-    constructor (private lintingSupportProvider: LintingSupportProvider) {}
+    constructor (private readonly lintingSupportProvider: LintingSupportProvider) {}
 
     /**
      * Handles command execution requests.

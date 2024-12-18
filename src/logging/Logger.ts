@@ -4,7 +4,6 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 import { RemoteConsole } from 'vscode-languageserver'
-import ClientConnection from '../ClientConnection'
 
 const SERVER_LOG = 'languageServerLog.txt'
 const MATLAB_LOG = 'matlabLog.txt'
@@ -36,7 +35,7 @@ class Logger {
 
     public initialize (console: RemoteConsole): void {
         this.console = console
-        
+
         this.log(`Log Directory: ${this.logDir}`)
     }
 

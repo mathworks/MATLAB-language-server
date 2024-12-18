@@ -14,7 +14,9 @@ export enum Argument {
     ShouldIndexWorkspace = 'indexWorkspace',
 
     // Advanced arguments
-    MatlabUrl = 'matlabUrl'
+    MatlabUrl = 'matlabUrl',
+
+    SnippetIgnoreList = 'snippetIgnoreList'
 }
 
 export enum ConnectionTiming {
@@ -26,6 +28,7 @@ export enum ConnectionTiming {
 interface CliArguments {
     [Argument.MatlabLaunchCommandArguments]: string
     [Argument.MatlabUrl]: string
+    [Argument.SnippetIgnoreList]: string
 }
 
 export interface Settings {
@@ -38,9 +41,6 @@ export interface Settings {
 }
 
 type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry' | 'maxFileSizeForAnalysis' | 'signIn'
-
-    
-
 
 const SETTING_NAMES: SettingName[] = [
     'installPath',
@@ -89,7 +89,8 @@ class ConfigurationManager {
 
         this.additionalArguments = {
             [Argument.MatlabLaunchCommandArguments]: cliArgs[Argument.MatlabLaunchCommandArguments] ?? '',
-            [Argument.MatlabUrl]: cliArgs[Argument.MatlabUrl] ?? ''
+            [Argument.MatlabUrl]: cliArgs[Argument.MatlabUrl] ?? '',
+            [Argument.SnippetIgnoreList]: cliArgs[Argument.SnippetIgnoreList] ?? ''
         }
     }
 
@@ -144,10 +145,10 @@ class ConfigurationManager {
                 this.configuration = await connection.workspace.getConfiguration('MATLAB') as Settings
             }
 
-            return this.configuration
+            return Object.assign(this.defaultConfiguration, this.configuration)
         }
 
-        return this.globalSettings
+        return Object.assign(this.defaultConfiguration, this.globalSettings)
     }
 
     /**
@@ -156,7 +157,7 @@ class ConfigurationManager {
      * @param argument The argument
      * @returns The argument's value
      */
-    getArgument (argument: Argument.MatlabLaunchCommandArguments | Argument.MatlabUrl): string {
+    getArgument (argument: Argument.MatlabLaunchCommandArguments | Argument.MatlabUrl | Argument.SnippetIgnoreList): string {
         return this.additionalArguments[argument]
     }
 

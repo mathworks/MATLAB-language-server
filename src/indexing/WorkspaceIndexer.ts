@@ -12,7 +12,7 @@ import ClientConnection from '../ClientConnection'
 export default class WorkspaceIndexer {
     private isWorkspaceIndexingSupported = false
 
-    constructor (private indexer: Indexer) {}
+    constructor (private readonly indexer: Indexer) {}
 
     /**
      * Sets up workspace change listeners, if supported.

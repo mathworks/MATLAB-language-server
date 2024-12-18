@@ -4,7 +4,7 @@ import Logger from '../logging/Logger'
 import NotificationService, { Notification } from '../notifications/NotificationService'
 
 const ORIGINAL_MIN_RELEASE = 'R2021a'
-const CURRENT_MIN_RELEASE = 'R2021a'
+const CURRENT_MIN_RELEASE = 'R2021b'
 const FUTURE_MIN_RELEASE = 'R2021b'
 
 enum DeprecationType {
@@ -40,8 +40,8 @@ export function checkIfMatlabDeprecated (matlabRelease: string): void {
         return
     }
 
-    let message = {
-        deprecationType: deprecationType,
+    const message = {
+        deprecationType,
         deprecationInfo: {
             matlabVersion: matlabRelease,
             minVersion: CURRENT_MIN_RELEASE,

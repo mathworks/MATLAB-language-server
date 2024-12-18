@@ -8,21 +8,6 @@ export enum Notification {
     MatlabConnectionClientUpdate = 'matlab/connection/update/client',
     MatlabConnectionServerUpdate = 'matlab/connection/update/server',
 
-    // Execution
-    MatlabRequestInstance = 'matlab/request',
-
-    MVMEvalRequest = 'evalRequest',
-    MVMEvalComplete = 'evalRequest',
-    MVMFevalRequest = 'fevalRequest',
-    MVMFevalComplete = 'fevalRequest',
-
-    MVMText = 'text',
-    MVMClc = 'clc',
-
-    MVMInterruptRequest = 'interruptRequest',
-
-    MVMStateChange = 'mvmStateChange',
-
     // Errors
     MatlabLaunchFailed = 'matlab/launchfailed',
     MatlabFeatureUnavailable = 'feature/needsmatlab',
@@ -30,6 +15,32 @@ export enum Notification {
 
     // MATLAB Version Deprecation
     MatlabVersionDeprecation = 'matlab/version/deprecation',
+
+    // Execution
+    MatlabRequestInstance = 'matlab/request',
+
+    MVMEvalRequest = 'evalRequest',
+    MVMEvalComplete = 'evalResponse',
+    MVMFevalRequest = 'fevalRequest',
+    MVMFevalComplete = 'fevalResponse',
+    MVMSetBreakpointRequest = 'setBreakpointRequest',
+    MVMSetBreakpointComplete = 'setBreakpointResponse',
+    MVMClearBreakpointRequest = 'clearBreakpointRequest',
+    MVMClearBreakpointComplete = 'clearBreakpointResponse',
+
+    MVMText = 'text',
+    MVMClc = 'clc',
+    MVMPromptChange = 'mvmPromptChange',
+
+    MVMInterruptRequest = 'interruptRequest',
+    MVMUnpauseRequest = 'unpauseRequest',
+
+    MVMStateChange = 'mvmStateChange',
+
+    DebuggingStateChange = 'DebuggingStateChange',
+    DebugAdaptorRequest = 'DebugAdaptorRequest',
+    DebugAdaptorResponse = 'DebugAdaptorResponse',
+    DebugAdaptorEvent = 'DebugAdaptorEvent',
 
     // Telemetry
     LogTelemetryData = 'telemetry/logdata',

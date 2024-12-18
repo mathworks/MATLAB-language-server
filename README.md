@@ -3,9 +3,7 @@
 
 MATLAB&reg; language server implements the Microsoft&reg; [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) for the MATLAB language.
 
-MATLAB language server requires MATLAB version R2021a or later.
-
-**Note:** This language server will no longer support MATLAB R2021a in a future release. To use advanced features or run MATLAB code, you will need to have MATLAB R2021b or later installed.
+MATLAB language server requires MATLAB version R2021b or later.
 
 ## Features Implemented
 MATLAB language server implements several Language Server Protocol features and their related services:
@@ -27,6 +25,20 @@ MATLAB language server supports these editors by installing the corresponding ex
 ## Release Notes
 
 ### Unreleased
+
+### 1.3.0
+Release date: 2024-12-18
+
+Notice:
+* The MATLAB language server no longer supports MATLAB R2021a. To make use of the advanced features of the extension or run and debug MATLAB code, you must have MATLAB R2021b or later installed.
+
+Added:
+* Debugging support
+* Include snippets defined within MATLAB (requires MATLAB R2025a or later)
+
+Fixed:
+* Use default values when settings are missing from configuration
+* Patches CVE-2024-52798
 
 ### 1.2.7
 Release date: 2024-11-07
