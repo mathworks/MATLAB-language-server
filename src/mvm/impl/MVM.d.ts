@@ -31,7 +31,6 @@ export default class MVM extends EventEmitter implements IMVM {
     private _tryAttach;
     private _handleReady;
     private _handleReadyError;
-    _detectImplBasedOnTimeout(): Promise<void>;
     private _detectImpl;
     private _setupDebuggerListeners;
     private _setupDebugListener;

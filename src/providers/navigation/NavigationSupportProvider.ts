@@ -143,7 +143,6 @@ class NavigationSupportProvider {
             })
         })
 
-
         /**
          * Handle a case when the indexer fails due to the user being in the middle of an edit.
          * Here the documentSymbol cache has some symbols but the codeData cache has none. So we
@@ -160,7 +159,7 @@ class NavigationSupportProvider {
         return result
     }
 
-    private _sendSectionRangesForHighlighting(result: SymbolInformation[], uri: string) {
+    private _sendSectionRangesForHighlighting (result: SymbolInformation[], uri: string): void {
         const sections = result.filter(result => result.kind === SymbolKind.Module)
         const sectionRanges: Range[] = []
         sections.forEach((section) => {

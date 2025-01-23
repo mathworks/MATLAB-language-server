@@ -5,6 +5,21 @@ import { findAllEntitlements } from '../utils/LicensingUtils';
 import { EntitlementError, OnlineLicensingError } from './errors';
 import { Entitlement } from './types';
 
+interface ServerExpandTokenData {
+    expirationDate: string
+    referenceDetail: {
+        firstName: string
+        lastName: string
+        displayName: string
+        userId: string
+        referenceId: string
+    }
+}
+
+interface ServerAccessTokenData {
+    accessTokenString: string
+}
+
 /**
  * Fetches an expand token from the MathWorks Access (MWA) service.
  * @param mwaUrl - The URL of the MathWorks Access service.
@@ -45,7 +60,7 @@ export async function fetchExpandToken (mwaUrl: string, identityToken: string, s
     if (response == null || !response.ok) {
         throw new OnlineLicensingError(`Communication with ${mwaUrl} failed.`)
     }
-    const jsonData: any = await response.json()
+    const jsonData: ServerExpandTokenData = await response.json() as ServerExpandTokenData
 
     return {
         expiry: jsonData.expirationDate,
@@ -91,7 +106,7 @@ export async function fetchAccessToken (mwaUrl: string, identityToken: string, s
         throw new OnlineLicensingError('HTTP request failed');
     }
 
-    const jsonData: any = await response.json()
+    const jsonData: ServerAccessTokenData = await response.json() as ServerAccessTokenData
     return {
         token: jsonData.accessTokenString
     }

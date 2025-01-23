@@ -9,7 +9,7 @@ export class AppError extends Error {
      * @param logs - Logs associated with the error.
      * @param stacktrace - Stacktrace associated with the error.
      */
-    constructor(
+    constructor (
         message: string,
         public readonly logs: string | null = null,
         public readonly stacktrace: string | null = null

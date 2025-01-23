@@ -36,24 +36,24 @@ export default async function sendRequest (url: string, options: RequestInit): P
  * @param  port - The port number to check.
  * @returns {Promise<boolean>} A promise that resolves to `true` if the port is free or `false` if the port is occupied.
  */
-export function isPortFree(port: number): Promise<boolean> {
+export function isPortFree (port: number): Promise<boolean> {
     return new Promise((resolve) => {
-      const server = net.createServer();
-  
-      server.once('error', (err: any) => {
-        if (err.code === 'EADDRINUSE') {
-          resolve(false);
-        } else {
-          resolve(false);
-        }
-      });
-  
-      server.once('listening', () => {
-        server.close(() => {
-          resolve(true); 
+        const server = net.createServer();
+
+        server.once('error', (err: {code: string}) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(false);
+            } else {
+                resolve(false);
+            }
         });
-      });
-  
-      server.listen(port);
+
+        server.once('listening', () => {
+            server.close(() => {
+                resolve(true);
+            });
+        });
+
+        server.listen(port);
     });
 }

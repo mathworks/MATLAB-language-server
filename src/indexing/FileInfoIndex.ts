@@ -15,7 +15,6 @@ export interface RawCodeData {
     errorInfo: CodeDataErrorInfo | undefined
 }
 
-
 interface CodeDataErrorInfo {
     message: string
 }
@@ -392,8 +391,9 @@ export class MatlabCodeData {
         this.parseSectionInfo(rawCodeData.sections)
         this.parseErrorInfo(rawCodeData.errorInfo)
     }
-    parseErrorInfo (errorInfo: CodeDataErrorInfo | undefined) {
-        if(errorInfo == undefined) {
+
+    parseErrorInfo (errorInfo: CodeDataErrorInfo | undefined): void {
+        if (errorInfo === undefined) {
             this.errorMessage = undefined
             return
         }

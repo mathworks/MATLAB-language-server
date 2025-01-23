@@ -58,7 +58,7 @@ export async function launchNewMatlab (matlabLifecycleManager: MatlabLifecycleMa
             NotificationService.sendNotification(Notification.LicensingServerUrl, url)
             NotificationService.sendNotification(Notification.LicensingData, licensing.getMinimalLicensingInfo())
 
-            return new Promise<MatlabSession>((resolve) => {
+            return await new Promise<MatlabSession>((resolve) => {
                 // Setup a onetime event listener for starting matlab session with licensing environment variables.
                 // The 'StartLicensedMatlab' event will be fired by the licensing server after licensing is successful.
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -88,7 +88,8 @@ export async function launchNewMatlab (matlabLifecycleManager: MatlabLifecycleMa
  * @throws Will reject the promise if there is an error in launching MATLAB or establishing the connection.
  */
 async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Promise<MatlabSession> {
-    return new Promise<MatlabSession>(async (resolve, reject) => {
+    // eslint-disable-next-line no-async-promise-executor
+    return await new Promise<MatlabSession>(async (resolve, reject) => {
         // Setup file watch for MATLAB starting
         const outFile = path.join(Logger.logDir, 'matlabls_conn.json')
         const matlabSession = new LocalMatlabSession()

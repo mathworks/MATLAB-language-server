@@ -17,7 +17,7 @@ import { deleteFile, writeJSONDataToFile } from '../../utils/FsUtils';
 import { isPortFree } from '../../utils/NetworkUtils';
 
 let server: HttpServer | express.Express | null = null; let port: number | null = null;
-let licensingUrlFilePath : string = path.join(os.tmpdir(), "url.json")
+const licensingUrlFilePath: string = path.join(os.tmpdir(), 'url.json')
 
 export let matlabLifecycleManager: MatlabLifecycleManager;
 /**
@@ -33,17 +33,17 @@ export let url: string | null = null;
  */
 export async function startLicensingServer (buildPath: string, mLM: MatlabLifecycleManager): Promise<string> {
     if (url !== null) {
-        return url; 
+        return url;
     }
 
-    // If in a codespaces environment, getExistingUrl() will return 
+    // If in a codespaces environment, getExistingUrl() will return
     // a previously started licensing server in the event of a page reload.
     const existingUrl = await getExistingUrl()
-    if(existingUrl) {
+    if (existingUrl !== '') {
         url = existingUrl
         return url
     }
-    
+
     matlabLifecycleManager = mLM;
 
     server = express()
@@ -63,7 +63,7 @@ export async function startLicensingServer (buildPath: string, mLM: MatlabLifecy
     url = `http://localhost:${port}/index.html?${MWI_AUTH_TOKEN_NAME_FOR_HTTP}=${authToken}`
 
     // Write url to file for handling new server start on page reload.
-    writeJSONDataToFile(licensingUrlFilePath, {url: url})    
+    void writeJSONDataToFile(licensingUrlFilePath, { url })
 
     return url
 }
@@ -77,7 +77,7 @@ export function stopLicensingServer (): void {
             console.log('Server stopped successfully');
         });
 
-        deleteFile(licensingUrlFilePath).then(() => {})
+        void deleteFile(licensingUrlFilePath).then(() => {})
     }
 }
 
@@ -86,18 +86,16 @@ export function stopLicensingServer (): void {
 
  * @returns {Promise<string>} A promise resolving to the URL string if the port is occupied, or an empty string otherwise.
  */
-async function getExistingUrl() : Promise<string> {
-    if(fs.existsSync(licensingUrlFilePath)){
+async function getExistingUrl (): Promise<string> {
+    if (fs.existsSync(licensingUrlFilePath)) {
         const data = JSON.parse(fs.readFileSync(licensingUrlFilePath, 'utf8'))
         const serverUrl = new URL(data.url)
 
-        if(await isPortFree(Number(serverUrl.port))){
-            return ''   
+        if (await isPortFree(Number(serverUrl.port))) {
+            return ''
         } else {
             return serverUrl.toString();
         }
-
     }
     return ''
 }
-

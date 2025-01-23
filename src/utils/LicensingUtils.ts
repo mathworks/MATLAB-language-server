@@ -112,7 +112,7 @@ export async function setupLicensingNotificationListenersAndUpdateClient (matlab
             async () => {
                 Logger.log('Received notification to delete licensing from the extension')
                 await licensing.unsetLicensing()
-                // Update language client 
+                // Update language client
                 NotificationService.sendNotification(Notification.LicensingData, licensing.getMinimalLicensingInfo())
             }
         )
@@ -121,7 +121,7 @@ export async function setupLicensingNotificationListenersAndUpdateClient (matlab
     if (licensingServerUrlNotificationListener == null) {
         licensingServerUrlNotificationListener = NotificationService.registerNotificationListener(
             Notification.LicensingServerUrl,
-            async () => {                
+            async () => {
                 const url = await startLicensingServer(staticFolderPath, mLM);
                 Logger.log(`Received Notification requesting for licensing server url: ${url}`)
                 // Update language client
@@ -173,15 +173,15 @@ export function handleInstallPathSettingChanged (configuration: Settings): void 
     const licensing = new Licensing()
 
     // Entitlements are based on the MATLAB version
-    // As installPath is changed, we need to update the entitlements using the 
+    // As installPath is changed, we need to update the entitlements using the
     // new MATLAB version.
-    if(licensing.isMHLMLicensing()){
+    if (licensing.isMHLMLicensing()) {
         licensing.updateAndPersistLicensing().then(isSuccessful => {
-            if(isSuccessful){
-                Logger.log("Successfully updated entitlements using the new MATLAB version")
-            }  else {
-                Logger.log("Failed to update entitlements using the new MATLAB version")
+            if (isSuccessful) {
+                Logger.log('Successfully updated entitlements using the new MATLAB version')
+            } else {
+                Logger.log('Failed to update entitlements using the new MATLAB version')
             }
-        })
+        }, () => {})
     }
 }

@@ -25,7 +25,7 @@ async function createStatusResponse (licensing: Licensing): Promise<CreateStatus
             matlab: {
                 version
             },
-            wsEnv: "",
+            wsEnv: '',
             error: marshalErrorInfo((tokenAuthError != null) ? tokenAuthError : licensing.error),
             warnings: [],
             licensing: marshalLicensingInfo(licensing.data)
