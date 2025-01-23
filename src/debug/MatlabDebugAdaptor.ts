@@ -60,19 +60,23 @@ const isError = function <T> (value: T | MVMError): boolean {
 
 export default class MatlabDebugAdaptor {
     static _nextId = 1;
-    private _debugServices: DebugServices;
-    private _mvm: IMVM;
+    private readonly _debugServices: DebugServices;
+    private readonly _mvm: IMVM;
 
     private _numberOfStackFrames: number = -1;
+    private _currentMATLABFrame: number = -1;
+    private _pendingStackPromise?: ResolvablePromise<void>;
+    private _followUpStackRequested: boolean = false;
+    private readonly _ignoreWorkspaceUpdates: boolean = false;
 
     private _pendingSetBreakpointPromise?: ResolvablePromise<void>;
-    private _pendingVariablesPromise?: ResolvablePromise<void>;
+    private _pendingTemporaryStackChangePromise?: ResolvablePromise<void>;
 
     private _breakpointChangeListeners: Array<(type: BreakpointChangeType, bp: BreakpointInfo) => void> = [];
 
     private _matlabBreakpoints: BreakpointInfo[] = [];
 
-    private _canonicalizedPathCache: Map<string, ResolvablePromise<string>> = new Map();
+    private readonly _canonicalizedPathCache: Map<string, ResolvablePromise<string>> = new Map();
 
     private _isCurrentlyStopped: boolean = false;
     protected _isCurrentlyDebugging: boolean = false;
@@ -84,7 +88,7 @@ export default class MatlabDebugAdaptor {
         this._debugServices = debugServices;
 
         this._pendingSetBreakpointPromise = undefined;
-        this._pendingVariablesPromise = undefined;
+        this._pendingTemporaryStackChangePromise = undefined;
 
         this._mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
             if (state === MatlabState.DISCONNECTED) {
@@ -203,11 +207,15 @@ export default class MatlabDebugAdaptor {
         this._pendingSetBreakpointPromise = createResolvablePromise();
     }
 
-    private async _waitForPendingVariablesRequest (): Promise<void> {
-        while (this._pendingVariablesPromise !== undefined) {
-            await this._pendingVariablesPromise;
+    private async _waitForPendingStackChanges (createNewPendingChange: boolean = true): Promise<void> {
+        while (this._pendingTemporaryStackChangePromise !== undefined) {
+            await this._pendingTemporaryStackChangePromise;
         }
-        this._pendingVariablesPromise = createResolvablePromise();
+        this._pendingTemporaryStackChangePromise = undefined;
+
+        if (createNewPendingChange) {
+            this._pendingTemporaryStackChangePromise = createResolvablePromise();
+        }
     }
 
     private _clearPendingBreakpointsRequest (): void {
@@ -216,9 +224,9 @@ export default class MatlabDebugAdaptor {
         oldPromise?.resolve();
     }
 
-    private _clearPendingVariablesRequest (): void {
-        const oldPromise = this._pendingVariablesPromise;
-        this._pendingVariablesPromise = undefined;
+    private _clearPendingStackChanges (): void {
+        const oldPromise = this._pendingTemporaryStackChangePromise;
+        this._pendingTemporaryStackChangePromise = undefined;
         oldPromise?.resolve();
     }
 
@@ -280,7 +288,31 @@ export default class MatlabDebugAdaptor {
                 this._handleDebuggingStateChange();
             }
 
+            this._currentMATLABFrame = stack.length;
+
+            void this._requestStackUpdate();
+
             this.sendEvent(new debug.StoppedEvent('breakpoint', 0));
+        });
+
+        this._debugServices.on(DebugServices.Events.DBStop, async (filename: string, lineNumber: number, stack: MatlabData[]) => {
+            this._isCurrentlyStopped = true;
+
+            const oldValue = this._isCurrentlyDebugging;
+            this._isCurrentlyDebugging = true;
+            if (oldValue !== this._isCurrentlyDebugging) {
+                this._handleDebuggingStateChange();
+            }
+
+            this._currentMATLABFrame = stack.length;
+
+            this.sendEvent(new debug.StoppedEvent('breakpoint', 0));
+        });
+
+        this._debugServices.on(DebugServices.Events.DBWorkspaceChanged, () => {
+            if (!this._ignoreWorkspaceUpdates) {
+                void this._requestStackUpdate();
+            }
         });
     }
 
@@ -527,7 +559,6 @@ export default class MatlabDebugAdaptor {
                 const size = stack.mwsize[0];
                 const newStack = [];
                 for (let i = 0; i < size; i++) {
-                    
                     newStack.push(new debug.StackFrame(size - i + 1, stack.mwdata.name[i], new debug.Source(stack.mwdata.name[i], stack.mwdata.file[i]), Math.abs(stack.mwdata.line[i]), 1))
                 }
                 return newStack;
@@ -630,7 +661,6 @@ export default class MatlabDebugAdaptor {
     }
 
     async evaluateRequest (response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, request?: DebugProtocol.Request): Promise<void> {
-
         let stackChanger;
         try {
             stackChanger = await this._moveToFrame(args.frameId);
@@ -653,7 +683,7 @@ export default class MatlabDebugAdaptor {
             maybeResult = await this._mvm.feval<MatlabData>('evalc', 1, ["try, datatipinfo('" + args.expression + "'), catch, disp('Error evaluating expression'); end"]);
         }
 
-        await this._mvm.feval('feature', 0, ['HotLinks', ((oldHotlinks as any)?.result?.[0] ?? true)]);
+        await this._mvm.feval('feature', 0, ['HotLinks', ((oldHotlinks as MatlabData)?.result?.[0] ?? true)]);
 
         if (stackChanger !== null) {
             try {
@@ -679,8 +709,8 @@ export default class MatlabDebugAdaptor {
             this.sendResponse(response);
             return;
         }
-        response.body = { 
-            result: result,
+        response.body = {
+            result,
             variablesReference: 0
         };
         response.body.type = 'string';
@@ -700,20 +730,24 @@ export default class MatlabDebugAdaptor {
     protected customRequest (command: string, response: DebugProtocol.Response, args: any, request?: DebugProtocol.Request): void {
         if (command === 'cacheFilePath') {
             this._getCanonicalPath(args.fileName).then(() => { }, () => { });
+        } else if (command === 'StackChange') {
+            void this._requestStackChange(args.frame);
         }
         this.sendResponse(response);
     }
 
     private _cleanup (): void {
         this._numberOfStackFrames = -1;
-        if (this._pendingSetBreakpointPromise != null) {
-            this._pendingSetBreakpointPromise.reject();
-            this._pendingSetBreakpointPromise = undefined;
-        }
-        if (this._pendingVariablesPromise != null) {
-            this._pendingVariablesPromise.reject();
-            this._pendingVariablesPromise = undefined;
-        }
+
+        this._pendingStackPromise?.reject();
+        this._pendingStackPromise = undefined;
+        this._followUpStackRequested = false;
+
+        this._pendingSetBreakpointPromise?.reject();
+        this._pendingSetBreakpointPromise = undefined;
+        this._pendingTemporaryStackChangePromise?.reject();
+        this._pendingTemporaryStackChangePromise = undefined;
+
         this._breakpointChangeListeners = [];
     }
 
@@ -730,12 +764,18 @@ export default class MatlabDebugAdaptor {
         }
 
         try {
-            await this._waitForPendingVariablesRequest();
+            await this._waitForPendingStackChanges();
         } catch (e) {
             return null;
         }
 
-        const dbAmount = this._numberOfStackFrames - frameId;
+        try {
+            await this._waitForStack();
+        } catch (e) {
+            return null;
+        }
+
+        const dbAmount = (this._numberOfStackFrames - this._currentMATLABFrame + 1) - frameId;
         if (dbAmount !== 0) {
             try {
                 if (dbAmount > 0) {
@@ -744,14 +784,20 @@ export default class MatlabDebugAdaptor {
                     await this._mvm.feval<undefined>('dbdown', 0, [-dbAmount]);
                 }
             } catch (e) {
-                this._clearPendingVariablesRequest();
+                this._clearPendingStackChanges();
                 throw e;
             }
         }
 
         return {
             revert: async () => {
-                const dbAmount = this._numberOfStackFrames - frameId;
+                try {
+                    await this._waitForStack();
+                } catch (e) {
+                    return
+                }
+
+                const dbAmount = (this._numberOfStackFrames - this._currentMATLABFrame + 1) - frameId;
                 if (dbAmount !== 0) {
                     try {
                         if (dbAmount > 0) {
@@ -760,14 +806,86 @@ export default class MatlabDebugAdaptor {
                             await this._mvm.feval<undefined>('dbup', 0, [-dbAmount]);
                         }
                     } catch (e) {
-                        this._clearPendingVariablesRequest();
+                        this._clearPendingStackChanges();
                         return;
                     }
                 }
 
-                this._clearPendingVariablesRequest();
+                this._clearPendingStackChanges();
             }
         };
+    }
+
+    private async _requestStackChange (frameId: number): Promise<void> {
+        if (frameId === undefined) {
+            return;
+        }
+
+        try {
+            await this._waitForPendingStackChanges();
+        } catch (e) {
+            return;
+        }
+
+        try {
+            await this._waitForStack();
+        } catch (e) {
+            return;
+        }
+
+        const dbAmount = (this._numberOfStackFrames - this._currentMATLABFrame + 1) - frameId;
+        if (dbAmount !== 0) {
+            try {
+                if (dbAmount > 0) {
+                    await this._mvm.feval<undefined>('dbup', 0, [dbAmount]);
+                } else {
+                    await this._mvm.feval<undefined>('dbdown', 0, [-dbAmount]);
+                }
+            } catch (e) {
+            }
+        }
+
+        this._clearPendingStackChanges();
+    }
+
+    private async _waitForStack (): Promise<void> {
+        if (this._pendingStackPromise != null) {
+            await this._pendingStackPromise;
+        }
+    }
+
+    private _requestStackUpdate (): Promise<void> {
+        if (this._pendingStackPromise != null) {
+            this._followUpStackRequested = true;
+            return this._pendingStackPromise;
+        }
+
+        this._pendingStackPromise = createResolvablePromise();
+
+        const requestStackHelper = (): void => {
+            this._mvm.feval('dbstack', 2, []).then((maybeResult: MatlabData) => {
+                if (isError(maybeResult)) {
+                    console.error(maybeResult.error);
+                    return;
+                }
+                const result = maybeResult.result;
+                this._currentMATLABFrame = result[1];
+
+                if (this._followUpStackRequested) {
+                    this._followUpStackRequested = false;
+                    requestStackHelper();
+                } else {
+                    this._pendingStackPromise?.resolve();
+                    this._pendingStackPromise = undefined;
+                }
+            }, (err: MatlabData) => {
+                console.error(err);
+            });
+        }
+
+        requestStackHelper();
+
+        return this._pendingStackPromise;
     }
 
     private async _getCanonicalPath (path: string): Promise<string> {

@@ -59,7 +59,7 @@ function isAuthTokenInRequestParams (req: Request): boolean {
  */
 export function generateAuthToken (length: number): ValidAuthToken {
     if (isValidToken(authToken)) {
-        return authToken!;
+        return authToken as string;
     }
 
     authToken = crypto.randomBytes(length).toString('base64')

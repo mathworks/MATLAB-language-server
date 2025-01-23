@@ -110,6 +110,7 @@ export default class Indexer {
     private async getCodeData (code: string, uri: string, matlabConnection: MatlabConnection): Promise<RawCodeData> {
         const filePath = URI.parse(uri).fsPath
 
+        // eslint-disable-next-line no-async-promise-executor
         return await new Promise(async resolve => {
             const channelId = matlabConnection.getChannelId()
             const channel = `${this.INDEX_DOCUMENT_RESPONSE_CHANNEL}/${channelId}`

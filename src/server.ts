@@ -30,6 +30,7 @@ import MVMServer from './mvm/MVMServer'
 import { stopLicensingServer } from './licensing/server'
 import { setInstallPath } from './licensing/config'
 import { handleInstallPathSettingChanged, handleSignInChanged, setupLicensingNotificationListenersAndUpdateClient } from './utils/LicensingUtils'
+import PathSynchronizer from './lifecycle/PathSynchronizer'
 
 export async function startServer (): Promise<void> {
     cacheAndClearProxyEnvironmentVariables()
@@ -55,6 +56,8 @@ export async function startServer (): Promise<void> {
     const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager)
     const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, indexer, documentIndexer, pathResolver)
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer)
+
+    let pathSynchronizer: PathSynchronizer | null
 
     // Create basic text document manager
     const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
@@ -145,6 +148,12 @@ export async function startServer (): Promise<void> {
         }
 
         workspaceIndexer.setupCallbacks(capabilities)
+
+        if (capabilities.workspace?.workspaceFolders != null) {
+            // If workspace folders are supported, try to synchronize the MATLAB path with the user's workspace.
+            pathSynchronizer = new PathSynchronizer(matlabLifecycleManager)
+            pathSynchronizer.initialize()
+        }
 
         mvm = new MVM(matlabLifecycleManager);
         mvmServer = new MVMServer(mvm, NotificationService);

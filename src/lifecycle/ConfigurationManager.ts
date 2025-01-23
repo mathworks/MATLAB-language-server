@@ -64,7 +64,7 @@ class ConfigurationManager {
     private hasConfigurationCapability = false
 
     // Map to keep track of callbacks to execute when a specific setting changes
-    private settingChangeCallbacks: Map<SettingName, (configuration: Settings) => void> = new Map();
+    private readonly settingChangeCallbacks: Map<SettingName, (configuration: Settings) => void> = new Map();
 
     constructor () {
         const cliArgs = getCliArgs()

@@ -25,7 +25,7 @@ interface TaggedData {
 }
 
 export default class MatlabDebugAdaptorServer extends MatlabDebugAdaptor {
-    private _notifier: typeof NotificationService;
+    private readonly _notifier: typeof NotificationService;
 
     constructor (mvm: IMVM, debugServices: DebugServices) {
         super(mvm, debugServices);

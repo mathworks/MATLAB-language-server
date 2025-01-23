@@ -107,7 +107,6 @@ function getIdentifierAtPosition (textDocument: TextDocument, position: Position
             break
         }
 
-        
         if (startChar + matchResults[0].length >= position.character) {
             // Found overlapping identifier
             result.identifier = matchResults[0]

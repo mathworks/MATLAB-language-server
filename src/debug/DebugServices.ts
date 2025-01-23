@@ -1,4 +1,4 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import { IMVM } from '../mvm/impl/MVM'
 import EventEmitter from 'events';
@@ -78,7 +78,7 @@ enum Events {
 
 export class DebugServices extends EventEmitter {
     static Events = Events;
-    private _mvm: IMVM;
+    private readonly _mvm: IMVM;
 
     constructor (mvm: IMVM) {
         super();
@@ -93,10 +93,9 @@ export class DebugServices extends EventEmitter {
         this._mvm.on('ContinueExecutionEvent', (data: MatlabData) => {
             this.emit(DebugServices.Events.DBCont);
         });
-        this._mvm.on('ChangeCurrentWorkspace', (data: MatlabData) => {
+        this._mvm.on('ChangeCurrentWorkspaceEvent', (data: MatlabData) => {
             this.emit(DebugServices.Events.DBWorkspaceChanged);
         });
-
         this._mvm.on('AddLineNumberBreakpointEvent', (data: MatlabData) => {
             this.emit(DebugServices.Events.BreakpointAdded, new BreakpointInfo(data.Filespec, data.LineNumber, data.Condition, data.whichAnonymousFunctionOnCurrentLine));
         });

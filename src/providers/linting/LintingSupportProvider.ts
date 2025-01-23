@@ -93,11 +93,11 @@ class LintingSupportProvider {
         const isMatlabAvailable = matlabConnection != null
 
         const isMFile = this.isMFile(uri)
-        const fileName = isMFile ? URI.parse(uri).fsPath : "untitled.m"
+        const fileName = isMFile ? URI.parse(uri).fsPath : 'untitled.m'
 
         let lintData: string[] = []
         const code = textDocument.getText()
-        
+
         const analysisLimit = (await ConfigurationManager.getConfiguration()).maxFileSizeForAnalysis
         if (analysisLimit > 0 && code.length > analysisLimit) {
             this.clearDiagnosticsForDocument(textDocument) // Clear document to handle setting changing value
@@ -542,8 +542,8 @@ class LintingSupportProvider {
      * @param uri - The URI of the file to check.
      * @returns True if the file is a MATLAB M-file (.m), false otherwise.
      */
-    private isMFile(uri: string): boolean {
-        return URI.parse(uri).fsPath.endsWith(".m")
+    private isMFile (uri: string): boolean {
+        return URI.parse(uri).fsPath.endsWith('.m')
     }
 }
 

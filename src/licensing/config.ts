@@ -34,7 +34,7 @@ export function setInstallPath (path: string): void {
     // When installPath changes, update MATLAB version
     getMatlabVersionFromInstallPath(installPath).then((version) => {
         matlabVersion = version;
-    });
+    }, () => {});
 }
 
 /**
@@ -53,12 +53,12 @@ export function setMatlabVersion (version: string): void {
  */
 export async function getMatlabVersion (): Promise<string | null> {
     // If MATLAB version was already determined (either by this function or the setInstallPath function), return it directly.
-    if (matlabVersion) {
+    if (matlabVersion !== null) {
         return matlabVersion
     } else {
         const matlabExecutableOnPath = await findExecutableOnPath('matlab')
         // If there's no matlab executable on system PATH return null
-        if (!matlabExecutableOnPath) {
+        if (matlabExecutableOnPath === null) {
             return null;
         }
 
@@ -77,7 +77,7 @@ export async function getMatlabVersion (): Promise<string | null> {
  * @param pathToMatlabRoot - The path to the MATLAB ROOT.
  * @returns {Promise<string|null>} A promise that resolves to the MATLAB version as a string, or null if an error occurs.
  */
-async function getMatlabVersionFromInstallPath (pathToMatlabRoot: string) {
+async function getMatlabVersionFromInstallPath (pathToMatlabRoot: string): Promise<string | null> {
     const versionInfoPath = path.join(pathToMatlabRoot, VERSION_INFO_FILENAME);
 
     try {
@@ -86,7 +86,7 @@ async function getMatlabVersionFromInstallPath (pathToMatlabRoot: string) {
         const versionInfo = xmlData.MathWorks_version_info.release[0]
         return versionInfo
     } catch (error) {
-        Logger.error(`Failed to read version info file at path:${versionInfoPath} with error:${error}`)
+        Logger.error(`Failed to read version info file at path:${versionInfoPath} with error:${error as string}`)
         return null;
     }
 }

@@ -350,11 +350,11 @@ class CompletionSupportProvider {
 
     /**
      * Filters out the snippet choices from the list of choices based on the configured snippet ignore list.
-     * 
+     *
      * @param choices The list of completion choices to filter
      * @returns The list of completion choices with snippet choices filtered out based on the configured snippet ignore list
      */
-    private filterSnippetChoices(choices: MCompletionChoice[]): MCompletionChoice[] {
+    private filterSnippetChoices (choices: MCompletionChoice[]): MCompletionChoice[] {
         // Get the snippet ignore list from the configuration manager
         const snippetIgnoreList = ConfigurationManager.getArgument(Argument.SnippetIgnoreList).split(';');
         return choices.filter(choice => {
