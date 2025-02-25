@@ -1,16 +1,14 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import { FoldingRangeParams, TextDocuments, FoldingRange } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { URI } from 'vscode-uri'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
-import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
+import MVM from '../../mvm/impl/MVM'
+import Logger from '../../logging/Logger'
+import parse from '../../mvm/MdaParser'
 
 class FoldingSupportProvider {
-    private readonly REQUEST_CHANNEL = '/matlabls/foldDocument/request'
-    private readonly RESPONSE_CHANNEL = '/matlabls/foldDocument/response'
-
-    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager, private readonly mvm: MVM) {}
 
     async handleFoldingRangeRequest (params: FoldingRangeParams, documentManager: TextDocuments<TextDocument>): Promise<FoldingRange[] | null> {
         const docToFold = documentManager.get(params.textDocument.uri)
@@ -18,19 +16,17 @@ class FoldingSupportProvider {
             return null
         }
 
-        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
-        const isMatlabAvailable = (matlabConnection != null)
+        const isConnected = this.mvm.isReady()
         const matlabRelease = this.matlabLifecycleManager.getMatlabRelease()
 
         // check for connection and release
-        if (!isMatlabAvailable || (matlabRelease == null) || (matlabRelease < 'R2024b')) {
+        if (!isConnected || (matlabRelease == null) || (matlabRelease < 'R2024b')) {
             return null
         }
 
-        const fileName = URI.parse(docToFold.uri).fsPath
         const code = docToFold.getText()
 
-        const frArray = await this.getFoldingRangesFromMatlab(code, fileName, matlabConnection)
+        const frArray = await this.getFoldingRangesFromMatlab(code)
 
         const foldingRanges = this.processFoldingRanges(frArray)
 
@@ -45,21 +41,27 @@ class FoldingSupportProvider {
      * @param matlabConnection The connection to MATLAB
      * @returns An array of line numbers
      */
-    private async getFoldingRangesFromMatlab (code: string, fileName: string, matlabConnection: MatlabConnection): Promise<number[]> {
-        return await new Promise<number[]>(resolve => {
-            const channelId = matlabConnection.getChannelId()
-            const channel = `${this.RESPONSE_CHANNEL}/${channelId}`
-            const responseSub = matlabConnection.subscribe(channel, message => {
-                matlabConnection.unsubscribe(responseSub)
-                resolve(message as number[])
-            })
+    private async getFoldingRangesFromMatlab (code: string): Promise<number[]> {
+        try {
+            const response = await this.mvm.feval(
+                'matlabls.handlers.folding.getFoldingRanges',
+                1,
+                [code]
+            )
 
-            matlabConnection.publish(this.REQUEST_CHANNEL, {
-                code,
-                fileName,
-                channelId
-            })
-        })
+            if ('error' in response) {
+                // Handle MVMError
+                Logger.error('Error received while retrieving folding ranges:')
+                Logger.error(response.error.msg)
+                return []
+            }
+
+            return parse(response.result[0]) as number[]
+        } catch (err) {
+            Logger.error('Error caught while retrieving folding ranges:')
+            Logger.error(err as string)
+            return []
+        }
     }
 
     /**

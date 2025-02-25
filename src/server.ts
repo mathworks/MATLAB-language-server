@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { ClientCapabilities, InitializeParams, InitializeResult, TextDocuments } from 'vscode-languageserver/node'
@@ -15,7 +15,7 @@ import LintingSupportProvider from './providers/linting/LintingSupportProvider'
 import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommands/ExecuteCommandProvider'
 import NavigationSupportProvider from './providers/navigation/NavigationSupportProvider'
 import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
-import MVM from './mvm/impl/MVM'
+import MVM, { IMVM, MatlabState } from './mvm/impl/MVM'
 import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
 import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
@@ -42,18 +42,24 @@ export async function startServer (): Promise<void> {
     Logger.initialize(connection.console)
 
     // Instantiate services
-    const pathResolver = new PathResolver()
     const matlabLifecycleManager = new MatlabLifecycleManager()
 
-    const indexer = new Indexer(matlabLifecycleManager, pathResolver)
+    const mvm = new MVM(matlabLifecycleManager);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const mvmServer = new MVMServer(mvm, NotificationService);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const matlabDebugAdaptor = new MatlabDebugAdaptorServer(mvm, new DebugServices(mvm));
+
+    const pathResolver = new PathResolver(mvm)
+    const indexer = new Indexer(matlabLifecycleManager, mvm, pathResolver)
     const workspaceIndexer = new WorkspaceIndexer(indexer)
     const documentIndexer = new DocumentIndexer(indexer)
 
-    const formatSupportProvider = new FormatSupportProvider(matlabLifecycleManager)
-    const foldingSupportProvider = new FoldingSupportProvider(matlabLifecycleManager)
-    const lintingSupportProvider = new LintingSupportProvider(matlabLifecycleManager)
+    const formatSupportProvider = new FormatSupportProvider(matlabLifecycleManager, mvm)
+    const foldingSupportProvider = new FoldingSupportProvider(matlabLifecycleManager, mvm)
+    const lintingSupportProvider = new LintingSupportProvider(matlabLifecycleManager, mvm)
     const executeCommandProvider = new ExecuteCommandProvider(lintingSupportProvider)
-    const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager)
+    const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager, mvm)
     const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, indexer, documentIndexer, pathResolver)
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer)
 
@@ -62,28 +68,29 @@ export async function startServer (): Promise<void> {
     // Create basic text document manager
     const documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 
-    let mvm: MVM | null
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let mvmServer: MVMServer | null
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let matlabDebugAdaptor: MatlabDebugAdaptorServer | null
     let hasMatlabBeenRequested: boolean = false
 
     matlabLifecycleManager.eventEmitter.on('connected', () => {
         // Handle things after MATLAB® has launched
 
         hasMatlabBeenRequested = false
+    })
 
-        // Initiate workspace indexing
-        void workspaceIndexer.indexWorkspace()
+    mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
+        if (state === MatlabState.READY) {
+            // Handle when the MVM has connected
 
-        documentManager.all().forEach(textDocument => {
-            // Lint the open documents
-            void lintingSupportProvider.lintDocument(textDocument)
+            // Initiate workspace indexing
+            void workspaceIndexer.indexWorkspace()
 
-            // Index the open document
-            void documentIndexer.indexDocument(textDocument)
-        })
+            documentManager.all().forEach(textDocument => {
+                // Lint the open documents
+                void lintingSupportProvider.lintDocument(textDocument)
+
+                // Index the open document
+                void documentIndexer.indexDocument(textDocument)
+            })
+        }
     })
 
     let capabilities: ClientCapabilities
@@ -151,13 +158,9 @@ export async function startServer (): Promise<void> {
 
         if (capabilities.workspace?.workspaceFolders != null) {
             // If workspace folders are supported, try to synchronize the MATLAB path with the user's workspace.
-            pathSynchronizer = new PathSynchronizer(matlabLifecycleManager)
+            pathSynchronizer = new PathSynchronizer(matlabLifecycleManager, mvm)
             pathSynchronizer.initialize()
         }
-
-        mvm = new MVM(matlabLifecycleManager);
-        mvmServer = new MVMServer(mvm, NotificationService);
-        matlabDebugAdaptor = new MatlabDebugAdaptorServer(mvm, new DebugServices(mvm));
 
         void startMatlabIfOnStartLaunch()
     })

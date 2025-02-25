@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { DefinitionParams, DocumentSymbolParams, Location, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -56,7 +56,7 @@ class NavigationSupportProvider {
         }
 
         if (requestType === RequestType.Definition) {
-            return await SymbolSearchService.findDefinition(uri, params.position, expression, matlabConnection, this.pathResolver, this.indexer)
+            return await SymbolSearchService.findDefinition(uri, params.position, expression, this.pathResolver, this.indexer)
         } else {
             return SymbolSearchService.findReferences(uri, params.position, expression, documentManager, requestType)
         }

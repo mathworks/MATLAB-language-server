@@ -1,11 +1,10 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { execFile, ExecFileException } from 'child_process'
 import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentEdit, TextEdit, VersionedTextDocumentIdentifier, WorkspaceEdit } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import ConfigurationManager from '../../lifecycle/ConfigurationManager'
-import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Logger from '../../logging/Logger'
 import * as fs from 'fs/promises'
@@ -13,16 +12,10 @@ import * as path from 'path'
 import which = require('which')
 import { MatlabLSCommands } from '../lspCommands/ExecuteCommandProvider'
 import ClientConnection from '../../ClientConnection'
+import MVM from '../../mvm/impl/MVM'
+import parse from '../../mvm/MdaParser'
 
 type mlintSeverity = '0' | '1' | '2' | '3' | '4'
-
-interface RawLintResults {
-    lintData: string[]
-}
-
-interface DiagnosticSuppressionResults {
-    suppressionEdits: TextEdit[]
-}
 
 const LINT_DELAY = 500 // Delay (in ms) after keystroke before attempting to lint the document
 
@@ -41,12 +34,6 @@ const FIX_CHANGE_REGEX = /----CHANGE MESSAGE L (\d+) \(C (\d+)\);\s+L (\d+) \(C 
  * the file is saved and suppressing warnings is not available.
  */
 class LintingSupportProvider {
-    private readonly LINTING_REQUEST_CHANNEL = '/matlabls/linting/request'
-    private readonly LINTING_RESPONSE_CHANNEL = '/matlabls/linting/response'
-
-    private readonly SUPPRESS_DIAGNOSTIC_REQUEST_CHANNEL = '/matlabls/linting/suppressdiagnostic/request'
-    private readonly SUPPRESS_DIAGNOSTIC_RESPONSE_CHANNEL = '/matlabls/linting/suppressdiagnostic/response'
-
     private readonly SEVERITY_MAP = {
         0: DiagnosticSeverity.Information,
         1: DiagnosticSeverity.Warning,
@@ -58,7 +45,7 @@ class LintingSupportProvider {
     private readonly _pendingFilesToLint = new Map<string, NodeJS.Timeout>()
     private readonly _availableCodeActions = new Map<string, CodeAction[]>()
 
-    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager, private readonly mvm: MVM) {}
 
     /**
      * Queues a document to be linted. This handles debouncing so
@@ -106,7 +93,7 @@ class LintingSupportProvider {
 
         if (isMatlabAvailable) {
             // Use MATLAB-based linting for better results and fixes
-            lintData = await this.getLintResultsFromMatlab(code, fileName, matlabConnection)
+            lintData = await this.getLintResultsFromMatlab(code, fileName)
         } else if (isMFile) {
             // Try to use mlint executable for basic linting
             lintData = await this.getLintResultsFromExecutable(fileName)
@@ -208,40 +195,44 @@ class LintingSupportProvider {
      * @param shouldSuppressThroughoutFile Whether or not to suppress the diagnostic throughout the entire file
      */
     async suppressDiagnostic (textDocument: TextDocument, range: Range, id: string, shouldSuppressThroughoutFile: boolean): Promise<void> {
-        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
-        if (matlabConnection == null) {
+        if (!this.mvm.isReady()) {
+            // MVM not yet ready
             return
         }
 
-        const channelId = matlabConnection.getChannelId()
-        const channel = `${this.SUPPRESS_DIAGNOSTIC_RESPONSE_CHANNEL}/${channelId}`
-        const responseSub = matlabConnection.subscribe(channel, message => {
-            matlabConnection.unsubscribe(responseSub)
+        try {
+            const response = await this.mvm.feval(
+                'matlabls.handlers.linting.getSuppressionEdits',
+                1,
+                [textDocument.getText(), id, range.start.line + 1, shouldSuppressThroughoutFile]
+            )
 
-            const suppressionEdits: TextEdit[] = (message as DiagnosticSuppressionResults).suppressionEdits
+            if ('error' in response) {
+                // Handle MVMError
+                Logger.error('Error received while retrieving diagnostic suppression edits:')
+                Logger.error(response.error.msg)
+                return
+            }
 
-            const edit: WorkspaceEdit = {
+            const edits = parse(response.result[0]) as TextEdit[]
+
+            const wsEdit: WorkspaceEdit = {
                 changes: {
-                    [textDocument.uri]: suppressionEdits
+                    [textDocument.uri]: edits
                 },
                 documentChanges: [
                     TextDocumentEdit.create(
                         VersionedTextDocumentIdentifier.create(textDocument.uri, textDocument.version),
-                        suppressionEdits
+                        edits
                     )
                 ]
             }
 
-            void ClientConnection.getConnection().workspace.applyEdit(edit)
-        })
-
-        matlabConnection.publish(this.SUPPRESS_DIAGNOSTIC_REQUEST_CHANNEL, {
-            code: textDocument.getText(),
-            diagnosticId: id,
-            line: range.start.line + 1,
-            suppressInFile: shouldSuppressThroughoutFile,
-            channelId
-        })
+            void ClientConnection.getConnection().workspace.applyEdit(wsEdit)
+        } catch (err) {
+            Logger.error('Error caught while retrieving diagnostic suppression edits:')
+            Logger.error(err as string)
+        }
     }
 
     /**
@@ -274,22 +265,33 @@ class LintingSupportProvider {
      * @param matlabConnection The connection to MATLAB
      * @returns Raw lint data for the code
      */
-    private async getLintResultsFromMatlab (code: string, fileName: string, matlabConnection: MatlabConnection): Promise<string[]> {
-        return await new Promise<string[]>(resolve => {
-            const channelId = matlabConnection.getChannelId()
-            const channel = `${this.LINTING_RESPONSE_CHANNEL}/${channelId}`
-            const responseSub = matlabConnection.subscribe(channel, message => {
-                matlabConnection.unsubscribe(responseSub)
+    private async getLintResultsFromMatlab (code: string, fileName: string): Promise<string[]> {
+        if (code.length === 0 || !this.mvm.isReady()) {
+            // If no code in document or the MVM is not yet ready,
+            // return early with an empty lint result
+            return []
+        }
 
-                resolve((message as RawLintResults).lintData)
-            })
+        try {
+            const response = await this.mvm.feval(
+                'matlabls.handlers.linting.getLintData',
+                1,
+                [code, fileName]
+            )
 
-            matlabConnection.publish(this.LINTING_REQUEST_CHANNEL, {
-                code,
-                fileName,
-                channelId
-            })
-        })
+            if ('error' in response) {
+                // Handle MVMError
+                Logger.error('Error received while linting document:')
+                Logger.error(response.error.msg)
+                return []
+            }
+
+            return parse(response.result[0]) as string[]
+        } catch (err) {
+            Logger.error('Error caught while linting document:')
+            Logger.error(err as string)
+            return []
+        }
     }
 
     /**
