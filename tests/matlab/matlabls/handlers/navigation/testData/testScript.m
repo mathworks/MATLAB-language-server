@@ -1,0 +1,1 @@
+a = myHelperFunction(1);
