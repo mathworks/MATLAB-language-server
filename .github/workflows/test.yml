@@ -39,5 +39,7 @@ jobs:
       run: npm run compile
     - name: Run TypeScript Unit Tests
       run: npm test
+    - name: Set up MATLAB
+      uses: matlab-actions/setup-matlab@v2.2.0
     - name: Run MATLAB Unit Tests
       uses: matlab-actions/run-tests@v2.1.1
