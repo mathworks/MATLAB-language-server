@@ -1,4 +1,4 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import { Location, Position, TextDocuments, Range } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -6,7 +6,6 @@ import FileInfoIndex, { FunctionVisibility, MatlabClassMemberInfo, MatlabCodeDat
 import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils'
 import Expression from '../utils/ExpressionUtils'
 import { getTextOnLine } from '../utils/TextDocumentUtils'
-import { MatlabConnection } from '../lifecycle/MatlabCommunicationManager'
 import PathResolver from '../providers/navigation/PathResolver'
 import * as fs from 'fs/promises'
 import { URI } from 'vscode-uri'
@@ -207,7 +206,7 @@ class SymbolSearchService {
      * @param indexer The workspace indexer
      * @returns The definition location(s)
      */
-    async findDefinition (uri: string, position: Position, expression: Expression, matlabConnection: MatlabConnection, pathResolver: PathResolver, indexer: Indexer): Promise<Location[]> {
+    async findDefinition (uri: string, position: Position, expression: Expression, pathResolver: PathResolver, indexer: Indexer): Promise<Location[]> {
         // Get code data for current file
         const codeData = FileInfoIndex.codeDataCache.get(uri)
 
@@ -226,7 +225,7 @@ class SymbolSearchService {
         }
 
         // Check the MATLAB path
-        const definitionOnPath = await this.findDefinitionOnPath(uri, position, expression, matlabConnection, pathResolver, indexer)
+        const definitionOnPath = await this.findDefinitionOnPath(uri, position, expression, pathResolver, indexer)
 
         if (definitionOnPath != null) {
             reportTelemetry(RequestType.Definition)
@@ -313,11 +312,10 @@ class SymbolSearchService {
      * @param indexer The workspace indexer
      * @returns The definition location(s), or null if no definition was found
      */
-    private async findDefinitionOnPath (uri: string, position: Position, expression: Expression, matlabConnection: MatlabConnection, pathResolver: PathResolver, indexer: Indexer): Promise<Location[] | null> {
-        const resolvedPath = await pathResolver.resolvePaths([expression.targetExpression], uri, matlabConnection)
-        const resolvedUri = resolvedPath[0].uri
+    private async findDefinitionOnPath (uri: string, position: Position, expression: Expression, pathResolver: PathResolver, indexer: Indexer): Promise<Location[] | null> {
+        const resolvedUri = await pathResolver.resolvePath(expression.targetExpression, uri)
 
-        if (resolvedUri === '') {
+        if (resolvedUri === '' || resolvedUri === null) {
             // Not found
             return null
         }

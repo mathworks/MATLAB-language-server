@@ -1,4 +1,4 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2025 The MathWorks, Inc.
 
 import * as debug from '@vscode/debugadapter'
 import { DebugProtocol } from '@vscode/debugprotocol';
@@ -54,7 +54,8 @@ const mdaUnwrap = function (obj: MatlabData, property?: string, index?: number):
     }
 }
 
-const isError = function <T> (value: T | MVMError): boolean {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isError = function (value: MVMError | any): value is MVMError {
     return typeof (value) === 'object' && (value != null) && 'error' in value;
 }
 
@@ -607,7 +608,7 @@ export default class MatlabDebugAdaptor {
             return;
         }
 
-        const maybeVariableResult = await this._mvm.feval<MatlabData>('matlab.internal.datatoolsservices.getWorkspaceDisplay', 1, ['caller']);
+        const maybeVariableResult = await this._mvm.feval('matlab.internal.datatoolsservices.getWorkspaceDisplay', 1, ['caller']);
 
         if (stackChanger != null) {
             try {
@@ -672,18 +673,18 @@ export default class MatlabDebugAdaptor {
         let maybeResult;
         const oldHotlinks = await this._mvm.feval('feature', 1, ['HotLinks']);
         if (args.context === 'repl') {
-            maybeResult = await this._mvm.feval<string>('evalc', 1, ['try, feature(\'HotLinks\', 0); ' + args.expression + ', catch exceptionObj; try; showReport(exceptionObj), end; clear exceptionObj; end']);
+            maybeResult = await this._mvm.feval('evalc', 1, ['try, feature(\'HotLinks\', 0); ' + args.expression + ', catch exceptionObj; try; showReport(exceptionObj), end; clear exceptionObj; end']);
             if (this._hasShownReplWarning < 3) {
                 this.sendEvent(new debug.OutputEvent('For best results, evaluate expressions in the MATLAB Terminal.', 'console'));
                 this._hasShownReplWarning++;
             }
         } else if (args.context === 'watch') {
-            maybeResult = await this._mvm.feval<MatlabData>('evalc', 1, ['try, disp(' + args.expression + "), catch, disp('Error evaluating expression'); end"]);
+            maybeResult = await this._mvm.feval('evalc', 1, ['try, disp(' + args.expression + "), catch, disp('Error evaluating expression'); end"]);
         } else {
-            maybeResult = await this._mvm.feval<MatlabData>('evalc', 1, ["try, datatipinfo('" + args.expression + "'), catch, disp('Error evaluating expression'); end"]);
+            maybeResult = await this._mvm.feval('evalc', 1, ["try, datatipinfo('" + args.expression + "'), catch, disp('Error evaluating expression'); end"]);
         }
 
-        await this._mvm.feval('feature', 0, ['HotLinks', ((oldHotlinks as MatlabData)?.result?.[0] ?? true)]);
+        await this._mvm.feval('feature', 0, ['HotLinks', (oldHotlinks?.result?.[0] ?? true)]);
 
         if (stackChanger !== null) {
             try {
@@ -779,9 +780,9 @@ export default class MatlabDebugAdaptor {
         if (dbAmount !== 0) {
             try {
                 if (dbAmount > 0) {
-                    await this._mvm.feval<undefined>('dbup', 0, [dbAmount]);
+                    await this._mvm.feval('dbup', 0, [dbAmount]);
                 } else {
-                    await this._mvm.feval<undefined>('dbdown', 0, [-dbAmount]);
+                    await this._mvm.feval('dbdown', 0, [-dbAmount]);
                 }
             } catch (e) {
                 this._clearPendingStackChanges();
@@ -801,9 +802,9 @@ export default class MatlabDebugAdaptor {
                 if (dbAmount !== 0) {
                     try {
                         if (dbAmount > 0) {
-                            await this._mvm.feval<undefined>('dbdown', 0, [dbAmount]);
+                            await this._mvm.feval('dbdown', 0, [dbAmount]);
                         } else {
-                            await this._mvm.feval<undefined>('dbup', 0, [-dbAmount]);
+                            await this._mvm.feval('dbup', 0, [-dbAmount]);
                         }
                     } catch (e) {
                         this._clearPendingStackChanges();
@@ -837,9 +838,9 @@ export default class MatlabDebugAdaptor {
         if (dbAmount !== 0) {
             try {
                 if (dbAmount > 0) {
-                    await this._mvm.feval<undefined>('dbup', 0, [dbAmount]);
+                    await this._mvm.feval('dbup', 0, [dbAmount]);
                 } else {
-                    await this._mvm.feval<undefined>('dbdown', 0, [-dbAmount]);
+                    await this._mvm.feval('dbdown', 0, [-dbAmount]);
                 }
             } catch (e) {
             }
@@ -897,7 +898,7 @@ export default class MatlabDebugAdaptor {
 
             let canonicalizeResult: MatlabData | MVMError;
             try {
-                canonicalizeResult = await this._mvm.feval<MatlabData>('builtin', 1, ['_canonicalizepath', path]);
+                canonicalizeResult = await this._mvm.feval('builtin', 1, ['_canonicalizepath', path]);
             } catch (e) {
                 cachePromise.reject();
                 this._canonicalizedPathCache.delete(path);
@@ -910,7 +911,7 @@ export default class MatlabDebugAdaptor {
                 return await cachePromise;
             }
 
-            const resultPath = canonicalizeResult.result[0];
+            const resultPath = canonicalizeResult.result[0] as string;
             cachePromise.resolve(resultPath);
             return resultPath
         } else {

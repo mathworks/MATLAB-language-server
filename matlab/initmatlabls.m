@@ -2,7 +2,7 @@ function initmatlabls (outFile)
     % Initializes a MATLAB® session to talk to a MATLAB language server.
     % Writes connection info to the outFile specified by the client
 
-    % Copyright 2022 - 2024 The MathWorks, Inc.
+    % Copyright 2022 - 2025 The MathWorks, Inc.
 
     % Prevent clearing the workspace from cleaning up the MatlabLanguageServerHelper
     mlock
@@ -26,16 +26,11 @@ function initmatlabls (outFile)
     try
         s = settings;
         s.matlab.editor.OpenFileAtBreakpoint.TemporaryValue = false;
+    catch ME
     end
 
-    % Create matlabls helper for calculating language server operations
-    persistent matlablsHelper %#ok<PUSE>
-    try
-        matlablsHelper = matlabls.MatlabLanguageServerHelper();
-    catch ME
-        disp('Error instantiating MATLAB Language Server Helper:')
-        disp(ME.message)
-    end
+    % Initialize communication manager
+    matlabls.internal.CommunicationManager.initialize();
     
     if nargin == 1
         logConnectionData(outFile)

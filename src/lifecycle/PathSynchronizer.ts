@@ -1,23 +1,17 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import { WorkspaceFolder, WorkspaceFoldersChangeEvent } from 'vscode-languageserver'
 import ClientConnection, { Connection } from '../ClientConnection'
 import Logger from '../logging/Logger'
 import MatlabLifecycleManager from './MatlabLifecycleManager'
-import { MatlabConnection } from './MatlabCommunicationManager'
 import * as os from 'os'
 import path from 'path'
+import { URI } from 'vscode-uri'
+import MVM, { IMVM, MatlabState } from '../mvm/impl/MVM'
+import parse from '../mvm/MdaParser'
 
 export default class PathSynchronizer {
-    readonly CD_REQUEST_CHANNEL = '/matlabls/pathSynchronizer/cd/request'
-
-    readonly PWD_REQUEST_CHANNEL = '/matlabls/pathSynchronizer/pwd/request'
-    readonly PWD_RESPONSE_CHANNEL = '/matlabls/pathSynchronizer/pwd/response'
-
-    readonly ADDPATH_REQUEST_CHANNEL = '/matlabls/pathSynchronizer/addpath/request'
-    readonly RMPATH_REQUEST_CHANNEL = '/matlabls/pathSynchronizer/rmpath/request'
-
-    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager) {}
+    constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager, private readonly mvm: MVM) {}
 
     /**
      * Initializes the PathSynchronizer by setting up event listeners.
@@ -31,7 +25,11 @@ export default class PathSynchronizer {
     initialize (): void {
         const clientConnection = ClientConnection.getConnection()
 
-        this.matlabLifecycleManager.eventEmitter.on('connected', () => this.handleMatlabConnected(clientConnection))
+        this.mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
+            if (state === MatlabState.READY) {
+                void this.handleMatlabConnected(clientConnection)
+            }
+        })
 
         clientConnection.workspace.onDidChangeWorkspaceFolders(event => this.handleWorkspaceFoldersChanged(event))
     }
@@ -43,10 +41,9 @@ export default class PathSynchronizer {
      * @param clientConnection The current client connection
      */
     private async handleMatlabConnected (clientConnection: Connection): Promise<void> {
-        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
-        if (matlabConnection == null) {
+        if (!this.mvm.isReady()) {
             // As the connection was just established, this should not happen
-            Logger.warn('MATLAB connection is unavailable after connection established')
+            Logger.warn('MVM is not ready after connection established')
             return
         }
 
@@ -59,10 +56,10 @@ export default class PathSynchronizer {
         const folderPaths = this.convertWorkspaceFoldersToFilePaths(workspaceFolders)
 
         // cd to first workspace folder
-        this.setWorkingDirectory(folderPaths[0], matlabConnection)
+        void this.setWorkingDirectory(folderPaths[0])
 
         // add all workspace folders to path
-        this.addToPath(folderPaths, matlabConnection)
+        void this.addToPath(folderPaths)
     }
 
     /**
@@ -71,20 +68,20 @@ export default class PathSynchronizer {
      * @param event The workspace folders change event
      */
     private async handleWorkspaceFoldersChanged (event: WorkspaceFoldersChangeEvent): Promise<void> {
-        const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
-        if (matlabConnection == null) {
+        if (!this.mvm.isReady()) {
+            // MVM not yet ready
             return
         }
 
-        const cwd = await this.getCurrentWorkingDirectory(matlabConnection)
+        const cwd = await this.getCurrentWorkingDirectory()
 
         // addpath for all added folders
         const addedFolderPaths = this.convertWorkspaceFoldersToFilePaths(event.added)
-        this.addToPath(addedFolderPaths, matlabConnection)
+        void this.addToPath(addedFolderPaths)
 
         // rmpath for all removed folders
         const removedFolderPaths = this.convertWorkspaceFoldersToFilePaths(event.removed)
-        this.removeFromPath(removedFolderPaths, matlabConnection)
+        void this.removeFromPath(removedFolderPaths)
 
         // log warning if primary workspace folder was removed
         if (this.isCwdInPaths(removedFolderPaths, cwd)) {
@@ -92,64 +89,91 @@ export default class PathSynchronizer {
         }
     }
 
-    private setWorkingDirectory (path: string, matlabConnection: MatlabConnection): void {
-        Logger.log(`CWD set to: ${path}`)
+    private async setWorkingDirectory (path: string): Promise<void> {
+        try {
+            const response = await this.mvm.feval('cd', 0, [path])
 
-        matlabConnection.publish(this.CD_REQUEST_CHANNEL, {
-            path
-        })
+            if ('error' in response) {
+                Logger.error('Error received while setting MATLAB\'s working directory:')
+                Logger.error(response.error.msg)
+            } else {
+                Logger.log(`CWD set to: ${path}`)
+            }
+        } catch (err) {
+            Logger.error('Error caught while setting MATLAB\'s working directory:')
+            Logger.error(err as string)
+        }
     }
 
-    private getCurrentWorkingDirectory (matlabConnection: MatlabConnection): Promise<string> {
-        const channelId = matlabConnection.getChannelId()
-        const channel = `${this.PWD_RESPONSE_CHANNEL}/${channelId}`
+    private async getCurrentWorkingDirectory (): Promise<string> {
+        try {
+            const response = await this.mvm.feval('pwd', 0, [])
 
-        return new Promise<string>(resolve => {
-            const responseSub = matlabConnection.subscribe(channel, message => {
-                const cwd = message as string
-                matlabConnection.unsubscribe(responseSub)
-                resolve(path.normalize(cwd))
-            })
+            if ('error' in response) {
+                Logger.error('Error received while getting MATLAB\'s working directory:')
+                Logger.error(response.error.msg)
+                return ''
+            }
 
-            matlabConnection.publish(this.PWD_REQUEST_CHANNEL, {
-                channelId
-            })
-        })
+            return parse(response.result[0])
+        } catch (err) {
+            Logger.error('Error caught while getting MATLAB\'s working directory:')
+            Logger.error(err as string)
+            return ''
+        }
     }
 
-    private addToPath (paths: string[], matlabConnection: MatlabConnection): void {
+    private async addToPath (paths: string[]): Promise<void> {
         if (paths.length === 0) return
 
         Logger.log(`Adding workspace folder(s) to the MATLAB Path: \n\t${paths.join('\n\t')}`)
-        matlabConnection.publish(this.ADDPATH_REQUEST_CHANNEL, {
-            paths
-        })
+
+        try {
+            const response = await this.mvm.feval('addpath', 0, [paths.join(path.delimiter)])
+
+            if ('error' in response) {
+                Logger.error('Error received while adding paths to the MATLAB path:')
+                Logger.error(response.error.msg)
+            }
+        } catch (err) {
+            Logger.error('Error caught while adding paths to the MATLAB path:')
+            Logger.error(err as string)
+        }
     }
 
-    private removeFromPath (paths: string[], matlabConnection: MatlabConnection): void {
+    private async removeFromPath (paths: string[]): Promise<void> {
         if (paths.length === 0) return
 
         Logger.log(`Removing workspace folder(s) from the MATLAB Path: \n\t${paths.join('\n\t')}`)
-        matlabConnection.publish(this.RMPATH_REQUEST_CHANNEL, {
-            paths
-        })
+
+        try {
+            const response = await this.mvm.feval('rmpath', 0, [paths.join(path.delimiter)])
+
+            if ('error' in response) {
+                Logger.error('Error received while removing paths from the MATLAB path:')
+                Logger.error(response.error.msg)
+            }
+        } catch (err) {
+            Logger.error('Error caught while removing paths from the MATLAB path:')
+            Logger.error(err as string)
+        }
     }
 
     private convertWorkspaceFoldersToFilePaths (workspaceFolders: WorkspaceFolder[]): string[] {
         return workspaceFolders.map(folder => {
-            let uri = decodeURIComponent(folder.uri)
-            uri = uri.replace('file:///', '')
-            return path.normalize(uri)
+            const uri = URI.parse(folder.uri)
+
+            return path.normalize(uri.fsPath)
         });
     }
 
     private isCwdInPaths (folderPaths: string[], cwd: string): boolean {
         if (os.platform() === 'win32') {
             // On Windows, paths are case-insensitive
-            return folderPaths.some(folderPath => folderPath.toLowerCase() === cwd.toLowerCase());
+            return folderPaths.some(folderPath => folderPath.toLowerCase() === cwd.toLowerCase())
         } else {
             // On Unix-like systems, paths are case-sensitive
-            return folderPaths.includes(cwd);
+            return folderPaths.includes(cwd)
         }
     }
 }
