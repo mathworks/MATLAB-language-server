@@ -37,5 +37,7 @@ jobs:
       run: npm ci
     - name: Build
       run: npm run compile
-    - name: Run Unit Tests
+    - name: Run TypeScript Unit Tests
       run: npm test
+    - name: Run MATLAB Unit Tests
+      uses: matlab-actions/run-tests@v2.1.1
