@@ -50,6 +50,8 @@ jobs:
         matlab-version: [R2021b, R2022a, R2022b, latest]
         os: [windows-latest, ubuntu-latest, macos-13]
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Set up MATLAB
       uses: matlab-actions/setup-matlab@v2.2.0
       with:
