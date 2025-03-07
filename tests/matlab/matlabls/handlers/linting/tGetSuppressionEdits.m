@@ -1,6 +1,13 @@
 % Copyright 2025 The MathWorks, Inc.
 classdef tGetSuppressionEdits < matlab.unittest.TestCase
     methods (TestClassSetup)
+        function isApplicable (testCase)
+            % Determine if the test should be skipped in the current environment
+            testCase.assumeTrue(...
+                ~isMATLABReleaseOlderThan('R2022a'),...
+                "Diagnostic suppression tests require R2022a and later.");
+        end
+
         function setup (~)
             % Add function under test to path
             addpath("../../../../../matlab");
