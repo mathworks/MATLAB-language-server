@@ -9,6 +9,7 @@ classdef tFormatCode < matlab.unittest.TestCase
             % Determine if the test should be skipped in the current environment
             isTestingEnvironment = ~isempty(getenv('MATLAB_TEST_ENVIRONMENT'));
             shouldRun = ~(isMATLABReleaseOlderThan('R2023b') && isTestingEnvironment);
+            shouldRun = ~isMATLABReleaseOlderThan('R2025a') || isempty(javachk('swing'));
 
             testCase.assumeTrue(...
                 shouldRun,...
