@@ -36,7 +36,7 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
             testCase.assertEqual(result.references, expectedReferences);
 
             expectedSections = {
-                struct(title = "Create Data", range = toRange(3, 1, 6, 2)),...
+                struct(title = "Create Data", range = toRange(3, 1, 6, 1)),...
                 struct(title = "Plot", range = toRange(7, 1, 8, 11))
             };
 
