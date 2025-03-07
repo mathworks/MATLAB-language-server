@@ -1,6 +1,13 @@
 % Copyright 2025 The MathWorks, Inc.
 classdef tGetFoldingRanges < matlab.unittest.TestCase
     methods (TestClassSetup)
+        function isApplicable (testCase)
+            % Determine if the test should be skipped in the current environment
+            testCase.assumeTrue(...
+                ~isMATLABReleaseOlderThan('R2024b'),...
+                "Code folding only supported in R2024b and later.");
+        end
+
         function setup (~)
             % Add function under test to path
             addpath("../../../../../matlab");
