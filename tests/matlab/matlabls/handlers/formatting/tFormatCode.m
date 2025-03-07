@@ -8,11 +8,11 @@ classdef tFormatCode < matlab.unittest.TestCase
         function isApplicable (testCase)
             % Determine if the test should be skipped in the current environment
             isTestingEnvironment = ~isempty(getenv('MATLAB_TEST_ENVIRONMENT'));
-            shouldRun = ~(isMATLABReleaseOlderThan('R2025a') && isTestingEnvironment);
+            shouldRun = ~(isMATLABReleaseOlderThan('R2023b') && isTestingEnvironment);
 
             testCase.assumeTrue(...
                 shouldRun,...
-                "Document formatting test cannot run prior to 25a in GitHub test environment.");
+                "Document formatting test cannot run prior to 23b in GitHub test environment.");
         end
 
         function setup (~)
