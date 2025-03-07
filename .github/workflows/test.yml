@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        matlab-version: [R2021b, R2022a, R2022b, latest]
+        matlab-version: [R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]
         os: [windows-latest, ubuntu-latest, macos-13]
     steps:
     - name: Checkout
