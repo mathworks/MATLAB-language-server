@@ -15,6 +15,12 @@ classdef tFormatCode < matlab.unittest.TestCase
         % Test correct formatting with spaces when the tab size is 4.
         % Each indent should be represented by 4 spaces.
         function testFormatting4WithSpaces (testCase)
+            if shouldSkipTest()
+                disp('Skipping test due to environment limitations.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             options.insertSpaces = true;
             options.tabSize = 4;
 
@@ -27,6 +33,12 @@ classdef tFormatCode < matlab.unittest.TestCase
         % Test correct formatting with tabs when the tab size is 4.
         % Each indent should be represented by 1 tab character.
         function testFormatting4WithTabs (testCase)
+            if shouldSkipTest()
+                disp('Skipping test due to environment limitations.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             options.insertSpaces = false;
             options.tabSize = 4;
 
@@ -39,6 +51,12 @@ classdef tFormatCode < matlab.unittest.TestCase
         % Test correct formatting with spaces when the tab size is 6.
         % Each indent should be represented by 6 spaces.
         function testFormatting6WithSpaces (testCase)
+            if shouldSkipTest()
+                disp('Skipping test due to environment limitations.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             options.insertSpaces = true;
             options.tabSize = 6;
 
@@ -51,6 +69,12 @@ classdef tFormatCode < matlab.unittest.TestCase
         % Test correct formatting with tabs when the tab size is 6.
         % Each indent should be represented by 1 tab character.
         function testFormatting6WithTabs (testCase)
+            if shouldSkipTest()
+                disp('Skipping test due to environment limitations.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             options.insertSpaces = false;
             options.tabSize = 4;
 
@@ -60,4 +84,10 @@ classdef tFormatCode < matlab.unittest.TestCase
             testCase.verifyEqual(actual, expected);
         end
     end
+end
+
+function shouldSkip = shouldSkipTest ()
+    % Before 25a, code formatting depends on Java logic, which may not be available
+    % in the testing environment.
+    shouldSkip = isMATLABReleaseOlderThan('R2025a') && ~isempty(javachk('swing'));
 end

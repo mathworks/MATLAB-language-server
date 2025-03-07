@@ -10,6 +10,12 @@ classdef tGetSuppressionEdits < matlab.unittest.TestCase
     methods (Test)
         % Test a basic case where a suppression should be placed on the same line
         function testBasicSuppression (testCase)
+            if shouldSkipTest()
+                disp('Skipping test on MATLAB version prior to R2022a.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             code = sprintf('if true\n    x = 3;\nend');
             diagnosticId = 'testId';
             diagnosticLine = 2;
@@ -24,6 +30,12 @@ classdef tGetSuppressionEdits < matlab.unittest.TestCase
 
         % Test a basic case where a file-wide suppression should be placed on the same line
         function testBasicSuppressionInFile (testCase)
+            if shouldSkipTest()
+                disp('Skipping test on MATLAB version prior to R2022a.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             code = sprintf('if true\n    x = 3;\nend');
             diagnosticId = 'testId';
             diagnosticLine = 2;
@@ -38,6 +50,12 @@ classdef tGetSuppressionEdits < matlab.unittest.TestCase
 
         % Test that suppression does not have preceding whitespace when there is trailing whitespace on line
         function testSuppressionWithTrailingSpace (testCase)
+            if shouldSkipTest()
+                disp('Skipping test on MATLAB version prior to R2022a.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             code = sprintf('if true\n    x = 3;  \nend');
             diagnosticId = 'testId';
             diagnosticLine = 2;
@@ -52,6 +70,12 @@ classdef tGetSuppressionEdits < matlab.unittest.TestCase
 
         % Test a case where a suppression should be placed at the end of a multi-line statement
         function testSuppressionAfterMultilineStatement (testCase)
+            if shouldSkipTest()
+                disp('Skipping test on MATLAB version prior to R2022a.');
+                testCase.verifyTrue(true);
+                return;
+            end
+
             code = sprintf('if true\n    x = 1 + ...\n        2 + ...\n        3;\nend');
             diagnosticId = 'testId';
             diagnosticLine = 2;
@@ -64,4 +88,9 @@ classdef tGetSuppressionEdits < matlab.unittest.TestCase
             testCase.verifyEqual(actual, expected);
         end
     end
+end
+
+function shouldSkip = shouldSkipTest ()
+    % Required APIs are not available prior to R2022a
+    shouldSkip = isMATLABReleaseOlderThan('R2022a');
 end
