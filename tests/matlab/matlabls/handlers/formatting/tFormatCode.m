@@ -12,7 +12,7 @@ classdef tFormatCode < matlab.unittest.TestCase
 
             testCase.assumeTrue(...
                 shouldRun,...
-                "Document formatting test cannot run prior to 23b in GitHub test environment.");
+                "Document formatting test cannot run prior to 24b in GitHub test environment.");
         end
 
         function setup (~)
