@@ -16,11 +16,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  typescript-build-and-test:
     name: ${{ matrix.os }}-${{ matrix.node-version }}
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 22.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
@@ -37,5 +38,25 @@ jobs:
       run: npm ci
     - name: Build
       run: npm run compile
-    - name: Run Unit Tests
+    - name: Run TypeScript Unit Tests
       run: npm test
+
+  matlab-test:
+    env:
+      MATLAB_TEST_ENVIRONMENT: 1
+    name: ${{ matrix.matlab-version }}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        matlab-version: [R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]
+        os: [windows-latest, ubuntu-latest, macos-13]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Set up MATLAB
+      uses: matlab-actions/setup-matlab@v2.2.0
+      with:
+        release: ${{ matrix.matlab-version }}
+    - name: Run MATLAB Unit Tests
+      uses: matlab-actions/run-tests@v2.1.1
