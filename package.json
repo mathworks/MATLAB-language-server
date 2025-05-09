@@ -1,6 +1,6 @@
 {
   "name": "matlab-language-server",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Language Server for MATLAB code",
   "main": "./src/index.ts",
   "bin": "./out/index.js",

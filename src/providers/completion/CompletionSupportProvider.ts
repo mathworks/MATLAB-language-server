@@ -2,12 +2,12 @@
 
 import { CompletionItem, CompletionItemKind, CompletionList, CompletionParams, ParameterInformation, Position, SignatureHelp, SignatureHelpParams, SignatureInformation, TextDocuments, InsertTextFormat } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { URI } from 'vscode-uri'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import ConfigurationManager, { Argument } from '../../lifecycle/ConfigurationManager'
 import MVM from '../../mvm/impl/MVM'
 import Logger from '../../logging/Logger'
 import parse from '../../mvm/MdaParser'
+import * as FileNameUtils from '../../utils/FileNameUtils'
 
 interface MCompletionData {
     widgetData?: MWidgetData
@@ -100,9 +100,19 @@ class CompletionSupportProvider {
             return CompletionList.create()
         }
 
-        const completionData = await this.retrieveCompletionData(doc, params.position)
+        const completionData = await this.retrieveCompletionDataForDocument(doc, params.position)
 
         return this.parseCompletionItems(completionData)
+    }
+
+    /**
+     * Returns completions for a give string
+     * @returns An array of possible completions
+     */
+    async getCompletions (code: string, cursorOffset: number): Promise<CompletionList> {
+        const completionData = await this.retrieveCompletionData(code, '', cursorOffset);
+
+        return this.parseCompletionItems(completionData);
     }
 
     /**
@@ -119,7 +129,7 @@ class CompletionSupportProvider {
             return null
         }
 
-        const completionData = await this.retrieveCompletionData(doc, params.position)
+        const completionData = await this.retrieveCompletionDataForDocument(doc, params.position)
 
         return this.parseSignatureHelp(completionData)
     }
@@ -131,17 +141,29 @@ class CompletionSupportProvider {
      * @param position The cursor position in the document
      * @returns The raw completion data
      */
-    private async retrieveCompletionData (doc: TextDocument, position: Position): Promise<MCompletionData> {
+    private async retrieveCompletionDataForDocument (doc: TextDocument, position: Position): Promise<MCompletionData> {
+        const docUri = doc.uri
+
+        const code = doc.getText()
+        const fileName = FileNameUtils.getFilePathFromUri(docUri, true)
+        const cursorPosition = doc.offsetAt(position)
+
+        return await this.retrieveCompletionData(code, fileName, cursorPosition);
+    }
+
+    /**
+     * Retrieves raw completion data from MATLAB.
+     *
+     * @param code The code to be completed
+     * @param fileName The name of the file with the completion, or empty string if there is no file
+     * @param cursorPosition The cursor position in the code
+     * @returns The raw completion data
+     */
+    private async retrieveCompletionData (code: string, fileName: string, cursorPosition: number): Promise<MCompletionData> {
         if (!this.mvm.isReady()) {
             // MVM not yet ready
             return {}
         }
-
-        const docUri = doc.uri
-
-        const code = doc.getText()
-        const fileName = URI.parse(docUri).fsPath
-        const cursorPosition = doc.offsetAt(position)
 
         try {
             const response = await this.mvm.feval(

@@ -4,6 +4,7 @@ import { URI } from 'vscode-uri'
 import MVM from '../../mvm/impl/MVM'
 import Logger from '../../logging/Logger'
 import parse from '../../mvm/MdaParser'
+import * as FileNameUtils from '../../utils/FileNameUtils'
 
 class PathResolver {
     constructor (private readonly mvm: MVM) {}
@@ -24,7 +25,7 @@ class PathResolver {
             return null
         }
 
-        const contextFile = URI.parse(contextFileUri).fsPath
+        const contextFile = FileNameUtils.getFilePathFromUri(contextFileUri)
 
         try {
             const response = await this.mvm.feval(

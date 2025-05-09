@@ -2,21 +2,21 @@
     "_schemaVersion": "1.0.0",
     "myHelpfulTestFunction": {
         "inputs": [
-            {"name": "in1", "kind": "required", "type": ["numeric"], "purpose": "The first numeric value"},
-            {"name": "in2", "kind": "required", "type": ["numeric"], "purpose": "The second numeric value"}
+            {"name": "in1_1", "kind": "required", "type": ["numeric"], "purpose": "The first numeric value"},
+            {"name": "in2_1", "kind": "required", "type": ["numeric"], "purpose": "The second numeric value"}
         ],
         "outputs": [
-            {"name": "out", "kind": "required", "type": ["numeric"], "purpose": "The sum of the inputs"}
+            {"name": "out_1", "kind": "required", "type": ["numeric"], "purpose": "The sum of the inputs"}
         ]
     },
     "myHelpfulTestFunction": {
         "inputs": [
-            {"name": "in1", "kind": "required", "type": ["string"], "purpose": "The first string value"},
-            {"name": "in2", "kind": "required", "type": ["string"], "purpose": "The second string value"},
-            {"name": "in3", "kind": "required", "type": ["string"], "purpose": "The third string value"}
+            {"name": "in1_2", "kind": "required", "type": ["string"], "purpose": "The first string value"},
+            {"name": "in2_2", "kind": "required", "type": ["string"], "purpose": "The second string value"},
+            {"name": "in3_2", "kind": "required", "type": ["string"], "purpose": "The third string value"}
         ],
         "outputs": [
-            {"name": "out", "kind": "required", "type": ["string"], "purpose": "The concatenation of the inputs"}
+            {"name": "out_2", "kind": "required", "type": ["string"], "purpose": "The concatenation of the inputs"}
         ]
     }
 }
