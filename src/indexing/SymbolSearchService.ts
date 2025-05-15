@@ -8,8 +8,8 @@ import Expression from '../utils/ExpressionUtils'
 import { getTextOnLine } from '../utils/TextDocumentUtils'
 import PathResolver from '../providers/navigation/PathResolver'
 import * as fs from 'fs/promises'
-import { URI } from 'vscode-uri'
 import Indexer from './Indexer'
+import * as FileNameUtils from '../utils/FileNameUtils'
 
 export enum RequestType {
     Definition,
@@ -321,7 +321,7 @@ class SymbolSearchService {
         }
 
         // Ensure URI is not a directory. This can occur with some packages.
-        const fileStats = await fs.stat(URI.parse(resolvedUri).fsPath)
+        const fileStats = await fs.stat(FileNameUtils.getFilePathFromUri(resolvedUri))
         if (fileStats.isDirectory()) {
             return null
         }

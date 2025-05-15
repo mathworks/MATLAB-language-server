@@ -10,6 +10,7 @@ import ConfigurationManager from '../lifecycle/ConfigurationManager'
 import MVM from '../mvm/impl/MVM'
 import Logger from '../logging/Logger'
 import parse from '../mvm/MdaParser'
+import * as FileNameUtils from '../utils/FileNameUtils'
 
 interface WorkspaceFileIndexedResponse {
     isDone: boolean
@@ -115,7 +116,8 @@ export default class Indexer {
             return
         }
 
-        const fileContentBuffer = await fs.readFile(URI.parse(uri).fsPath)
+        const filePath = FileNameUtils.getFilePathFromUri(uri)
+        const fileContentBuffer = await fs.readFile(filePath)
         const code = fileContentBuffer.toString()
         const rawCodeData = await this.getCodeData(code, uri)
 
@@ -136,7 +138,7 @@ export default class Indexer {
      * @returns The raw data extracted from the document
      */
     private async getCodeData (code: string, uri: string): Promise<RawCodeData | null> {
-        const filePath = URI.parse(uri).fsPath
+        const filePath = FileNameUtils.getFilePathFromUri(uri)
         const analysisLimit = (await ConfigurationManager.getConfiguration()).maxFileSizeForAnalysis
 
         try {

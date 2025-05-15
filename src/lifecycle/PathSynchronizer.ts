@@ -6,9 +6,9 @@ import Logger from '../logging/Logger'
 import MatlabLifecycleManager from './MatlabLifecycleManager'
 import * as os from 'os'
 import path from 'path'
-import { URI } from 'vscode-uri'
 import MVM, { IMVM, MatlabState } from '../mvm/impl/MVM'
 import parse from '../mvm/MdaParser'
+import * as FileNameUtils from '../utils/FileNameUtils'
 
 export default class PathSynchronizer {
     constructor (private readonly matlabLifecycleManager: MatlabLifecycleManager, private readonly mvm: MVM) {}
@@ -161,9 +161,7 @@ export default class PathSynchronizer {
 
     private convertWorkspaceFoldersToFilePaths (workspaceFolders: WorkspaceFolder[]): string[] {
         return workspaceFolders.map(folder => {
-            const uri = URI.parse(folder.uri)
-
-            return path.normalize(uri.fsPath)
+            return path.normalize(FileNameUtils.getFilePathFromUri(folder.uri))
         });
     }
 

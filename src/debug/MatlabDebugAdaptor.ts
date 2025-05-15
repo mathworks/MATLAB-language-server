@@ -5,6 +5,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import { DebugServices, BreakpointInfo } from './DebugServices'
 import { ResolvablePromise, createResolvablePromise } from '../utils/PromiseUtils'
 import { IMVM, MVMError, MatlabState } from '../mvm/impl/MVM';
+import fs from 'node:fs';
 
 enum BreakpointChangeType {
     ADD,
@@ -233,6 +234,8 @@ export default class MatlabDebugAdaptor {
 
     private _setupListeners (): void {
         this._debugServices.on(DebugServices.Events.BreakpointAdded, async (breakpoint: BreakpointInfo) => {
+            breakpoint.filePath = this._mapToMFile(breakpoint.filePath, false);
+
             this._matlabBreakpoints.push(breakpoint);
 
             this._breakpointChangeListeners.forEach((listener) => {
@@ -241,6 +244,8 @@ export default class MatlabDebugAdaptor {
         });
 
         this._debugServices.on(DebugServices.Events.BreakpointRemoved, async (breakpoint: BreakpointInfo) => {
+            breakpoint.filePath = this._mapToMFile(breakpoint.filePath, false);
+
             this._matlabBreakpoints = this._matlabBreakpoints.filter((existingBreakpoint) => {
                 return !existingBreakpoint.equals(breakpoint, true);
             });
@@ -422,6 +427,7 @@ export default class MatlabDebugAdaptor {
         }
 
         const canonicalizedPath = await this._getCanonicalPath(source.path);
+        const pathToSetOrClear = this._mapToPFile(canonicalizedPath, true);
 
         const newBreakpoints: BreakpointInfo[] = (args.breakpoints != null)
             ? args.breakpoints.map((breakpoint) => {
@@ -458,7 +464,7 @@ export default class MatlabDebugAdaptor {
         // Remove all breakpoints that are now gone.
         const breakpointsRemovalPromises: Array<Promise<void>> = [];
         breakpointsToRemove.forEach((breakpoint: BreakpointInfo) => {
-            breakpointsRemovalPromises.push(this._mvm.clearBreakpoint(breakpoint.filePath, breakpoint.lineNumber));
+            breakpointsRemovalPromises.push(this._mvm.clearBreakpoint(pathToSetOrClear, breakpoint.lineNumber));
         })
         await Promise.all(breakpointsRemovalPromises);
 
@@ -476,12 +482,12 @@ export default class MatlabDebugAdaptor {
 
             let matlabBreakpointInfos: BreakpointInfo[] = [];
             const listener = this._registerBreakpointChangeListener((changeType, bpInfo) => {
-                if (changeType === BreakpointChangeType.ADD && bpInfo.filePath === canonicalizedPath) {
+                if (changeType === BreakpointChangeType.ADD && bpInfo.filePath === pathToSetOrClear) {
                     matlabBreakpointInfos.push(bpInfo);
                 }
             });
 
-            await this._mvm.setBreakpoint(canonicalizedPath, newBreakpoint.info.lineNumber, newBreakpoint.info.condition);
+            await this._mvm.setBreakpoint(pathToSetOrClear, newBreakpoint.info.lineNumber, newBreakpoint.info.condition);
 
             listener.remove();
 
@@ -499,6 +505,36 @@ export default class MatlabDebugAdaptor {
 
         this.sendResponse(response)
         this._clearPendingBreakpointsRequest();
+    }
+
+    _mapToPFile (filePath: string, checkIfExists: boolean): string {
+        // If this is an m-file then convert to p-file and check existence
+        if (filePath.endsWith('.m')) {
+            const pFile = filePath.substring(0, filePath.length - 1) + 'p';
+            if (!checkIfExists || fs.existsSync(pFile)) {
+                return pFile;
+            } else {
+                return filePath;
+            }
+        }
+
+        // Not an m file so p-code not supported
+        return filePath;
+    }
+
+    _mapToMFile (filePath: string, checkIfExists: boolean): string {
+        // If this is an p-file then convert to m-file and check existence
+        if (filePath.endsWith('.p')) {
+            const mFile = filePath.substring(0, filePath.length - 1) + 'm';
+            if (!checkIfExists || fs.existsSync(mFile)) {
+                return mFile;
+            } else {
+                return filePath;
+            }
+        }
+
+        // Not an m file so p-code not supported
+        return filePath;
     }
 
     async continueRequest (response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments, request?: DebugProtocol.Request): Promise<void> {
@@ -558,15 +594,18 @@ export default class MatlabDebugAdaptor {
             if (stack[0]?.mwtype !== undefined) {
                 stack = stack[0]
                 const size = stack.mwsize[0];
-                const newStack = [];
+                const transformedStack = [];
                 for (let i = 0; i < size; i++) {
-                    newStack.push(new debug.StackFrame(size - i + 1, stack.mwdata.name[i], new debug.Source(stack.mwdata.name[i], stack.mwdata.file[i]), Math.abs(stack.mwdata.line[i]), 1))
+                    transformedStack.push({ name: stack.mwdata.name[i], file: stack.mwdata.file[i], line: stack.mwdata.line[i] });
                 }
-                return newStack;
-            } else {
-                const numberOfStackFrames: number = stack.length;
-                return stack.map((stackFrame: MatlabData, i: number) => new debug.StackFrame(numberOfStackFrames - i + 1, stackFrame.name, new debug.Source(stackFrame.name as string, stackFrame.file as string), Math.abs(stackFrame.line), 1));
+                stack = transformedStack;
             }
+
+            const numberOfStackFrames: number = stack.length;
+            return stack.map((stackFrame: MatlabData, i: number) => {
+                const fileName: string = this._mapToMFile(stackFrame.file, true);
+                return new debug.StackFrame(numberOfStackFrames - i + 1, stackFrame.name, new debug.Source(stackFrame.name as string, fileName), Math.abs(stackFrame.line), 1)
+            });
         };
 
         const stack = transformStack(stackResponse.result);

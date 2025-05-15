@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { GenericNotificationHandler, Disposable } from 'vscode-languageserver/node'
 import ClientConnection from '../ClientConnection'
@@ -18,6 +18,8 @@ export enum Notification {
 
     // Execution
     MatlabRequestInstance = 'matlab/request',
+    TerminalCompletionRequest = 'TerminalCompletionRequest',
+    TerminalCompletionResponse = 'TerminalCompletionResponse',
 
     MVMEvalRequest = 'evalRequest',
     MVMEvalComplete = 'evalResponse',

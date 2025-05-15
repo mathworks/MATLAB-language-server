@@ -3,7 +3,6 @@
 import { execFile, ExecFileException } from 'child_process'
 import { CodeAction, CodeActionKind, CodeActionParams, Command, Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentEdit, TextEdit, VersionedTextDocumentIdentifier, WorkspaceEdit } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { URI } from 'vscode-uri'
 import ConfigurationManager from '../../lifecycle/ConfigurationManager'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Logger from '../../logging/Logger'
@@ -14,6 +13,7 @@ import { MatlabLSCommands } from '../lspCommands/ExecuteCommandProvider'
 import ClientConnection from '../../ClientConnection'
 import MVM from '../../mvm/impl/MVM'
 import parse from '../../mvm/MdaParser'
+import * as FileNameUtils from '../../utils/FileNameUtils'
 
 type mlintSeverity = '0' | '1' | '2' | '3' | '4'
 
@@ -79,8 +79,7 @@ class LintingSupportProvider {
         const matlabConnection = await this.matlabLifecycleManager.getMatlabConnection()
         const isMatlabAvailable = matlabConnection != null
 
-        const isMFile = this.isMFile(uri)
-        const fileName = isMFile ? URI.parse(uri).fsPath : 'untitled.m'
+        const fileName = FileNameUtils.getFilePathFromUri(uri, true)
 
         let lintData: string[] = []
         const code = textDocument.getText()
@@ -94,7 +93,7 @@ class LintingSupportProvider {
         if (isMatlabAvailable) {
             // Use MATLAB-based linting for better results and fixes
             lintData = await this.getLintResultsFromMatlab(code, fileName)
-        } else if (isMFile) {
+        } else if (FileNameUtils.isMFile(uri)) {
             // Try to use mlint executable for basic linting
             lintData = await this.getLintResultsFromExecutable(fileName)
         }
@@ -536,16 +535,6 @@ class LintingSupportProvider {
             a.range.end.line === b.range.end.line &&
             a.severity === b.severity &&
             a.source === b.source
-    }
-
-    /**
-     * Checks if the given URI corresponds to a MATLAB M-file.
-     *
-     * @param uri - The URI of the file to check.
-     * @returns True if the file is a MATLAB M-file (.m), false otherwise.
-     */
-    private isMFile (uri: string): boolean {
-        return URI.parse(uri).fsPath.endsWith('.m')
     }
 }
 

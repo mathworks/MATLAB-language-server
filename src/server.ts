@@ -223,6 +223,16 @@ export async function startServer (): Promise<void> {
         }
     )
 
+    NotificationService.registerNotificationListener(
+        Notification.TerminalCompletionRequest,
+        async (data) => { // eslint-disable-line @typescript-eslint/no-misused-promises
+            NotificationService.sendNotification(Notification.TerminalCompletionResponse, {
+                requestId: data.requestId,
+                result: await completionSupportProvider.getCompletions(data.code, data.offset)
+            });
+        }
+    )
+
     // Handles files opened
     documentManager.onDidOpen(params => {
         reportFileOpened(params.document)
