@@ -31,6 +31,7 @@ export interface FEvalRequest {
     functionName: string;
     nargout: number;
     args: unknown[];
+    isUserEval: boolean;
     capabilitiesToRemove?: Capability[];
 }
 /**
@@ -103,7 +104,7 @@ export declare const STATE_REQUESTER_TO_STATE: {
 export interface IMVM extends EventEmitter {
     getMatlabRelease(): string | null;
     eval: (command: string, isUserEval?: boolean, capabilitiesToRemove?: Capability[]) => Promise<void>;
-    feval: (functionName: string, nargout: number, args: unknown[], capabilitiesToRemove?: Capability[]) => Promise<MVMError | any>;
+    feval: (functionName: string, nargout: number, args: unknown[], isUserEval?: boolean, capabilitiesToRemove?: Capability[]) => Promise<MVMError | any>;
     setBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     clearBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     unpause(): void;

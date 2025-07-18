@@ -24,7 +24,7 @@ function Error({ message, logs, children }) {
             <div className="modal-dialog modal-dialog-centered" role="document">
                 <div className="modal-content alert alert-danger">
                     <div className="modal-header">
-                        <span className={`alert_icon icon-alert-error`}></span>
+                        <span className={'alert_icon icon-alert-error'}></span>
                         <h4 className="modal-title alert_heading">Error</h4>
                     </div>
                     <div className="modal-body">
@@ -36,7 +36,7 @@ function Error({ message, logs, children }) {
             </div>
         </div>
     );
-};
+}
 
 Error.propTypes = {
     message: PropTypes.string.isRequired,

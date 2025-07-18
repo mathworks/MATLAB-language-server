@@ -28,15 +28,15 @@ function validateInput(nlm_connections_str) {
     5) port1@hostname1:port2@hostname2,port3@hostname3,port4@hostname4:port5@hostname5
     */
 
-    let nlm_connection_strs = nlm_connections_str.split(/:|;|,/)
+    const nlm_connection_strs = nlm_connections_str.split(/:|;|,/);
 
     // All strings comply with port@hostname format
-    for (let nlm_connection_str of nlm_connection_strs) {   
+    for (const nlm_connection_str of nlm_connection_strs) {   
         if (!connStrRegex.test(nlm_connection_str)){
-            return false
+            return false;
         } 
     }        
-    return true
+    return true;
 }    
 
 
@@ -50,15 +50,19 @@ function NLM() {
     function submitForm(event) {
         event.preventDefault();
         dispatch(fetchSetLicensing({
-            'type': 'nlm',
-            'connectionString': connStr
+            type: 'nlm',
+            connectionString: connStr
         }));
     }
 
     return (
         <div id="NLM">
             <form onSubmit={submitForm}>
-                <div className={`form-group has-feedback ${changed ? (valid ? 'has-success' : 'has-error') : ''}`}>
+                <div className={`form-group has-feedback ${changed
+                    ? (valid
+                        ? 'has-success'
+                        : 'has-error')
+                    : ''}`}>
                     <label htmlFor="nlm-connection-string">License Server Address</label>
                     <div className="input-group">
                         <input id="nlm-connection-string"
@@ -72,11 +76,13 @@ function NLM() {
                         />
                         
                         <span className="input-group-addon" >
-                            {valid ? (
-                                <span className="glyphicon glyphicon-ok form-control-feedback" style={{ paddingLeft: '8px' }}></span>
-                            ) : (
-                                <span className="glyphicon glyphicon-remove form-control-feedback" style={{ paddingLeft: '8px' }}></span>
-                            )}
+                            {valid
+                                ? (
+                                    <span className="glyphicon glyphicon-ok form-control-feedback" style={{ paddingLeft: '8px' }}></span>
+                                )
+                                : (
+                                    <span className="glyphicon glyphicon-remove form-control-feedback" style={{ paddingLeft: '8px' }}></span>
+                                )}
                         </span>                        
                     </div>
                 </div>
@@ -84,7 +90,7 @@ function NLM() {
             </form>
             <br></br>
             <p id="ExistingLicenseNote">
-            <b>Note</b>: If the MATLAB installation specified in the Install Path setting is already activated, select <b>Existing License</b> at the top of this page to skip sign in.                                        
+                <b>Note</b>: If the MATLAB installation specified in the Install Path setting is already activated, select <b>Existing License</b> at the top of this page to skip sign in.                                        
             </p>
         </div>
     );

@@ -1,0 +1,51 @@
+{
+    "extends": [
+      "standard",
+      "plugin:react/recommended"
+    ],
+    "plugins": [
+      "react",
+      "testing-library",
+      "node"
+    ],
+    "env": {
+      "vitest/globals": true,
+      "browser": true
+    },
+    "rules": {
+      "indent": ["error", 4, {"SwitchCase": 1}],
+      "semi": ["error", "always"],
+      "no-extra-semi": "error",
+      "quote-props": ["error", "as-needed"],
+      "dot-notation": "warn",
+      "object-curly-newline": "warn",
+      "multiline-ternary": "warn",
+      "prefer-const": "warn",
+      "no-prototype-builtins": "warn",
+      "array-callback-return": "warn",
+      "array-bracket-spacing": "warn",
+      "quotes": ["warn", "single"],
+      "lines-between-class-members": "warn",
+      "no-empty": "warn",
+      "prefer-regex-literals": "warn",
+      "node/no-callback-literal": "warn",
+      "no-useless-catch": "warn",
+      "node/handle-callback-err": "warn",
+      "no-case-declarations": "warn",
+      "computed-property-spacing": "warn",
+      "no-async-promise-executor": "warn",
+      "node/no-deprecated-api": "warn",
+      "no-unreachable-loop": "warn",
+      "no-void": "warn",
+      "no-unused-vars": ["error", { "varsIgnorePattern": "React" }]
+    },
+    "ignorePatterns": ["build/**"],
+    "settings": {
+      "react": {
+      "version": "detect"
+      }
+    }
+  }
+  
+  
+  

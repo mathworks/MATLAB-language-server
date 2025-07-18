@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { Position, Range } from 'vscode-languageserver'
 import { isPositionGreaterThan, isPositionLessThanOrEqualTo } from '../utils/PositionUtils'
@@ -11,7 +11,7 @@ export interface RawCodeData {
     functionInfo: CodeDataFunctionInfo[]
     packageName: string
     references: CodeDataReference[]
-    sections: CodeDataSectionInfo[]
+    sections: CodeDataSectionInfoRaw[]
     errorInfo: CodeDataErrorInfo | undefined
 }
 
@@ -30,6 +30,10 @@ interface CodeDataClassInfo {
     declaration: CodeDataRange
     properties: CodeDataMemberInfo[]
     enumerations: CodeDataMemberInfo[]
+    propertiesBlocks: CodeDataMemberInfo[]
+    enumerationsBlocks: CodeDataMemberInfo[]
+    methodsBlocks: CodeDataMemberInfo[]
+    methods: CodeDataMemberInfo[]
     classDefFolder: string
     baseClasses: string[]
 }
@@ -37,9 +41,16 @@ interface CodeDataClassInfo {
 /**
  * Section data of MATLAB. Sections are groupings formed in MATLAB using %% comments.
  */
-interface CodeDataSectionInfo {
+interface CodeDataSectionInfoRaw {
     title: string
     range: CodeDataRange
+    isExplicit: boolean
+}
+
+interface CodeDataSectionInfo {
+    title: string
+    range: Range
+    isExplicit: boolean
 }
 
 /**
@@ -160,6 +171,9 @@ export class MatlabClassInfo {
     readonly methods: Map<string, MatlabFunctionInfo>
     readonly properties: Map<string, MatlabClassMemberInfo>
     readonly enumerations: Map<string, MatlabClassMemberInfo>
+    readonly propertiesBlocks: Map<string, MatlabClassMemberInfo>
+    readonly enumerationsBlocks: Map<string, MatlabClassMemberInfo>
+    readonly methodsBlocks: Map<string, MatlabClassMemberInfo>
 
     readonly name: string
 
@@ -173,6 +187,9 @@ export class MatlabClassInfo {
         this.methods = new Map<string, MatlabFunctionInfo>()
         this.properties = new Map<string, MatlabClassMemberInfo>()
         this.enumerations = new Map<string, MatlabClassMemberInfo>()
+        this.propertiesBlocks = new Map<string, MatlabClassMemberInfo>()
+        this.enumerationsBlocks = new Map<string, MatlabClassMemberInfo>()
+        this.methodsBlocks = new Map<string, MatlabClassMemberInfo>()
 
         this.name = rawClassInfo.name
 
@@ -208,6 +225,9 @@ export class MatlabClassInfo {
             this.enumerations.clear()
             this.properties.clear()
             this.methods.clear()
+            this.enumerationsBlocks.clear()
+            this.propertiesBlocks.clear()
+            this.methodsBlocks.clear()
             this.parsePropertiesAndEnums(rawClassInfo)
         } else {
             // Data contains supplementary class info - nothing to do in this situation
@@ -233,6 +253,16 @@ export class MatlabClassInfo {
     }
 
     /**
+     * Creates a unique identifier for a symbol by combining its name and position
+     * @param name The name of the symbol
+     * @param range The CodeDataRange containing the position information
+     * @returns A string identifier in the format "name::lineStart:charStart"
+     */
+    private createSymbolId(name: string, range: CodeDataRange): string {
+        return `${name}::${range.lineStart}:${range.charStart}`;
+    }
+
+    /**
      * Parses information about the class's properties and enums from the raw data.
      *
      * @param rawClassInfo The raw class info
@@ -245,6 +275,18 @@ export class MatlabClassInfo {
         rawClassInfo.enumerations.forEach(enumerationInfo => {
             const name = enumerationInfo.name
             this.enumerations.set(name, new MatlabClassMemberInfo(enumerationInfo))
+        })
+        rawClassInfo.propertiesBlocks.forEach(propertiesInfo => {
+            const symbolId = this.createSymbolId(propertiesInfo.name, propertiesInfo.range)
+            this.propertiesBlocks.set(symbolId, new MatlabClassMemberInfo(propertiesInfo))
+        })
+        rawClassInfo.enumerationsBlocks.forEach(enumerationsInfo => {
+            const symbolId = this.createSymbolId(enumerationsInfo.name, enumerationsInfo.range)
+            this.enumerationsBlocks.set(symbolId, new MatlabClassMemberInfo(enumerationsInfo))
+        })
+        rawClassInfo.methodsBlocks.forEach(methodInfo => {
+            const symbolId = this.createSymbolId(methodInfo.name, methodInfo.range)
+            this.methodsBlocks.set(symbolId, new MatlabClassMemberInfo(methodInfo))
         })
     }
 }
@@ -376,14 +418,14 @@ class MatlabVariableInfo {
 export class MatlabCodeData {
     readonly functions: Map<string, MatlabFunctionInfo>
     readonly references: Map<string, Range[]>
-    readonly sections: Map<string, Range[]>
+    readonly sections: CodeDataSectionInfo[]
     readonly packageName: string
     errorMessage: string | undefined
 
     constructor (public uri: string, rawCodeData: RawCodeData, public classInfo?: MatlabClassInfo) {
         this.functions = new Map<string, MatlabFunctionInfo>()
         this.references = new Map<string, Range[]>()
-        this.sections = new Map<string, Range[]>()
+        this.sections = []
         this.packageName = rawCodeData.packageName
         this.errorMessage = undefined
         this.parseFunctions(rawCodeData.functionInfo)
@@ -485,16 +527,13 @@ export class MatlabCodeData {
      * Parse raw section info to the section and set to this.sections
      * @param sectionsInfo Array of the section information of the file retrieved from MATLAB
      */
-    private parseSectionInfo (sectionsInfo: CodeDataSectionInfo[]): void {
-        sectionsInfo.forEach((sectionInfo) => {
-            const { title, range: rangeSectionInfo } = sectionInfo
-            const range = convertRange(rangeSectionInfo)
-            if (!this.sections.has(title)) {
-                this.sections.set(title, [range])
-            } else {
-                this.sections.get(title)?.push(range)
-            }
-        })
+    private parseSectionInfo (sectionsInfo: CodeDataSectionInfoRaw[]): void {
+        const sections = sectionsInfo.map((sectionInfo) => ({
+            title: sectionInfo.title,
+            range: convertRange(sectionInfo.range),
+            isExplicit: sectionInfo.isExplicit
+        }))
+        this.sections.splice(0, 0, ...sections)
     }
 }
 

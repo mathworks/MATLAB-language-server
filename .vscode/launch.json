@@ -12,7 +12,7 @@
             ],
             "internalConsoleOptions": "openOnSessionStart",
             "name": "Mocha Tests",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"

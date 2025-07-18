@@ -47,14 +47,18 @@ function Information () {
     const errorLogsNode = (error && error.logs !== null && error.logs.length > 0)
         ? (
             <div className="expand_collapse error-logs-container">
-                <h4 className={`expand_trigger ${errorLogsExpanded ? 'expanded' : 'collapsed'}`}
-                    onClick={() => setErrorLogsExpanded(!errorLogsExpanded)}>
+                <h4 className={`expand_trigger ${errorLogsExpanded
+                    ? 'expanded'
+                    : 'collapsed'}`}
+                onClick={() => setErrorLogsExpanded(!errorLogsExpanded)}>
                     <span className="icon-arrow-open-down"></span>
                     <span className="icon-arrow-open-right"></span>
                 Error logs
                 </h4>
                 <div id="error-logs"
-                    className={`expand_target error-container alert alert-danger ${errorLogsExpanded ? 'expanded' : 'collapsed'}`}
+                    className={`expand_target error-container alert alert-danger ${errorLogsExpanded
+                        ? 'expanded'
+                        : 'collapsed'}`}
                     aria-expanded={errorLogsExpanded}>
                     <Linkify>
                         <div className="error-msg">{error.logs.join('\n').trim()}</div>
@@ -73,14 +77,18 @@ function Information () {
     const warningsNode = (warnings && warnings.length > 0)
         ? (
             <div className="expand_collapse warnings-container">
-                <h4 className={`expand_trigger ${warningsExpanded ? 'expanded' : 'collapsed'}`}
-                    onClick={() => setWarningsExpanded(!warningsExpanded)}>
+                <h4 className={`expand_trigger ${warningsExpanded
+                    ? 'expanded'
+                    : 'collapsed'}`}
+                onClick={() => setWarningsExpanded(!warningsExpanded)}>
                     <span className="icon-arrow-open-down"></span>
                     <span className="icon-arrow-open-right"></span>
                 Warnings
                 </h4>
                 <div id="warnings"
-                    className={`expand_target warnings-container alert alert-warning ${warningsExpanded ? 'expanded' : 'collapsed'}`}
+                    className={`expand_target warnings-container alert alert-warning ${warningsExpanded
+                        ? 'expanded'
+                        : 'collapsed'}`}
                     aria-expanded={warningsExpanded}>
                     <Linkify componentDecorator={linkDecorator}>
                         <div className="warnings-msg">{warnings.map((warning, index) => (index + 1).toString() + ')' + warning.trim()).join('\n\n')}</div>
@@ -92,7 +100,9 @@ function Information () {
 
 
     const toggleVisibility = () => {
-        tokenInput.current.type = tokenInput.current.type === 'text' ? 'password' : 'text';
+        tokenInput.current.type = tokenInput.current.type === 'text'
+            ? 'password'
+            : 'text';
     };
 
     const authenticate = async (token) => {
@@ -135,7 +145,7 @@ function Information () {
                                         <div className="flex-item-1">
                                            Please Authenticate                                        
                                         </div>                                      
-                                            { !isAuthenticated && 
+                                        { !isAuthenticated && 
                                                 <div className="flex-item-2">
                                                     <form id="token-form" onSubmit={(e) => e.preventDefault()} className='flex-container'>
                                                         <input
@@ -150,7 +160,7 @@ function Information () {
                                                         >Submit</button>
                                                     </form>
                                                 </div>
-                                            }
+                                        }
                                         
                                     </>
                                 }

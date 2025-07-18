@@ -31,7 +31,7 @@ export const selectIsError = createSelector(
 
 export const selectIsConnectionError = createSelector(
     selectServerStatusFetchFailCount,
-    (fails) => { return fails >= MAX_REQUEST_FAIL_COUNT }
+    (fails) => { return fails >= MAX_REQUEST_FAIL_COUNT; }
 );
 
 export const selectOverlayHidable = createSelector(
@@ -60,14 +60,6 @@ export const getFetchAbortController = createSelector(
 export const selectFetchStatusPeriod = createSelector(
     selectSubmittingServerStatus,
     selectIsFetchingServerStatus,
-    // selectIsConcurrencyEnabled,
-    // selectIsConcurrent,
-    // (isSubmitting, isFetchingServerStatus, isConcurrencyEnabled, isConcurrent) => {
-    //     if (isSubmitting || isFetchingServerStatus || (isConcurrencyEnabled && isConcurrent)) {
-    //         return null;
-    //     }
-    //     return STATUS_REQUEST_INTERVAL_MS; // milliseconds
-    // }
     (isSubmitting, isFetchingServerStatus) => {
         if (isSubmitting || isFetchingServerStatus ) {
             return null;
@@ -102,13 +94,17 @@ export const selectLicensingIsExistingLicense = createSelector(
 export const selectLicensingMhlmUsername = createSelector(
     selectLicensingInfo,
     selectLicensingIsMhlm,
-    (licensingInfo, isMhlm) => isMhlm ? licensingInfo.emailAddress : ''
+    (licensingInfo, isMhlm) => isMhlm
+        ? licensingInfo.emailAddress
+        : ''
 );
 
 export const selectLicensingNLMConnectionString = createSelector(
     selectLicensingInfo,
     selectLicensingIsNlm,
-    (licensingInfo, isNlm) => isNlm ? licensingInfo.connectionString : ''
+    (licensingInfo, isNlm) => isNlm
+        ? licensingInfo.connectionString
+        : ''
 );
 
 // Selector to check if the license type is mhlm and entitlements property is not empty
@@ -124,14 +120,6 @@ export const selectIsEntitled = createSelector(
     (licensingInfo, entitlementIdInfo) => entitlementIdInfo && licensingInfo.entitlementId
 );
 
-// TODO Are these overkill? Perhaps just selecting status would be enough
-// TODO Could be used for detected intermediate failures, such as server being
-// temporarily inaccessible
-// export const selectMatlabPending = createSelector(
-//     selectMatlabStatus,
-//     matlabStatus => matlabStatus === 'starting'
-// );
-
 export const selectOverlayVisible = createSelector(
     selectOverlayVisibility,
     selectIsError,
@@ -144,12 +132,12 @@ export const selectIsInvalidTokenError = createSelector(
     selectIsError,
     selectError,
     (authEnabled, isAuthenticated, isError, error) => {
-        if ((authEnabled && !isAuthenticated) && isError && error.type === "InvalidTokenError") {
-            return true
+        if ((authEnabled && !isAuthenticated) && isError && error.type === 'InvalidTokenError') {
+            return true;
         }
-        return false
+        return false;
     }
-)
+);
 
 export const selectInformationDetails = createSelector(
     selectIsError,
@@ -166,7 +154,7 @@ export const selectInformationDetails = createSelector(
                 icon: 'warning',
                 alert: 'warning',
                 label: 'Unknown',
-            }
+            };
         }
 
         if (isError && authEnabled && isInvalidTokenError) {
@@ -174,7 +162,7 @@ export const selectInformationDetails = createSelector(
                 icon: 'warning',
                 alert: 'warning',
                 label: 'Invalid Token supplied',
-            }
+            };
         }
 
         if(isError){
@@ -183,19 +171,19 @@ export const selectInformationDetails = createSelector(
                     icon: 'warning',
                     alert: 'warning',
                     label: 'Unknown',
-                } 
+                }; 
             } else if( authEnabled && isInvalidTokenError){
                 return {
                     icon: 'warning',
                     alert: 'warning',
                     label: 'Invalid Token supplied',
-                }
+                };
             } else {
                 return {
                     icon: 'warning',
                     alert: 'warning',
                     label: error,
-                } 
+                }; 
             }
 
         } else {
@@ -206,13 +194,13 @@ export const selectInformationDetails = createSelector(
                         label: 'Success',
                         icon: 'success',
                         alert: 'success'
-                    }
+                    };
                 } else {
                     return {
                         label: 'Success',
                         icon: 'info-reverse',
                         alert: 'info'
-                    }
+                    };
                 }
                 
             }
@@ -223,45 +211,8 @@ export const selectInformationDetails = createSelector(
             label: 'Success',
             icon: 'info-reverse',
             alert: 'info'
-        }
-
-        // Check status of MATLAB for errors
-        // switch (matlabStatus) {
-        //     case 'up':
-        //         return {
-        //             label: 'Running',
-        //             icon: 'success',
-        //             alert: 'success'
-        //         };
-        //     case 'starting':
-        //         return {
-        //             label: 'Starting. This may take several minutes.',
-        //             icon: 'info-reverse',
-        //             alert: 'info',
-        //             spinner: true
-        //         };
-
-        //     case 'stopping':
-        //         return {
-        //             label: 'Stopping',
-        //             icon: 'info-reverse',
-        //             alert: 'info',
-        //             spinner: true
-        //         };
-        //     case 'down':
-        //         const detail = {
-        //             label: 'Not running',
-        //             icon: 'info-reverse',
-        //             alert: 'info'
-        //         };
-        //         if (isError) {
-        //             detail.icon = 'error';
-        //             detail.alert = 'danger';
-        //         }
-        //         return detail;
-        //     default:
-        //         throw new Error(`Unknown MATLAB status: "${matlabStatus}".`);
-        // }
+        };
+ 
 
     }
 );

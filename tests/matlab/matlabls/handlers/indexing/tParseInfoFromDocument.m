@@ -36,8 +36,9 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
             testCase.assertEqual(result.references, expectedReferences);
 
             expectedSections = {
-                struct(title = "Create Data", range = toRange(3, 1, 6, 1)),...
-                struct(title = "Plot", range = toRange(7, 1, 8, 11))
+                struct(title = "Section 1", range = toRange(1, 1, 2, 1), isExplicit = false),...
+                struct(title = "Create Data", range = toRange(3, 1, 6, 1), isExplicit = true),...
+                struct(title = "Plot", range = toRange(7, 1, 8, 11), isExplicit = true)
             };
 
             testCase.assertEqual(result.sections, expectedSections);
@@ -200,6 +201,26 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
                 struct(name = 'C', range = toRange(6, 9, 6, 10), parentClass = 'SampleClass', isPublic = false)
             };
             testCase.assertEqual(classInfo.enumerations, expectedEnumerations);
+
+            % Add tests for properties blocks
+            expectedPropertiesBlocks = {
+                struct(name = 'properties', range = toRange(9, 5, 12, 8), parentClass = 'SampleClass', isPublic = true)
+            };
+            testCase.assertEqual(classInfo.propertiesBlocks, expectedPropertiesBlocks);
+
+            % Add tests for methods blocks  
+            expectedMethodsBlocks = {
+                struct(name = 'methods', range = toRange(14, 5, 22, 8), parentClass = 'SampleClass', isPublic = true),...
+                struct(name = 'methods (Abstract)', range = toRange(24, 5, 26, 8), parentClass = 'SampleClass', isPublic = true),...
+                struct(name = 'methods (Hidden)', range = toRange(28, 5, 33, 8), parentClass = 'SampleClass', isPublic = true)
+            };
+            testCase.assertEqual(classInfo.methodsBlocks, expectedMethodsBlocks);
+
+            % Add tests for enumeration blocks
+            expectedEnumerationBlocks = {
+                struct(name = 'enumeration', range = toRange(3, 5, 7, 8), parentClass = 'SampleClass', isPublic = true)
+            };
+            testCase.assertEqual(classInfo.enumerationsBlocks, expectedEnumerationBlocks);
 
             testCase.assertEmpty(classInfo.classDefFolder);
             testCase.assertEqual(classInfo.baseClasses, {'SuperA', 'SuperB'});

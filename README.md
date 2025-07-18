@@ -10,12 +10,14 @@ MATLAB language server implements several Language Server Protocol features and 
 * Code diagnostics — [publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
 * Quick fixes — [codeActionProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction)
 * Document formatting — [documentFormattingProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting)
+* Document range formatting - [documentRangeFormattingProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rangeFormatting)
 * Code completions — [completionProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion)
 * Function signature help — [signatureHelpProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp)
 * Go to definition — [definitionProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition)
 * Go to references — [referencesProvider](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references)
-* Document symbols — [documentSymbol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol)
+* Document symbols — [documentSymbolProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol)
 * Symbol rename - [renameProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename)
+* Code folding - [foldingRangeProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_foldingRange)
 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:
@@ -25,6 +27,18 @@ MATLAB language server supports these editors by installing the corresponding ex
 ## Release Notes
 
 ### Unreleased
+
+### 1.3.4
+Release date: 2025-07-24
+
+Added:
+* Support for document range formatting
+* Document symbol model now include methods, properties, and enumerations for improved navigation
+
+Fixed:
+* Resolves a crash that occurs when language server is used over stdin/stdout
+* Resolves issue where language server stops working after calling `restoredefaultpath`
+* Applied patches for CVE-2023-44270, CVE-2024-11831, CVE-2025-27789, CVE-2025-30359, CVE-2025-30360, CVE-2025-32996, and CVE-2025-5889
 
 ### 1.3.3
 Release date: 2025-05-15
