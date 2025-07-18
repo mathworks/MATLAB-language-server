@@ -29,7 +29,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 ### Unreleased
 
 ### 1.3.4
-Release date: 2025-07-24
+Release date: 2025-07-31
 
 Added:
 * Support for document range formatting
