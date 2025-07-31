@@ -162,7 +162,7 @@ class NavigationSupportProvider {
     }
 
     private _sendSectionRangesForHighlighting (result: MatlabCodeData, uri: string): void {
-        const sectionRanges = result.sections.map((sectionData) => sectionData.range);
+        const sectionRanges = result.sections.map((sectionData) => ({ range: sectionData.range, isExplicit: sectionData.isExplicit }));
         NotificationService.sendNotification(Notification.MatlabSections, { uri, sectionRanges })
     }
 }
