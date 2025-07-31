@@ -14,7 +14,9 @@ function Overlay({
             id="overlay"
             style={
                 {
-                    backgroundColor: transparent ? "transparent" : null
+                    backgroundColor: transparent
+                        ? 'transparent'
+                        : null
                 }
             }
         >
@@ -24,7 +26,9 @@ function Overlay({
 }
 
 Overlay.propTypes = {
-    transparent: PropTypes.bool
+    transparent: PropTypes.bool,
+    children: PropTypes.oneOfType([PropTypes.node, PropTypes.arrayOf(PropTypes.node)])
 };
+
 
 export default Overlay;

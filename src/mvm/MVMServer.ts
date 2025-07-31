@@ -1,4 +1,4 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import NotificationService, { Notification } from '../notifications/NotificationService'
 import MVM, { IMVM, MatlabState, EvalRequest, EvalResponse, FEvalRequest, FEvalResponse, BreakpointRequest, PromptState } from './impl/MVM'
@@ -55,7 +55,7 @@ export default class MVMServer {
         if (requestId === undefined) {
             return;
         }
-        void this._mvm.feval(data.functionName, data.nargout, data.args, data.capabilitiesToRemove)?.then((result: unknown) => {
+        void this._mvm.feval(data.functionName, data.nargout, data.args, data.isUserEval, data.capabilitiesToRemove)?.then((result: unknown) => {
             this._notificationService.sendNotification(Notification.MVMFevalComplete, {
                 requestId,
                 result

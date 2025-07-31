@@ -44,7 +44,7 @@ export async function startServer (): Promise<void> {
     // Instantiate services
     const matlabLifecycleManager = new MatlabLifecycleManager()
 
-    const mvm = new MVM(matlabLifecycleManager);
+    const mvm = new MVM(matlabLifecycleManager, Logger);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const mvmServer = new MVMServer(mvm, NotificationService);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -115,6 +115,7 @@ export async function startServer (): Promise<void> {
                 },
                 definitionProvider: true,
                 documentFormattingProvider: true,
+                documentRangeFormattingProvider: true,
                 executeCommandProvider: {
                     commands: Object.values(MatlabLSCommands)
                 },
@@ -286,6 +287,10 @@ export async function startServer (): Promise<void> {
     connection.onDocumentFormatting(async params => {
         // Gather a set of document edits required for formatting, which the IDE will execute
         return await formatSupportProvider.handleDocumentFormatRequest(params, documentManager)
+    })
+
+    connection.onDocumentRangeFormatting(async params => {
+        return await formatSupportProvider.handleDocumentRangeFormatRequest(params, documentManager)
     })
 
     /** --------------------  LINTING SUPPORT   -------------------- **/

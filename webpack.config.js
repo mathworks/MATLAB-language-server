@@ -18,6 +18,7 @@ const config = {
     resolve: {
         extensions: ['.ts', '.js']
     },
+    externals: ["express", "yargs", "chokidar"],
     module: {
         rules: [
             {

@@ -3,10 +3,13 @@
 import React, { useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useInterval } from 'react-use';
+import './App.css';
+import './3p/css/bootstrap.min.css';
+import './3p/css/site7.min.css';
 import Overlay from '../Overlay';
 import LicensingGatherer from '../LicensingGatherer';
 import Information from '../Information';
-import EntitlementSelector from "../EntitlementSelector";
+import EntitlementSelector from '../EntitlementSelector';
 import Error from '../Error';
 
 import {
@@ -28,7 +31,7 @@ import {
     selectLicensingIsExistingLicense,
     selectLicensingMhlmUsername,
     selectLicensingNLMConnectionString
-} from "../../selectors";
+} from '../../selectors';
 
 import {
     fetchServerStatus,
@@ -55,17 +58,17 @@ function App() {
     const licensingInfo = useSelector(selectLicensingInfo);
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const authEnabled = useSelector(selectAuthEnabled);
-    const error = useSelector(selectError)
-    const isInvalidTokenError = useSelector(selectIsInvalidTokenError)
-    const isMHLM = useSelector(selectLicensingIsMhlm)
-    const isNLM = useSelector(selectLicensingIsNlm)
-    const isExistingLicense = useSelector(selectLicensingIsExistingLicense)
-    const mhlmUsername = useSelector(selectLicensingMhlmUsername) // eslint-disable-line no-unused-vars
-    const nlmConnectionString = useSelector(selectLicensingNLMConnectionString) // eslint-disable-line no-unused-vars
+    const error = useSelector(selectError);
+    const isInvalidTokenError = useSelector(selectIsInvalidTokenError);
+    const isMHLM = useSelector(selectLicensingIsMhlm);
+    const isNLM = useSelector(selectLicensingIsNlm);
+    const isExistingLicense = useSelector(selectLicensingIsExistingLicense);
+    const mhlmUsername = useSelector(selectLicensingMhlmUsername); // eslint-disable-line no-unused-vars
+    const nlmConnectionString = useSelector(selectLicensingNLMConnectionString); // eslint-disable-line no-unused-vars
 
     function handleClick(e) {
         e.preventDefault();
-        dispatch(fetchUnsetLicensing())
+        dispatch(fetchUnsetLicensing());
     }
     let dialog;    
     if (isConnectionError) {
@@ -73,9 +76,11 @@ function App() {
             <Error message="Server unreachable"> </Error>
         );
     } else if(error && !isInvalidTokenError){     
-        const actionToTake = ['OnlineLicensingError', 'LicensingError', 'EntitlementError'].includes(error.type) ? (
-            <span onClick={handleClick} style={{ color: 'blue', cursor: 'pointer' }}> Try Licensing again </span>
-        ) : null;
+        const actionToTake = ['OnlineLicensingError', 'LicensingError', 'EntitlementError'].includes(error.type)
+            ? (
+                <span onClick={handleClick} style={{ color: 'blue', cursor: 'pointer' }}> Try Licensing again </span>
+            )
+            : null;
 
 
         dialog = (
@@ -151,34 +156,36 @@ function App() {
         overlayContent = <EntitlementSelector options={licensingInfo.entitlements} />;
     } else {
         // Licensing was successful        
-        let textToShow
+        let textToShow;
 
         if(isNLM){
-            textToShow = <div> <h1>Sign in using network license manager successful.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>               
+            textToShow = <div> <h1>Sign in using network license manager successful.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>;               
         } else if(isExistingLicense) {            
-            textToShow = <div> <h1>Using existing MATLAB installation.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>
+            textToShow = <div> <h1>Using existing MATLAB installation.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>;
         } else if(isMHLM){
-            textToShow = <div><h1>Sign in successful.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>
+            textToShow = <div><h1>Sign in successful.<br/>Close this window and continue in Visual Studio® Code.</h1> </div>;
         }  
 
         overlayContent = <div style={{textAlign: 'center'}} >
             {textToShow} 
-        </div>
+        </div>;
         transparent = true;
     }
 
-    const overlay = overlayVisible ? (
-        <Overlay transparent={transparent}>
-            {overlayContent}
-        </Overlay>
-    ) : null;
+    const overlay = overlayVisible
+        ? (
+            <Overlay transparent={transparent}>
+                {overlayContent}
+            </Overlay>
+        )
+        : null;
 
 
     return (
-         <React.Fragment>
-                <div data-testid="app" className="main">
-                    {overlay}
-                </div>
+        <React.Fragment>
+            <div data-testid="app" className="main">
+                {overlay}
+            </div>
         </React.Fragment>
     );
 }

@@ -19,7 +19,6 @@ import sha256 from 'crypto-js/sha256';
 import { MWI_AUTH_TOKEN_NAME_FOR_HTTP } from '../constants';
 
 export function setAuthStatus (authentication) {
-    console.log("Authentication is ", authentication)
     return {
         type: SET_AUTH_STATUS,
         authentication
@@ -47,12 +46,12 @@ export function requestServerStatus() {
 }
 
 export function receiveServerStatus(status) {
-    return function (dispatch, getState) {
+    return function (dispatch) {
         return dispatch({
             type: RECEIVE_SERVER_STATUS,
             status,
         });
-    }
+    };
 }
 
 export function requestEnvConfig() {
@@ -100,7 +99,7 @@ export function receiveError(error, statusCode) {
         type: RECEIVE_ERROR,
         error,
         statusCode
-    }
+    };
 }
 
 export async function fetchWithTimeout(dispatch, resource, options = {}, timeout = 10000) {
@@ -119,29 +118,29 @@ export async function fetchWithTimeout(dispatch, resource, options = {}, timeout
     } catch (err) {
         const errorText = 'Check your internet connection and verify that the server is running.';
         // If AbortController is aborted, then AbortError exception is raised due to time out.
-        if (err.name === "AbortError" || err.name === 'TypeError') {
-            dispatch(receiveError(`HTTP Error 408 - Request Timeout. ${errorText}`, 408))
+        if (err.name === 'AbortError' || err.name === 'TypeError') {
+            dispatch(receiveError(`HTTP Error 408 - Request Timeout. ${errorText}`, 408));
         } else {
-            dispatch(receiveError("Communication with server failed.", 500))
+            dispatch(receiveError('Communication with server failed.', 500));
         }
     }
 }
 
-export function fetchServerStatus(requestTransferSession = false) {
-    return async function (dispatch, getState) {        
+export function fetchServerStatus() {
+    return async function (dispatch) {        
         dispatch(requestServerStatus());
 
-        let url = './get_status'
+        const url = './get_status';
 
         const response = await fetchWithTimeout(dispatch, url, {}, 10000);
         
         const data = await response.json();
         dispatch(receiveServerStatus(data));
-    }
+    };
 }
 
 export function updateAuthStatus (token) {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
         const tokenHash = sha256(token);
         const options = {
             method: 'POST',
@@ -157,7 +156,7 @@ export function updateAuthStatus (token) {
 }
 
 export function getAuthToken () {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
         const options = {
             method: 'GET'
         };
@@ -168,7 +167,7 @@ export function getAuthToken () {
 }
 
 export function fetchEnvConfig() {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
 
         dispatch(requestEnvConfig());
         const response = await fetchWithTimeout(dispatch, './get_env_config', {}, 10000);
@@ -178,7 +177,7 @@ export function fetchEnvConfig() {
 }
 
 export function fetchSetLicensing(info) {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
 
         const options = {
             method: 'PUT',
@@ -189,18 +188,18 @@ export function fetchSetLicensing(info) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(info),
-        }
+        };
 
         dispatch(requestSetLicensing());
         const response = await fetchWithTimeout(dispatch, './set_licensing_info', options, 15000);
         const data = await response.json();
         dispatch(receiveSetLicensing(data));
 
-    }
+    };
 }
 
 export function fetchUpdateLicensing(info) {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
 
         const options = {
             method: 'PUT',
@@ -211,29 +210,29 @@ export function fetchUpdateLicensing(info) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(info),
-        }
+        };
 
         dispatch(requestUpdateLicensing());
         const response = await fetchWithTimeout(dispatch, './update_entitlement', options, 1500);
         const data = await response.json();
         dispatch(receiveUpdateLicensing(data));
-    }
+    };
 }
 
 export function fetchUnsetLicensing() {
-    return async function (dispatch, getState) {
+    return async function (dispatch) {
 
         const options = {
             method: 'DELETE',
             mode: 'same-origin',
             cache: 'no-cache',
             credentials: 'same-origin',
-        }
+        };
 
         dispatch(requestSetLicensing());
         const response = await fetchWithTimeout(dispatch, './set_licensing_info', options, 15000);
         const data = await response.json();
         dispatch(receiveSetLicensing(data));
 
-    }
+    };
 }

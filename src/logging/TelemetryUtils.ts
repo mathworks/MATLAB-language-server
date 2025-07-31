@@ -13,6 +13,7 @@ export enum Actions {
     ShutdownMatlab = 'shutdownMATLAB',
     MatlabSessionKey = 'getMATLABSession',
     FormatDocument = 'formatDocument',
+    FormatDocumentRange = 'formatDocumentRange',
     GoToReference = 'goToReference',
     GoToDefinition = 'goToDefinition',
     DocumentSymbol = 'documentSymbol',

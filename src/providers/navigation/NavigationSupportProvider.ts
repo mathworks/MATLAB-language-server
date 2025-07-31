@@ -2,7 +2,7 @@
 
 import { DefinitionParams, DocumentSymbolParams, Location, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import FileInfoIndex from '../../indexing/FileInfoIndex'
+import FileInfoIndex, { MatlabCodeData } from '../../indexing/FileInfoIndex'
 import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions } from '../../logging/TelemetryUtils'
@@ -132,15 +132,17 @@ class NavigationSupportProvider {
             if (codeData.classInfo.range != null) {
                 pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range)
             }
-            classInfo.methods.forEach((info, name) => pushSymbol(name, SymbolKind.Method, info.range))
             classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range))
             classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
+            classInfo.methodsBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.Method, info.range))
+            classInfo.enumerationsBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.EnumMember, info.range))
+            classInfo.propertiesBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.Property, info.range))
         }
         codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
-        codeData.sections.forEach((range, title) => {
-            range.forEach(range => {
-                pushSymbol(title, SymbolKind.Module, range)
-            })
+        codeData.sections.forEach((sectionData) => {
+            if (sectionData.isExplicit) {
+                pushSymbol(sectionData.title, SymbolKind.Module, sectionData.range)
+            }
         })
 
         /**
@@ -155,16 +157,12 @@ class NavigationSupportProvider {
             }
         }
         this._documentSymbolCache.set(uri, result)
-        this._sendSectionRangesForHighlighting(result, uri)
+        this._sendSectionRangesForHighlighting(codeData, uri)
         return result
     }
 
-    private _sendSectionRangesForHighlighting (result: SymbolInformation[], uri: string): void {
-        const sections = result.filter(result => result.kind === SymbolKind.Module)
-        const sectionRanges: Range[] = []
-        sections.forEach((section) => {
-            sectionRanges.push(section.location.range)
-        })
+    private _sendSectionRangesForHighlighting (result: MatlabCodeData, uri: string): void {
+        const sectionRanges = result.sections.map((sectionData) => ({ range: sectionData.range, isExplicit: sectionData.isExplicit }));
         NotificationService.sendNotification(Notification.MatlabSections, { uri, sectionRanges })
     }
 }

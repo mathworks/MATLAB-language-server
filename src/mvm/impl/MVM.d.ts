@@ -19,9 +19,10 @@ export default class MVM extends EventEmitter implements IMVM {
     private _readyPromise?;
     private _isReady;
     private _lifecycleManager;
-    constructor(lifecycleManager: any);
+    private _logger;
+    constructor(lifecycleManager: any, logger: any);
     eval(command: string, isUserEval?: boolean, capabilitiesToRemove?: Capability[]): Promise<void>;
-    feval(functionName: string, nargout: number, args: unknown[], capabilitiesToRemove?: Capability[]): Promise<MVMError | any>;
+    feval(functionName: string, nargout: number, args: unknown[], isUserEval?: boolean, capabilitiesToRemove?: Capability[]): Promise<MVMError | any>;
     setBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     clearBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     unpause(): void;

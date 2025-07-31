@@ -37,7 +37,6 @@ export function authStatus (state = false, action) {
         case RECEIVE_ENV_CONFIG:
             return action.config.authentication.status;
         case SET_AUTH_STATUS:
-            console.log("status is ", action.authentication.status)
             return action.authentication.status;
         default:
             return state;
@@ -81,9 +80,9 @@ export function matlabVersionOnPath(state = null, action) {
     switch (action.type) {       
         case RECEIVE_SERVER_STATUS:
         case RECEIVE_SET_LICENSING:
-            return action.status.matlab.version
+            return action.status.matlab.version;
         case RECEIVE_ENV_CONFIG:
-            return action.config.matlab.version
+            return action.config.matlab.version;
         default:
             return state;
     }
@@ -181,7 +180,9 @@ export function warnings(state = null, action) {
     switch (action.type) {
         case RECEIVE_SERVER_STATUS:
             const warnings = action.status.warnings;                             
-            return warnings.length > 0 ? warnings : null;
+            return warnings.length > 0
+                ? warnings
+                : null;
         default:
             return state;
     }
@@ -191,12 +192,12 @@ export function error(state = null, action) {
     switch (action.type) {
         case SET_AUTH_STATUS:
             if (action?.authentication?.error !== null) {
-                const { message, type } = action.authentication.error
+                const { message, type } = action.authentication.error;
                 return {
                     message: message,
                     type: type,
                     logs: null
-                }
+                };
             }
             else return null;
         case RECEIVE_ERROR:
@@ -209,11 +210,13 @@ export function error(state = null, action) {
         case RECEIVE_SET_LICENSING:
         case RECEIVE_STOP_MATLAB:
         case RECEIVE_START_MATLAB:
-            return action.status.error ? {
-                message: action.status.error.message,
-                logs: action.status.error.logs,
-                type: action.status.error.type
-            } : null;
+            return action.status.error
+                ? {
+                    message: action.status.error.message,
+                    logs: action.status.error.logs,
+                    type: action.status.error.type
+                }
+                : null;
         default:
             return state;
     }
@@ -221,9 +224,10 @@ export function error(state = null, action) {
 
 export function envConfig(state = null, action) {
     switch (action.type) {
-        case RECEIVE_ENV_CONFIG:
-            const { authentication, matlab,  ...envConfig } = action.config
-            return envConfig
+        case RECEIVE_ENV_CONFIG: {
+            const { ...envConfig } = action.config;
+            return envConfig;
+        }
         default:
             return state;
     }

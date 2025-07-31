@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import PropTypes from 'prop-types';
 import {
     selectLicensingMhlmUsername,
     selectWsEnv,
@@ -14,61 +15,61 @@ import {
 
 // Send a generated nonce to the login iframe
 function setLoginNonce(username) {
-    const clientNonce = (Math.random() + "").substr(2);
+    const clientNonce = (Math.random() + '').substr(2);
     const noncePayload = {
-        event: "init",
+        event: 'init',
         clientTransactionId: clientNonce,
-        transactionId: "",
-        release: "",
-        platform: "",
-        clientString: "desktop-jupyter",
-        clientID: "",
-        locale: "",
-        profileTier: "",
+        transactionId: '',
+        release: '',
+        platform: '',
+        clientString: 'desktop-jupyter',
+        clientID: '',
+        locale: '',
+        profileTier: '',
         showCreateAccount: false,
         showRememberMe: false,
         showLicenseField: false,
-        licenseNo: "",
+        licenseNo: '',
         cachedUsername: username,
         cachedRememberMe: false
     };
 
-    const loginFrame = document.getElementById("loginframe").contentWindow;
-    loginFrame.postMessage(JSON.stringify(noncePayload), "*");
+    const loginFrame = document.getElementById('loginframe').contentWindow;
+    loginFrame.postMessage(JSON.stringify(noncePayload), '*');
 }
 
 function initLogin(clientNonce, serverNonce, sourceId) {
     const initPayload = {
-        event: "load",
+        event: 'load',
         clientTransactionId: clientNonce,
         transactionId: serverNonce,
-        release: "",
-        platform: "web",
-        clientString: "desktop-jupyter",
-        clientId: "",
+        release: '',
+        platform: 'web',
+        clientString: 'desktop-jupyter',
+        clientId: '',
         sourceId: sourceId,
-        profileTier: "MINIMUM",
+        profileTier: 'MINIMUM',
         showCreateAccount: false,
         showRememberMe: false,
         showLicenseField: false,
-        entitlementId: "",
+        entitlementId: '',
         showPrivacyPolicy: true,
-        contextualText: "",
-        legalText: "",
-        cachedIdentifier: "",
-        cachedRememberMe: "",
-        token: "",
+        contextualText: '',
+        legalText: '',
+        cachedIdentifier: '',
+        cachedRememberMe: '',
+        token: '',
         unauthorized: false
     };
 
-    const loginFrame = document.getElementById("loginframe").contentWindow;
-    loginFrame.postMessage(JSON.stringify(initPayload), "*");
+    const loginFrame = document.getElementById('loginframe').contentWindow;
+    loginFrame.postMessage(JSON.stringify(initPayload), '*');
 }
 
-const versionRegex = /^[Rr]\d{4}[ab]$/
+const versionRegex = /^[Rr]\d{4}[ab]$/;
 
 function validateInput(matlabVersion) {    
-    return versionRegex.test(matlabVersion)
+    return versionRegex.test(matlabVersion);
 } 
 
 // Adding a child prop with null as default for improved testability.
@@ -81,11 +82,11 @@ function MHLM({mhlmLicensingInfo = null}) {
 
     const [iFrameLoaded, setIFrameLoaded] = useState(false);
     // useState variable to store response from mhlm after authentication
-    const [fetchedMhlmLicensingInfo, setFetchedMhlmLicensingInfo] = useState(mhlmLicensingInfo)
+    const [fetchedMhlmLicensingInfo, setFetchedMhlmLicensingInfo] = useState(mhlmLicensingInfo);
     
-    const [matlabVersionInput, setMatlabVersionInput] = useState("");
+    const [matlabVersionInput, setMatlabVersionInput] = useState('');
     const [changed, setChanged] = useState(false);
-    const valid = validateInput(matlabVersionInput)
+    const valid = validateInput(matlabVersionInput);
 
     const mhlmLoginHostname = useMemo(
         () => {
@@ -123,12 +124,12 @@ function MHLM({mhlmLicensingInfo = null}) {
                         profileId: data.profileId,
                         emailAddress: data.emailAddress,
                         sourceId
-                    }
+                    };
                     // matlab version is required in subsequent steps on the server side.
                     // If matlab version is available, persist licensing on the server side.
                     // Else, store response from mhlm and render drop down to choose matlab version.
                     if(matlabVersionOnPath){                        
-                        dispatch(fetchSetLicensing({...mhlmLicensingInfo, "matlabVersion": matlabVersionOnPath}));   
+                        dispatch(fetchSetLicensing({...mhlmLicensingInfo, matlabVersion: matlabVersionOnPath}));   
                     } else {
                         setFetchedMhlmLicensingInfo(mhlmLicensingInfo);
                     }
@@ -136,11 +137,11 @@ function MHLM({mhlmLicensingInfo = null}) {
             }
         };
 
-        window.addEventListener("message", handler);
+        window.addEventListener('message', handler);
 
         // Clean up
         return () => {
-            window.removeEventListener("message", handler);
+            window.removeEventListener('message', handler);
         };
     }, [dispatch, sourceId, mhlmLoginHostname, fetchedMhlmLicensingInfo, matlabVersionOnPath]);
 
@@ -169,20 +170,24 @@ function MHLM({mhlmLicensingInfo = null}) {
             </iframe>
 
             <p id="ExistingLicenseNote">
-            <b>Note</b>: If the MATLAB installation specified in the Install Path setting is already activated, select <b>Existing License</b> at the top of this page to skip sign in.                                         
+                <b>Note</b>: If the MATLAB installation specified in the Install Path setting is already activated, select <b>Existing License</b> at the top of this page to skip sign in.                                         
             </p>
         </div>
-    )
+    );
 
     const submitForm = (event) => {
         event.preventDefault();
-        dispatch(fetchSetLicensing({...fetchedMhlmLicensingInfo, "matlabVersion": matlabVersionRef.current.value}))
+        dispatch(fetchSetLicensing({...fetchedMhlmLicensingInfo, matlabVersion: matlabVersionRef.current.value}));
     };
 
     const chooseMatlabVersionDropDown = (
-    <div id="ChooseMatlabVersion">
+        <div id="ChooseMatlabVersion">
             <form onSubmit={submitForm}>
-                <div className={`form-group has-feedback ${changed ? (valid ? 'has-success' : 'has-error') : ''}`}>                     
+                <div className={`form-group has-feedback ${changed
+                    ? (valid
+                        ? 'has-success'
+                        : 'has-error')
+                    : ''}`}>                     
                     <p>
                         <b>Note</b>: The MATLAB version could not be determined. Enter the version of MATLAB you are attempting to start.
                     </p>
@@ -192,21 +197,23 @@ function MHLM({mhlmLicensingInfo = null}) {
 
                     <div className="input-group">
                         <input
-                        type="text"
-                        className="form-control"
-                        placeholder={'R20XYb'}
-                        id="matlabVersion"
-                        aria-invalid={!valid}
-                        ref={matlabVersionRef}
-                        value={matlabVersionInput}
-                        onChange={event => { setChanged(true); setMatlabVersionInput(event.target.value); }}
+                            type="text"
+                            className="form-control"
+                            placeholder={'R20XYb'}
+                            id="matlabVersion"
+                            aria-invalid={!valid}
+                            ref={matlabVersionRef}
+                            value={matlabVersionInput}
+                            onChange={event => { setChanged(true); setMatlabVersionInput(event.target.value); }}
                         />                        
                         <span className="input-group-addon" >
-                        {valid ? (
-                            <span className="glyphicon glyphicon-ok form-control-feedback" style={{ paddingLeft: '8px' }}></span>
-                        ) : (
-                            <span className="glyphicon glyphicon-remove form-control-feedback" style={{ paddingLeft: '8px' }}></span>
-                        )}
+                            {valid
+                                ? (
+                                    <span className="glyphicon glyphicon-ok form-control-feedback" style={{ paddingLeft: '8px' }}></span>
+                                )
+                                : (
+                                    <span className="glyphicon glyphicon-remove form-control-feedback" style={{ paddingLeft: '8px' }}></span>
+                                )}
                         </span>
                     </div>
 
@@ -215,7 +222,7 @@ function MHLM({mhlmLicensingInfo = null}) {
                     <input disabled={!valid} type="submit" id="startMatlabBtn" value="Submit" className="btn btn_color_blue" />
                 </div>
             </form>
-    </div>            
+        </div>            
     );
 
     // Render MHLM iFrame if not authenticated and matlab version couldn't be determined
@@ -225,5 +232,9 @@ function MHLM({mhlmLicensingInfo = null}) {
         return mhlmIframe;
     }
 }
+
+MHLM.propTypes = {
+    mhlmLicensingInfo: PropTypes.object
+};
 
 export default MHLM;
