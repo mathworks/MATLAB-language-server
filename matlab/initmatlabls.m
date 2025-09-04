@@ -13,7 +13,8 @@ function initmatlabls (outFile)
     % Ensure the language server code is on the path
     folder = fileparts(mfilename('fullpath'));
 
-    updatePath(folder);
+    % Shadow necessary functions
+    matlabls.setupShadows(folder);
     
     try
         s = settings;
@@ -68,29 +69,4 @@ function logConnectionData (outFile)
         error('Failed to rename connection file.')
     end
     
-end
-
-function updatePath(languageServerFolder)
-    addpath(languageServerFolder)
-
-    try
-        addRestoreDefaultPathShadow(languageServerFolder);
-
-        if isMATLABReleaseOlderThan('R2023a')
-            addpath(fullfile(languageServerFolder, 'shadows', 'clc'));
-        end
-    catch ME
-        disp('Error while attempting to add shadow directory to path')
-        disp(ME.message)
-    end
-end
-
-function addRestoreDefaultPathShadow(languageServerFolder)
-    currentDirectory = pwd;
-    cd(fullfile(matlabroot, 'toolbox', 'local'));
-    originalRestoreDefaultPath = @restoredefaultpath;
-    cd(matlabroot);
-    addpath(fullfile(languageServerFolder, 'shadows', 'restoredefaultpath'));
-    restoredefaultpath('SET', originalRestoreDefaultPath, @() updatePath(languageServerFolder));
-    cd(currentDirectory);
 end

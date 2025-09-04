@@ -1,4 +1,4 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2025 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Position } from 'vscode-languageserver'

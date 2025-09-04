@@ -13,6 +13,7 @@ import Indexer from '../../indexing/Indexer'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
 import PathResolver from './PathResolver'
 import NotificationService, { Notification } from '../../notifications/NotificationService'
+import { DocumentUri } from 'vscode-languageserver-types'
 
 class NavigationSupportProvider {
     constructor (
@@ -56,7 +57,9 @@ class NavigationSupportProvider {
         }
 
         if (requestType === RequestType.Definition) {
-            return await SymbolSearchService.findDefinition(uri, params.position, expression, this.pathResolver, this.indexer)
+            return await SymbolSearchService.findDefinitions(
+                uri, params.position, expression, this.pathResolver, this.indexer, requestType
+            )
         } else {
             return SymbolSearchService.findReferences(uri, params.position, expression, documentManager, requestType)
         }
@@ -77,7 +80,7 @@ class NavigationSupportProvider {
      * @param requestType The type of request
      * @returns Array of symbols found in the document
      */
-    async handleDocumentSymbol (params: DocumentSymbolParams, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
+    async handleDocumentSymbol (uri: DocumentUri, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Promise<SymbolInformation[]> {
         // Get or wait for the MATLAB connection to handle files opened before MATLAB is ready.
         // We do not want to trigger MATLAB to launch due to the frequency of this callback.
         // However, simply returning [] in this case could cause a delay between MATLAB started
@@ -100,7 +103,6 @@ class NavigationSupportProvider {
             return []
         }
 
-        const uri = params.textDocument.uri
         const textDocument = documentManager.get(uri)
 
         if (textDocument == null) {
