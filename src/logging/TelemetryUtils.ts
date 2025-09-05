@@ -1,4 +1,4 @@
-// Copyright 2023-2024 The MathWorks, Inc.
+// Copyright 2023-2025 The MathWorks, Inc.
 
 import NotificationService, { Notification } from '../notifications/NotificationService'
 
@@ -17,7 +17,8 @@ export enum Actions {
     GoToReference = 'goToReference',
     GoToDefinition = 'goToDefinition',
     DocumentSymbol = 'documentSymbol',
-    RenameSymbol = 'renameSymbol'
+    RenameSymbol = 'renameSymbol',
+    HighlightSymbol = 'highlightSymbol'
 }
 
 export enum ActionErrorConditions {

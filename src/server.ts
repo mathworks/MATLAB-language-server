@@ -21,6 +21,7 @@ import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
 import Indexer from './indexing/Indexer'
 import RenameSymbolProvider from './providers/rename/RenameSymbolProvider'
+import HighlightSymbolProvider from './providers/highlighting/HighlightSymbolProvider'
 import { RequestType } from './indexing/SymbolSearchService'
 import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
 import MatlabDebugAdaptorServer from './debug/MatlabDebugAdaptorServer'
@@ -31,6 +32,10 @@ import { stopLicensingServer } from './licensing/server'
 import { setInstallPath } from './licensing/config'
 import { handleInstallPathSettingChanged, handleSignInChanged, setupLicensingNotificationListenersAndUpdateClient } from './utils/LicensingUtils'
 import PathSynchronizer from './lifecycle/PathSynchronizer'
+import { URI } from 'vscode-uri'
+import GraphicsPrewarmService from './lifecycle/GraphicsPrewarmService'
+
+import { handleDefaultEditorConfigChange, setDefaultEditorVsCode } from './utils/DefaultEditorUtils'
 
 export async function startServer (): Promise<void> {
     cacheAndClearProxyEnvironmentVariables()
@@ -55,6 +60,9 @@ export async function startServer (): Promise<void> {
     const workspaceIndexer = new WorkspaceIndexer(indexer)
     const documentIndexer = new DocumentIndexer(indexer)
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const graphicsPrewarmService = new GraphicsPrewarmService(mvm, ConfigurationManager)
+
     const formatSupportProvider = new FormatSupportProvider(matlabLifecycleManager, mvm)
     const foldingSupportProvider = new FoldingSupportProvider(matlabLifecycleManager, mvm)
     const lintingSupportProvider = new LintingSupportProvider(matlabLifecycleManager, mvm)
@@ -62,6 +70,7 @@ export async function startServer (): Promise<void> {
     const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager, mvm)
     const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, indexer, documentIndexer, pathResolver)
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer)
+    const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, pathResolver, indexer)
 
     let pathSynchronizer: PathSynchronizer | null
 
@@ -89,6 +98,8 @@ export async function startServer (): Promise<void> {
 
                 // Index the open document
                 void documentIndexer.indexDocument(textDocument)
+
+                void navigationSupportProvider.handleDocumentSymbol(textDocument.uri, documentManager, RequestType.DocumentSymbol)
             })
         }
     })
@@ -127,7 +138,8 @@ export async function startServer (): Promise<void> {
                 documentSymbolProvider: true,
                 renameProvider: {
                     prepareProvider: true
-                }
+                },
+                documentHighlightProvider: true
             }
         }
 
@@ -142,6 +154,7 @@ export async function startServer (): Promise<void> {
         // Add callbacks when settings change.
         ConfigurationManager.addSettingCallback('signIn', handleSignInChanged)
         ConfigurationManager.addSettingCallback('installPath', handleInstallPathSettingChanged)
+        ConfigurationManager.addSettingCallback('defaultEditor', configuration => handleDefaultEditorConfigChange(configuration, mvm))
 
         const configuration = await ConfigurationManager.getConfiguration()
 
@@ -234,11 +247,22 @@ export async function startServer (): Promise<void> {
         }
     )
 
+    // Notification service to recieve VS Code executable path during in-session config changes and trigger updating MATLAB settings
+    NotificationService.registerNotificationListener(
+        Notification.EditorExecutablePath,
+        async (data) => {
+            const configuration = await ConfigurationManager.getConfiguration()
+            await setDefaultEditorVsCode(configuration, mvm, data)
+        }
+    )
+
     // Handles files opened
     documentManager.onDidOpen(params => {
         reportFileOpened(params.document)
         void lintingSupportProvider.lintDocument(params.document)
         void documentIndexer.indexDocument(params.document)
+        
+        void navigationSupportProvider.handleDocumentSymbol(params.document.uri, documentManager, RequestType.DocumentSymbol)
     })
 
     documentManager.onDidClose(params => {
@@ -247,6 +271,12 @@ export async function startServer (): Promise<void> {
 
     // Handles files saved
     documentManager.onDidSave(params => {
+        // Trigger any post-save operations
+        if (mvm.isReady()) {
+            const filePath = URI.parse(params.document.uri).fsPath
+            void mvm.feval('matlabls.utils.saveHelper', 0, [filePath])
+        }
+
         void lintingSupportProvider.lintDocument(params.document)
     })
 
@@ -309,7 +339,7 @@ export async function startServer (): Promise<void> {
     })
 
     connection.onDocumentSymbol(async params => {
-        return await navigationSupportProvider.handleDocumentSymbol(params, documentManager, RequestType.DocumentSymbol)
+        return await navigationSupportProvider.handleDocumentSymbol(params.textDocument.uri, documentManager, RequestType.DocumentSymbol)
     })
 
     // Start listening to open/change/close text document events
@@ -322,6 +352,11 @@ export async function startServer (): Promise<void> {
 
     connection.onRenameRequest(async params => {
         return await renameSymbolProvider.handleRenameRequest(params, documentManager)
+    })
+
+    /** -------------- VARIABLE HIGHLIGHTING SUPPORT --------------- **/
+    connection.onDocumentHighlight(async params => {
+        return await highlightSymbolProvider.handleDocumentHighlightRequest(params, documentManager)
     })
 }
 

@@ -18,6 +18,7 @@ MATLAB language server implements several Language Server Protocol features and 
 * Document symbols — [documentSymbolProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol)
 * Symbol rename - [renameProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename)
 * Code folding - [foldingRangeProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_foldingRange)
+* Document highlights - [highlightSymbolProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight)
 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:
@@ -28,6 +29,15 @@ MATLAB language server supports these editors by installing the corresponding ex
 ## Release Notes
 
 ### Unreleased
+
+### 1.3.5
+Release date: 2025-09-04
+
+Fixed:
+* Resolves issue where newly saved document contents are ignored during execution
+
+Added:
+* Support for highlighting all references to a selected function, variable, class, or class property
 
 ### 1.3.4
 Release date: 2025-07-31

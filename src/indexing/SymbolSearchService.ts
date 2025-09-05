@@ -16,6 +16,7 @@ export enum RequestType {
     References,
     DocumentSymbol,
     RenameSymbol,
+    DocumentHighlight
 }
 
 export function reportTelemetry (type: RequestType, errorCondition = ''): void {
@@ -32,6 +33,9 @@ export function reportTelemetry (type: RequestType, errorCondition = ''): void {
             break
         case RequestType.RenameSymbol:
             action = Actions.RenameSymbol
+            break
+        case RequestType.DocumentHighlight:
+            action = Actions.HighlightSymbol
             break
     }
     reportTelemetryAction(action, errorCondition)
@@ -56,7 +60,7 @@ class SymbolSearchService {
      * @param position The position of the expression
      * @param expression The expression for which we are looking for references
      * @param documentManager The text document manager
-     * @param requestType The type of request (definition, references, or rename)
+     * @param requestType The type of request
      * @returns The references' locations
      */
     findReferences (uri: string, position: Position, expression: Expression, documentManager: TextDocuments<TextDocument>, requestType: RequestType): Location[] {
@@ -197,43 +201,53 @@ class SymbolSearchService {
 
     /**
      * Finds the definition(s) of an expression.
+     * 
+     * For DocumentHighlight requests, only the file containing the expression will be
+     * searched. For all other request types, the entire workspace and the MATLAB path
+     * will be searched.
      *
      * @param uri The URI of the document containing the expression
      * @param position The position of the expression
      * @param expression The expression for which we are looking for the definition
-     * @param matlabConnection The connection to MATLAB®
      * @param pathResolver The path resolver
      * @param indexer The workspace indexer
+     * @param requestType The type of request - DocumentHighlight requests will only return
+     *     definitions in the file referenced by `uri`
      * @returns The definition location(s)
      */
-    async findDefinition (uri: string, position: Position, expression: Expression, pathResolver: PathResolver, indexer: Indexer): Promise<Location[]> {
+    async findDefinitions (uri: string, position: Position, expression: Expression, pathResolver: PathResolver,
+        indexer: Indexer, requestType: RequestType): Promise<Location[]> {
+        
         // Get code data for current file
         const codeData = FileInfoIndex.codeDataCache.get(uri)
 
         if (codeData == null) {
             // File not indexed - unable to look for definition
-            reportTelemetry(RequestType.Definition, 'File not indexed')
+            reportTelemetry(requestType, 'File not indexed')
             return []
         }
+
+        reportTelemetry(requestType)
 
         // First check within the current file's code data
         const definitionInCodeData = this.findDefinitionInCodeData(uri, position, expression, codeData)
 
         if (definitionInCodeData != null) {
-            reportTelemetry(RequestType.Definition)
             return definitionInCodeData
+        }
+        
+        if (requestType === RequestType.DocumentHighlight) {
+            return []
         }
 
         // Check the MATLAB path
         const definitionOnPath = await this.findDefinitionOnPath(uri, position, expression, pathResolver, indexer)
 
         if (definitionOnPath != null) {
-            reportTelemetry(RequestType.Definition)
             return definitionOnPath
         }
 
         // If not on path, may be in user's workspace
-        reportTelemetry(RequestType.Definition)
         return this.findDefinitionInWorkspace(uri, expression)
     }
 

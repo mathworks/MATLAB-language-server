@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { ClientCapabilities, DidChangeConfigurationNotification, DidChangeConfigurationParams } from 'vscode-languageserver'
 import { reportTelemetrySettingsChange } from '../logging/TelemetryUtils'
@@ -38,9 +38,11 @@ export interface Settings {
     telemetry: boolean
     maxFileSizeForAnalysis: number
     signIn: boolean
+    prewarmGraphics: boolean
+    defaultEditor: boolean
 }
 
-type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry' | 'maxFileSizeForAnalysis' | 'signIn'
+type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry' | 'maxFileSizeForAnalysis' | 'signIn' | 'prewarmGraphics' | 'defaultEditor'
 
 const SETTING_NAMES: SettingName[] = [
     'installPath',
@@ -48,10 +50,12 @@ const SETTING_NAMES: SettingName[] = [
     'indexWorkspace',
     'telemetry',
     'maxFileSizeForAnalysis',
-    'signIn'
+    'signIn',
+    'prewarmGraphics',
+    'defaultEditor'
 ]
 
-class ConfigurationManager {
+export class ConfigurationManager {
     private static instance: ConfigurationManager
 
     private configuration: Settings | null = null
@@ -75,7 +79,9 @@ class ConfigurationManager {
             indexWorkspace: false,
             telemetry: true,
             maxFileSizeForAnalysis: 0,
-            signIn: false
+            signIn: false,
+            prewarmGraphics: true,
+            defaultEditor: false
         }
 
         this.globalSettings = {
@@ -84,7 +90,9 @@ class ConfigurationManager {
             indexWorkspace: cliArgs[Argument.ShouldIndexWorkspace] ?? this.defaultConfiguration.indexWorkspace,
             telemetry: this.defaultConfiguration.telemetry,
             maxFileSizeForAnalysis: this.defaultConfiguration.maxFileSizeForAnalysis,
-            signIn: this.defaultConfiguration.signIn
+            signIn: this.defaultConfiguration.signIn,
+            prewarmGraphics: this.defaultConfiguration.prewarmGraphics,
+            defaultEditor: this.defaultConfiguration.defaultEditor
         }
 
         this.additionalArguments = {
