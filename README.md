@@ -34,7 +34,7 @@ MATLAB language server supports these editors by installing the corresponding ex
 Release date: 2025-09-04
 
 Fixed:
-* Resolves an issue where newly saved document contents are ignored during execution
+* Resolves issue where newly saved document contents are ignored during execution
 
 Added:
 * Support for highlighting all references to a selected function, variable, class, or class property
