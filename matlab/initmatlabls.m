@@ -4,32 +4,46 @@ function initmatlabls (outFile)
 
     % Copyright 2022 - 2025 The MathWorks, Inc.
 
-    % Prevent clearing the workspace from cleaning up the MatlabLanguageServerHelper
-    mlock
-
-    disp('matlabls: Beginning initialization')
-    fprintf('matlabls: matlabroot is \n%s\n', matlabroot)
-
-    % Ensure the language server code is on the path
-    folder = fileparts(mfilename('fullpath'));
-
-    % Shadow necessary functions
-    matlabls.setupShadows(folder);
-    
     try
-        s = settings;
-        s.matlab.editor.OpenFileAtBreakpoint.TemporaryValue = false;
+        disp('matlabls: Beginning initialization')
+        fprintf('matlabls: matlabroot is \n%s\n', matlabroot)
+
+        % Ensure the language server code is on the path
+        folder = fileparts(mfilename('fullpath'));
+
+        % Shadow necessary functions
+        matlabls.setupShadows(folder);
+        
+        try
+            s = settings;
+            s.matlab.editor.OpenFileAtBreakpoint.TemporaryValue = false;
+            s.matlab.editor.ReopenFilesOnRestart.TemporaryValue = false;
+        catch ME
+        end
+
+        % Initialize communication manager
+        matlabls.internal.CommunicationManager.initialize();
+        
+        if nargin == 1
+            logConnectionData(outFile)
+        end
+
+        disp('matlabls: Initialization complete')
     catch ME
+        disp('matlabls: Initialization errored:')
+        disp(getReport(ME))
     end
 
-    % Initialize communication manager
-    matlabls.internal.CommunicationManager.initialize();
-    
-    if nargin == 1
-        logConnectionData(outFile)
-    end
-
-    disp('matlabls: Initialization complete')
+    % Set up a timer to exit MATLAB as a precaution to prevent leaking
+    % this instance if something goes wrong in the language server.
+    % This timer will be cleared as soon as the MVM becomes available.
+    t = timer( ...
+        Name = '__MATLABLS_EXIT_TIMER__', ...
+        StartDelay = 5 * 60, ... 5 minutes
+        ExecutionMode = 'singleShot', ...
+        TimerFcn = @exitCallback ...
+    );
+    start(t);
 end
 
 function logConnectionData (outFile)
@@ -68,5 +82,11 @@ function logConnectionData (outFile)
     if ~status
         error('Failed to rename connection file.')
     end
-    
+end
+
+function exitCallback (t, ~)
+    stop(t)
+    delete(t)
+    disp('Exiting MATLAB due to connection failure')
+    exit()
 end

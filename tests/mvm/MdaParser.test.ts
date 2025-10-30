@@ -21,6 +21,55 @@ describe('MdaParser', () => {
             })
         })
 
+        it ('should correctly parse a scalar uint32 array', () => {
+            const numericArray = {
+                mwtype: 'uint32',
+                mwsize: [1, 1],
+                mwdata: [42]
+            }
+
+            const expected = 42;
+
+            let actual = parse(numericArray)
+            assert.strictEqual(actual, expected);
+        })
+
+        it ('should correctly parse a 1D uint32 array', () => {
+            const numericArray1 = {
+                mwtype: 'uint32',
+                mwsize: [1, 3],
+                mwdata: [42, 17, 99]
+            }
+            const numericArray2 = {
+                mwtype: 'uint32',
+                mwsize: [3, 1],
+                mwdata: [42, 17, 99]
+            }
+
+            const expected = [42, 17, 99]
+            let actual = parse(numericArray1)
+            assert.deepStrictEqual(actual, expected)
+
+            actual = parse(numericArray2)
+            assert.deepStrictEqual(actual, expected)
+        })
+
+        it ('should correctly parse a 2D uint32 array', () => {
+            const numericArray = {
+                mwtype: 'uint32',
+                mwsize: [2, 3],
+                mwdata: [42, 17, 99, 10, 20, 30]
+            }
+
+            const expected = [
+                [42, 99, 20],
+                [17, 10, 30]
+            ]
+
+            const actual = parse(numericArray)
+            assert.deepStrictEqual(actual, expected)
+        })
+
         it ('should correctly parse a string array', () => {
             const stringArray1 = {
                 mwtype: 'string',

@@ -1,6 +1,6 @@
 {
   "name": "matlab-language-server",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Language Server for MATLAB code",
   "main": "./src/index.ts",
   "bin": "./out/index.js",
@@ -14,7 +14,8 @@
     "pretest": "npm run test-compile",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
-    "postinstall": "cd src/licensing/gui && npm install && cd ../../..",
+    "project-install": "node ./build/projectInstall.js",
+    "project-install-clean": "node ./build/projectInstall.js --clean",
     "test": "mocha"
   },
   "repository": {

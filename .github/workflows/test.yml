@@ -35,7 +35,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - name: npm clean install
-      run: npm ci
+      run: npm run project-install-clean
     - name: Build
       run: npm run compile
     - name: Run TypeScript Unit Tests

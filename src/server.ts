@@ -88,6 +88,7 @@ export async function startServer (): Promise<void> {
     mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
         if (state === MatlabState.READY) {
             // Handle when the MVM has connected
+            mvm.feval('matlabls.utils.startupHelper', 0, [])
 
             // Initiate workspace indexing
             void workspaceIndexer.indexWorkspace()

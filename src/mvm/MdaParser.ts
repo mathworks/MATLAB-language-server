@@ -35,6 +35,17 @@ export default function parse (obj: any): any {
         }
 
         switch (obj.mwtype) {
+            case 'int8':
+            case 'uint8':
+            case 'int16':
+            case 'uint16':
+            case 'int32':
+            case 'uint32':
+            case 'int64':
+            case 'uint64':
+            case 'single':
+            case 'double':
+                return parseNumber(obj)
             case 'string':
                 return parseString(obj)
             case 'char':
@@ -100,6 +111,22 @@ function parseStructArray (obj: MatlabDataArray): any {
 
     // Now, still may need to reformat the data, but do not need to re-parse
     return reformatData(parsedStructArray, obj.mwsize, false)
+}
+
+/**
+ * Parses a MATLAB number (e.g. uint32)
+ *
+ * @param obj A MATLAB Data Array representing a number
+ * @returns The parsed number(s)
+ */
+function parseNumber (obj: MatlabDataArray): number | number[] {
+    if (obj.mwsize[0] === 1 && obj.mwsize[1] === 1) {
+        // If a scalar number, just return it
+        return obj.mwdata[0]
+    }
+
+    // Otherwise, reformat the data
+    return reformatData(obj.mwdata, obj.mwsize, false) // No need to recursively parse the contents - we know they are numbers
 }
 
 /**

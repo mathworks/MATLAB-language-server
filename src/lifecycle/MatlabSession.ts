@@ -1,25 +1,27 @@
 // Copyright 2024 The MathWorks, Inc.
 
-import { ChildProcess } from 'child_process';
-import Logger from '../logging/Logger';
-import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils';
-import NotificationService, { Notification } from '../notifications/NotificationService';
-import ConfigurationManager, { Argument } from './ConfigurationManager';
-import LifecycleNotificationHelper from './LifecycleNotificationHelper';
-import MatlabCommunicationManager, { LifecycleEventType, MatlabConnection } from './MatlabCommunicationManager';
+import { ChildProcess } from 'child_process'
+import Logger from '../logging/Logger'
+import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils'
+import NotificationService, { Notification } from '../notifications/NotificationService'
+import ConfigurationManager, { Argument } from './ConfigurationManager'
+import LifecycleNotificationHelper from './LifecycleNotificationHelper'
+import MatlabCommunicationManager, { LifecycleEventType, MatlabConnection } from './MatlabCommunicationManager'
 
 import * as chokidar from 'chokidar'
 import * as fsPromises from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import { EventEmitter } from 'events'
-import { checkIfMatlabDeprecated } from '../utils/DeprecationUtils';
-import { getProxyEnvironmentVariables } from '../utils/ProxyUtils';
-import MatlabLifecycleManager from './MatlabLifecycleManager';
+import { checkIfMatlabDeprecated } from '../utils/DeprecationUtils'
+import { getProxyEnvironmentVariables } from '../utils/ProxyUtils'
+import MatlabLifecycleManager from './MatlabLifecycleManager'
+import * as FileNameUtils from '../utils/FileNameUtils'
 
-import Licensing from '../licensing';
-import { startLicensingServer } from '../licensing/server';
-import { staticFolderPath } from '../licensing/config';
+import Licensing from '../licensing'
+import { startLicensingServer } from '../licensing/server'
+import { staticFolderPath } from '../licensing/config'
+import ClientConnection from '../ClientConnection'
 
 interface MatlabStartupInfo {
     pid: number
@@ -52,7 +54,7 @@ export async function launchNewMatlab (matlabLifecycleManager: MatlabLifecycleMa
         const licensing = new Licensing()
 
         if (!licensing.isLicensed()) {
-            const url = await startLicensingServer(staticFolderPath, matlabLifecycleManager);
+            const url = await startLicensingServer(staticFolderPath, matlabLifecycleManager)
 
             // If there's no cached licensing, start licensing server and send the url to the client
             NotificationService.sendNotification(Notification.LicensingServerUrl, url)
@@ -131,9 +133,17 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
             void fsPromises.rm(outFile, { force: true })
         })
 
+        // Get launch directory for MATLAB
+        const clientConnection = ClientConnection.getConnection()
+        const workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+        let launchDirectory: string | null = null
+        if (workspaceFolders != null && workspaceFolders.length > 0) {
+            launchDirectory = path.normalize(FileNameUtils.getFilePathFromUri(workspaceFolders[0].uri))
+        }
+
         // Launch MATLAB process
         Logger.log('Launching MATLAB...')
-        const { command, args } = await getMatlabLaunchCommand(outFile)
+        const { command, args } = await getMatlabLaunchCommand(outFile, launchDirectory)
         const envVars: NodeJS.ProcessEnv = {
             ...environmentVariables, // Environment variables that we want to to pass to MATLAB
             ...getProxyEnvironmentVariables() // Proxy specific environment variables.
@@ -251,7 +261,7 @@ export default interface MatlabSession {
     shutdown: () => void
 }
 
-let sessionIdCt = 1;
+let sessionIdCt = 1
 
 abstract class AbstractMatlabSession implements MatlabSession {
     sessionId = sessionIdCt++
@@ -331,7 +341,7 @@ class LocalMatlabSession extends AbstractMatlabSession {
         reportTelemetryAction(Actions.ShutdownMatlab, shutdownMessage)
         this.eventEmitter.emit('shutdown')
 
-        this.isValid = false;
+        this.isValid = false
 
         // Close the connection and kill MATLAB process
         if (os.platform() === 'win32' && this.matlabPid != null) {
@@ -436,7 +446,7 @@ async function readStartupInfo (file: string): Promise<MatlabStartupInfo> {
  * @param outFile The file in which MATLAB should output connection details
  * @returns The MATLAB launch command and arguments
  */
-async function getMatlabLaunchCommand (outFile: string): Promise<{ command: string, args: string[] }> {
+async function getMatlabLaunchCommand (outFile: string, launchDirectory: string | null): Promise<{ command: string, args: string[] }> {
     const matlabInstallPath = (await ConfigurationManager.getConfiguration()).installPath
     let command = 'matlab'
     if (matlabInstallPath !== '') {
@@ -453,18 +463,25 @@ async function getMatlabLaunchCommand (outFile: string): Promise<{ command: stri
         '-noAppIcon', // Hide MATLAB application icon in taskbar/dock, if applicable
         '-nosplash', // Hide splash screen
         '-r', getMatlabStartupCommand(outFile), // Startup command
-        '-useStartupFolderPref', // Startup folder flag
         '-nodesktop' // Hide the MATLAB desktop
     ]
+
+    if (launchDirectory != null) {
+        // Specify MATLAB startup directory
+        args.push('-sd', launchDirectory)
+    }
 
     // If licensing mode is NLM, add licmode arg
     const licensing = new Licensing()
     if (licensing.isNLMLicensing()) {
-        args.push('-licmode');
-        args.push('file');
+        args.push('-licmode')
+        args.push('file')
     }
 
     if (os.platform() === 'win32') {
+        // Append `.exe` on Windows
+        command += '.exe'
+
         args.push('-noDisplayDesktop') // Workaround for '-nodesktop' on Windows until a better solution is implemented
         args.push('-wait')
     }
