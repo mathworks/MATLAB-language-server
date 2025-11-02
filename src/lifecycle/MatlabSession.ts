@@ -135,10 +135,15 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
 
         // Get launch directory for MATLAB
         const clientConnection = ClientConnection.getConnection()
-        const workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
         let launchDirectory: string | null = null
-        if (workspaceFolders != null && workspaceFolders.length > 0) {
-            launchDirectory = path.normalize(FileNameUtils.getFilePathFromUri(workspaceFolders[0].uri))
+        try {
+            const workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+            if (workspaceFolders != null && workspaceFolders.length > 0) {
+                launchDirectory = path.normalize(FileNameUtils.getFilePathFromUri(workspaceFolders[0].uri))
+            }
+        } catch {
+            // Fall back to null launchDirectory when request fails
+            launchDirectory = null
         }
 
         // Launch MATLAB process

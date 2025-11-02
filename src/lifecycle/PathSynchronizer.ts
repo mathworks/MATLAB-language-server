@@ -47,7 +47,12 @@ export default class PathSynchronizer {
             return
         }
 
-        const workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+        let workspaceFolders: WorkspaceFolder[] | null = null
+        try {
+            workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+        } catch {
+            workspaceFolders = null
+        }
         if (workspaceFolders == null || workspaceFolders.length === 0) {
             // No workspace folders - no action needs to be taken
             return

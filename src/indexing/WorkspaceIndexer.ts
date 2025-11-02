@@ -41,7 +41,12 @@ export default class WorkspaceIndexer {
             return
         }
 
-        const folders = await ClientConnection.getConnection().workspace.getWorkspaceFolders()
+        let folders: WorkspaceFolder[] | null = null
+        try {
+            folders = await ClientConnection.getConnection().workspace.getWorkspaceFolders()
+        } catch {
+            folders = null
+        }
 
         if (folders == null) {
             return
