@@ -118,11 +118,15 @@ export class ConfigurationManager {
     setup (capabilities: ClientCapabilities): void {
         const connection = ClientConnection.getConnection()
 
-        this.hasConfigurationCapability = capabilities.workspace?.configuration != null
+        this.hasConfigurationCapability = capabilities.workspace?.configuration === true
 
-        if (this.hasConfigurationCapability) {
-            // Register for configuration changes
-            void connection.client.register(DidChangeConfigurationNotification.type)
+        const canDynamicRegister = capabilities.workspace?.didChangeConfiguration?.dynamicRegistration === true
+        if (canDynamicRegister) {
+            // Register for configuration changes if client supports dynamic registration
+            const p = connection.client.register(DidChangeConfigurationNotification.type)
+            if (p != null && typeof (p as any).catch === 'function') {
+                void (p as Promise<any>).catch(() => {})
+            }
         }
 
         connection.onDidChangeConfiguration(params => { void this.handleConfigurationChanged(params) })
