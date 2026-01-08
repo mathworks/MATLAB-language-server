@@ -1,6 +1,26 @@
 // Copyright 2025 The MathWorks, Inc.
 
+import assert from 'assert'
 import quibble from 'quibble'
+
+/**
+ * Uses Node's {@link assert} to assert that two arrays are deepStrictEqual, ignoring order.
+ * 
+ * The expected array must not have any duplicate entries.
+ * 
+ * @param actual The actual result array to be compared against the expected result
+ * @param expectedNoDuplicates The expected result array, which should not have any duplicates
+ * @param message An error message to be passed to Node's {@link assert} if the comparison fails
+ */
+export function assertDeepStrictEqualIgnoringOrder<T> (actual: T[], expectedNoDuplicates: T[], message?: string | Error): void {
+    const expectedSet: Set<T> = new Set(expectedNoDuplicates)
+    assert.ok(expectedNoDuplicates.length === expectedSet.size, 'expectedNoDuplicates cannot have duplicates')
+
+    assert.ok(actual.length === expectedSet.size, message)
+    assert.deepStrictEqual(new Set(actual), expectedSet, message)
+}
+
+/* Mocking Utilities */
 
 // Make sure the path to be quibbled is taken relative to the actual test
 // file, not to this utils file
@@ -35,24 +55,27 @@ type SameSignatureAs<T extends AnyFunction> = (...args: Parameters<T>) => Return
  * default stub with the function given to it.
  * 
  * The module dependent on the function being stubbed must be dynamically
- * imported after the call to this function (see `dynamicImport`).
+ * imported after the call to this function (see {@link dynamicImport}).
  * 
  * The first type parameter must be provided; the correct type can be
  * obtained via `typeof import('relative/path/to/module/being/stubbed')`.
- * This path should be the same as `path`, but due to TypeScript
+ * This path should be the same as {@link path}, but due to TypeScript
  * limitations, must be provided as a string literal here.
  * 
  * The second type parameter can be inferred, but providing it enables
  * stronger type checking. The recommended way to provide this type
  * parameter is `typeof functionToStub`, where `functionToStub` holds
- * the value that will be passed to the `propertyToReplace` parameter.
+ * the value that will be passed to {@link exportToReplace}.
  * 
+ * @param moduleContext The module to which the provided {@link path}
+ *     should be relative (`module` is typically the correct argument
+ *     here)
  * @param path The relative path, from the test file calling this
  *     function, to the module being stubbed
- * @param propertyToReplace The name of the property in the module
- *     given by `path` that corresponds to the function to be stubbed -
- *     `default` if the function is the module's default export, or
- *     the name of the function otherwise
+ * @param exportToReplace The name of the export in the module
+ *     given by {@link path} that corresponds to the function to be
+ *     stubbed - `default` if the function is the module's default
+ *     export, or the name of the function otherwise
  * @param defaultStub The default implementation of the stub
  * @returns A function that, when called with a new stub implementation
  *     as an argument, replaces the existing stub implementation with
@@ -60,7 +83,7 @@ type SameSignatureAs<T extends AnyFunction> = (...args: Parameters<T>) => Return
  *     imported by the module dependent on it)
  */
 export function stubDependency<DependencyExports = ErrorHintType, StubKey extends keyof DependencyExports = keyof DependencyExports> (
-    path: string, propertyToReplace: StubKey, defaultStub: FunctionOfType<DependencyExports[StubKey]>
+    moduleContext: NodeJS.Module, path: string, exportToReplace: StubKey, defaultStub: FunctionOfType<DependencyExports[StubKey]>
 ): (newStub: FunctionOfType<DependencyExports[StubKey]>) => void {
     // We want our stub to have the same signature as the function being stubbed
     // (which is of type DependencyExports[StubKey])
@@ -72,13 +95,14 @@ export function stubDependency<DependencyExports = ErrorHintType, StubKey extend
     let stub: Stub = defaultStub
     const stubWrapper: Stub = ((...args) => stub(...args))
 
-    // Replace the exports of the module at path with an object mapping the
-    // property being replaced to the stub wrapper. Whenever the function
-    // being replaced is called, the currently assigned stub function will
-    // be called in turn.
-    quibble(path, {
-        [propertyToReplace]: stubWrapper
-    })
+    // Replace the exportToReplace in the module at path with the stub
+    // wrapper. Whenever the function being replaced is called, the
+    // currently assigned stub function will be called in turn.
+    const mockedModule: DependencyExports = {
+        ...dynamicImport<DependencyExports>(moduleContext, path),
+        [exportToReplace]: stubWrapper
+    }
+    quibble(path, mockedModule)
 
     // Return a function that can be called to update the stub function
     // (i.e., change the behavior of the function being stubbed)
@@ -88,11 +112,11 @@ export function stubDependency<DependencyExports = ErrorHintType, StubKey extend
 }
 
 /**
- * Serves as a typed version of `require` for dynamic imports.
+ * Serves as a typed version of {@link require} for dynamic imports.
  * 
  * Obtain the correct value for the type parameter via
  * `typeof import('relative/path/to/module/being/imported')`. This path
- * should be the same as `path`, but due to TypeScript limitations,
+ * should be the same as {@link path}, but due to TypeScript limitations,
  * must be provided as a string literal here.
  * 
  * @param moduleContext The module to which the import path should be

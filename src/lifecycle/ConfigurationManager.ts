@@ -81,7 +81,7 @@ export class ConfigurationManager {
             maxFileSizeForAnalysis: 0,
             signIn: false,
             prewarmGraphics: true,
-            defaultEditor: false
+            defaultEditor: true
         }
 
         this.globalSettings = {

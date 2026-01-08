@@ -1,0 +1,375 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        6,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "parent",
+          "range": [
+            0,
+            15,
+            0,
+            21
+          ]
+        },
+        "range": [
+          0,
+          0,
+          5,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [
+          "in"
+        ],
+        "outputArgs": [
+          "out"
+        ],
+        "variableDefinitions": [
+          {
+            "name": "in",
+            "components": [
+              {
+                "name": "in",
+                "range": [
+                  0,
+                  22,
+                  0,
+                  24
+                ]
+              }
+            ],
+            "range": [
+              0,
+              22,
+              0,
+              24
+            ]
+          },
+          {
+            "name": "out",
+            "components": [
+              {
+                "name": "out",
+                "range": [
+                  0,
+                  9,
+                  0,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              0,
+              9,
+              0,
+              12
+            ]
+          },
+          {
+            "name": "out",
+            "components": [
+              {
+                "name": "out",
+                "range": [
+                  1,
+                  4,
+                  1,
+                  7
+                ]
+              }
+            ],
+            "range": [
+              1,
+              4,
+              1,
+              7
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "out",
+            "components": [
+              {
+                "name": "out",
+                "range": [
+                  0,
+                  9,
+                  0,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              0,
+              9,
+              0,
+              12
+            ]
+          },
+          {
+            "name": "in",
+            "components": [
+              {
+                "name": "in",
+                "range": [
+                  0,
+                  22,
+                  0,
+                  24
+                ]
+              }
+            ],
+            "range": [
+              0,
+              22,
+              0,
+              24
+            ]
+          },
+          {
+            "name": "out",
+            "components": [
+              {
+                "name": "out",
+                "range": [
+                  1,
+                  4,
+                  1,
+                  7
+                ]
+              }
+            ],
+            "range": [
+              1,
+              4,
+              1,
+              7
+            ]
+          },
+          {
+            "name": "in",
+            "components": [
+              {
+                "name": "in",
+                "range": [
+                  1,
+                  10,
+                  1,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              1,
+              10,
+              1,
+              12
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": [
+          {
+            "declarationNameId": {
+              "name": "nested",
+              "range": [
+                2,
+                19,
+                2,
+                25
+              ]
+            },
+            "range": [
+              2,
+              4,
+              4,
+              7
+            ],
+            "isPublic": false,
+            "isConstructor": false,
+            "isStaticMethod": false,
+            "isPrototype": false,
+            "inputArgs": [
+              "in"
+            ],
+            "outputArgs": [
+              "out"
+            ],
+            "variableDefinitions": [
+              {
+                "name": "in",
+                "components": [
+                  {
+                    "name": "in",
+                    "range": [
+                      2,
+                      26,
+                      2,
+                      28
+                    ]
+                  }
+                ],
+                "range": [
+                  2,
+                  26,
+                  2,
+                  28
+                ]
+              },
+              {
+                "name": "out",
+                "components": [
+                  {
+                    "name": "out",
+                    "range": [
+                      2,
+                      13,
+                      2,
+                      16
+                    ]
+                  }
+                ],
+                "range": [
+                  2,
+                  13,
+                  2,
+                  16
+                ]
+              },
+              {
+                "name": "out",
+                "components": [
+                  {
+                    "name": "out",
+                    "range": [
+                      3,
+                      8,
+                      3,
+                      11
+                    ]
+                  }
+                ],
+                "range": [
+                  3,
+                  8,
+                  3,
+                  11
+                ]
+              }
+            ],
+            "variableReferences": [
+              {
+                "name": "out",
+                "components": [
+                  {
+                    "name": "out",
+                    "range": [
+                      2,
+                      13,
+                      2,
+                      16
+                    ]
+                  }
+                ],
+                "range": [
+                  2,
+                  13,
+                  2,
+                  16
+                ]
+              },
+              {
+                "name": "in",
+                "components": [
+                  {
+                    "name": "in",
+                    "range": [
+                      2,
+                      26,
+                      2,
+                      28
+                    ]
+                  }
+                ],
+                "range": [
+                  2,
+                  26,
+                  2,
+                  28
+                ]
+              },
+              {
+                "name": "out",
+                "components": [
+                  {
+                    "name": "out",
+                    "range": [
+                      3,
+                      8,
+                      3,
+                      11
+                    ]
+                  }
+                ],
+                "range": [
+                  3,
+                  8,
+                  3,
+                  11
+                ]
+              },
+              {
+                "name": "in",
+                "components": [
+                  {
+                    "name": "in",
+                    "range": [
+                      3,
+                      14,
+                      3,
+                      16
+                    ]
+                  }
+                ],
+                "range": [
+                  3,
+                  14,
+                  3,
+                  16
+                ]
+              }
+            ],
+            "functionOrUnboundReferences": [],
+            "globals": [],
+            "nestedScopes": []
+          }
+        ]
+      }
+    ]
+  },
+  "timeToIndex": 0.0163569
+}

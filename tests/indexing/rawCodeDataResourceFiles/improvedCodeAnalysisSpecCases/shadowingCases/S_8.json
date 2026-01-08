@@ -1,0 +1,189 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        8,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              7,
+              0,
+              7,
+              1
+            ]
+          }
+        ],
+        "range": [
+          7,
+          0,
+          7,
+          1
+        ]
+      }
+    ],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "x",
+          "range": [
+            0,
+            9,
+            0,
+            10
+          ]
+        },
+        "range": [
+          0,
+          0,
+          1,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      },
+      {
+        "declarationNameId": {
+          "name": "fun",
+          "range": [
+            3,
+            9,
+            3,
+            12
+          ]
+        },
+        "range": [
+          3,
+          0,
+          5,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [
+          "x"
+        ],
+        "outputArgs": [],
+        "variableDefinitions": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  3,
+                  13,
+                  3,
+                  14
+                ]
+              }
+            ],
+            "range": [
+              3,
+              13,
+              3,
+              14
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  3,
+                  13,
+                  3,
+                  14
+                ]
+              }
+            ],
+            "range": [
+              3,
+              13,
+              3,
+              14
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  4,
+                  9,
+                  4,
+                  10
+                ]
+              }
+            ],
+            "range": [
+              4,
+              9,
+              4,
+              10
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [
+          {
+            "firstArgIdName": "x",
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  4,
+                  4,
+                  4,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              4,
+              4,
+              4,
+              8
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0125905
+}

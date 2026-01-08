@@ -25,10 +25,23 @@ classdef SampleClass <...
         out = abstractFcn (in)
     end
 
-    methods (Hidden)
+    methods (Access=private)
         function privateFcn (obj)
             disp(['PropA: ', num2str(obj.PropA)]);
             disp(['PropB: ', obj.PropB]);
+
+            SampleClass.staticFcn();
+            SuperB.staticMethod();
         end
     end
+
+    methods (Static)
+        function staticFcn ()
+        end
+    end
+end
+
+function local ()
+    disp(SampleClass.A);
+    SampleClass.staticFcn();
 end

@@ -1,0 +1,164 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        9,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "f1",
+          "range": [
+            0,
+            9,
+            0,
+            11
+          ]
+        },
+        "range": [
+          0,
+          0,
+          3,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [
+          {
+            "name": "unknown1",
+            "components": [
+              {
+                "name": "unknown1",
+                "range": [
+                  1,
+                  4,
+                  1,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              1,
+              4,
+              1,
+              12
+            ]
+          },
+          {
+            "name": "unknown2",
+            "components": [
+              {
+                "name": "unknown2",
+                "range": [
+                  2,
+                  4,
+                  2,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              2,
+              4,
+              2,
+              12
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      },
+      {
+        "declarationNameId": {
+          "name": "f2",
+          "range": [
+            5,
+            9,
+            5,
+            11
+          ]
+        },
+        "range": [
+          5,
+          0,
+          8,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [
+          {
+            "name": "unknown1",
+            "components": [
+              {
+                "name": "unknown1",
+                "range": [
+                  6,
+                  4,
+                  6,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              6,
+              4,
+              6,
+              12
+            ]
+          },
+          {
+            "name": "unknown2",
+            "components": [
+              {
+                "name": "unknown2",
+                "range": [
+                  7,
+                  4,
+                  7,
+                  12
+                ]
+              }
+            ],
+            "range": [
+              7,
+              4,
+              7,
+              12
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.011053
+}

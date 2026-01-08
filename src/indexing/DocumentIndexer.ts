@@ -1,4 +1,4 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import Indexer from './Indexer'
@@ -13,7 +13,10 @@ const INDEXING_DELAY = 500 // Delay (in ms) after keystroke before attempting to
 export default class DocumentIndexer {
     private readonly pendingFilesToIndex = new Map<string, NodeJS.Timeout>()
 
-    constructor (private readonly indexer: Indexer) {}
+    constructor (
+        private readonly indexer: Indexer,
+        private readonly fileInfoIndex: FileInfoIndex
+    ) {}
 
     /**
      * Queues a document to be indexed. This handles debouncing so that
@@ -67,7 +70,7 @@ export default class DocumentIndexer {
             this.clearTimerForDocumentUri(uri)
             await this.indexer.indexDocument(textDocument)
         }
-        if (!FileInfoIndex.codeDataCache.has(uri)) {
+        if (!this.fileInfoIndex.codeInfoCache.has(uri)) {
             await this.indexer.indexDocument(textDocument)
         }
     }

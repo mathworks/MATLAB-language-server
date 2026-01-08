@@ -3,6 +3,7 @@ import sinon from 'sinon'
 
 export default function getMockMvm (): any {
     const mockMvm = {
+        isReady: sinon.stub(),
         waitUntilReady: sinon.stub(),
         feval: sinon.stub(),
         getMatlabRelease: sinon.stub(),

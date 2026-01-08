@@ -8,17 +8,15 @@ import { DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams, Docu
 import DocumentIndexer from '../../../src/indexing/DocumentIndexer'
 import Indexer from '../../../src/indexing/Indexer'
 import MatlabLifecycleManager from '../../../src/lifecycle/MatlabLifecycleManager'
-import PathResolver from '../../../src/providers/navigation/PathResolver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import getMockMvm from '../../mocks/Mvm.mock'
 import ClientConnection from '../../../src/ClientConnection'
 import getMockConnection from '../../mocks/Connection.mock'
-import SymbolSearchService from '../../../src/indexing/SymbolSearchService'
-import Expression from '../../../src/utils/ExpressionUtils'
+import { findReferencesAndDefinitions } from '../../../src/indexing/SymbolSearchService'
 
 import type HighlightSymbolProvider from '../../../src/providers/highlighting/HighlightSymbolProvider'
-import type { getExpressionAtPosition } from '../../../src/utils/ExpressionUtils'
-import { dynamicImport, stubDependency } from '../../TestUtils'
+import { assertDeepStrictEqualIgnoringOrder, dynamicImport, stubDependency } from '../../TestUtils'
+import FileInfoIndex from '../../../src/indexing/FileInfoIndex'
 
 describe('HighlightSymbolProvider', () => {
     const CURRENT_FILE_URI: DocumentUri = 'currentFileUri'
@@ -27,7 +25,7 @@ describe('HighlightSymbolProvider', () => {
     let mockMvm: any
 
     let matlabLifecycleManager: MatlabLifecycleManager
-    let pathResolver: PathResolver
+    let fileInfoIndex: FileInfoIndex
     let indexer: Indexer
     let documentIndexer: DocumentIndexer
 
@@ -35,13 +33,17 @@ describe('HighlightSymbolProvider', () => {
 
     let documentManager: TextDocuments<TextDocument>
 
-    let setGetExpressionAtPositionStub: (newStub: typeof getExpressionAtPosition) => void
+    let setFindReferencesAndDefinitionsStub: (newStub: typeof findReferencesAndDefinitions) => void
 
     const range1 = Range.create(
         Position.create(1, 2),
         Position.create(3, 4)
     )
     const range2 = Range.create(
+        Position.create(5, 6),
+        Position.create(7, 8)
+    )
+    const range2Dup = Range.create(
         Position.create(5, 6),
         Position.create(7, 8)
     )
@@ -53,10 +55,6 @@ describe('HighlightSymbolProvider', () => {
         Position.create(13, 14),
         Position.create(15, 16)
     )
-    const range3To4 = Range.create(
-        Position.create(9, 10),
-        Position.create(15, 16)
-    )
 
     const locationCurrentFileRange1 = Location.create(
         CURRENT_FILE_URI,
@@ -66,13 +64,13 @@ describe('HighlightSymbolProvider', () => {
         CURRENT_FILE_URI,
         range2
     )
+    const locationCurrentFileRange2Dup = Location.create(
+        CURRENT_FILE_URI,
+        range2Dup
+    )
     const locationCurrentFileRange3 = Location.create(
         CURRENT_FILE_URI,
         range3
-    )
-    const locationCurrentFileRange3To4 = Location.create(
-        CURRENT_FILE_URI,
-        range3To4
     )
 
     const locationOtherFileRange3 = Location.create(
@@ -87,21 +85,22 @@ describe('HighlightSymbolProvider', () => {
     const setup = () => {
         mockMvm = getMockMvm()
         matlabLifecycleManager = new MatlabLifecycleManager()
-        pathResolver = new PathResolver(mockMvm)
-        indexer = new Indexer(matlabLifecycleManager, mockMvm, pathResolver)
-        documentIndexer = new DocumentIndexer(indexer)
+        fileInfoIndex = new FileInfoIndex()
+        indexer = new Indexer(matlabLifecycleManager, mockMvm, fileInfoIndex)
+        documentIndexer = new DocumentIndexer(indexer, fileInfoIndex)
 
         documentManager = new TextDocuments(TextDocument)
 
         sinon.stub(matlabLifecycleManager, 'getMatlabConnection').resolves({} as any)
         sinon.stub(documentIndexer, 'ensureDocumentIndexIsUpdated').resolves()
 
-        type ExpressionUtilsExports = typeof import('../../../src/utils/ExpressionUtils')
-        const functionToStub: keyof ExpressionUtilsExports = 'getExpressionAtPosition'
-        setGetExpressionAtPositionStub = stubDependency<ExpressionUtilsExports, typeof functionToStub>(
-            '../../../src/utils/ExpressionUtils',
+        type SymbolSearchServiceExports = typeof import('../../../src/indexing/SymbolSearchService')
+        const functionToStub: keyof SymbolSearchServiceExports = 'findReferencesAndDefinitions'
+        setFindReferencesAndDefinitionsStub = stubDependency<SymbolSearchServiceExports, typeof functionToStub>(
+            module,
+            '../../../src/indexing/SymbolSearchService',
             functionToStub,
-            () => new Expression(['test'], 0)
+            () => ({ references: [], definitions: [] })
         )
 
         type HighlightSymbolProviderExports = typeof import('../../../src/providers/highlighting/HighlightSymbolProvider')
@@ -110,7 +109,7 @@ describe('HighlightSymbolProvider', () => {
         )
 
         highlightSymbolProvider = new HighlightSymbolProvider(
-            matlabLifecycleManager, documentIndexer, pathResolver, indexer
+            matlabLifecycleManager, documentIndexer, indexer, fileInfoIndex
         )
 
         const mockTextDocument = TextDocument.create(
@@ -167,19 +166,8 @@ describe('HighlightSymbolProvider', () => {
             assert.deepStrictEqual(res, [], 'Result should be empty when there is no document at the given URI')
         })
 
-        it('should return empty array of highlights if there is no supported expression at the given position', async () => {
-            setGetExpressionAtPositionStub(() => null)
-
-            const res = await highlightSymbolProvider.handleDocumentHighlightRequest(
-                mockParams, documentManager
-            )
-
-            assert.deepStrictEqual(res, [], 'Result should be empty when there is no supported expression at the given position')
-        })
-
         it('should return empty array of highlights if there are no references', async () => {
-            sinon.stub(SymbolSearchService, 'findReferences').returns([])
-            sinon.stub(SymbolSearchService, 'findDefinitions').resolves([])
+            setFindReferencesAndDefinitionsStub(() => ({ references: [], definitions: [] }))
 
             const res = await highlightSymbolProvider.handleDocumentHighlightRequest(
                 mockParams, documentManager
@@ -189,11 +177,13 @@ describe('HighlightSymbolProvider', () => {
         })
 
         it('should return highlights for references found (in the current file)', async () => {
-            sinon.stub(SymbolSearchService, 'findReferences').returns([
-                locationCurrentFileRange1,
-                locationCurrentFileRange2
-            ])
-            sinon.stub(SymbolSearchService, 'findDefinitions').resolves([])
+            setFindReferencesAndDefinitionsStub(() => ({
+                references: [
+                    locationCurrentFileRange1,
+                    locationCurrentFileRange2
+                ],
+                definitions: []
+            }))
 
             const res = await highlightSymbolProvider.handleDocumentHighlightRequest(
                 mockParams, documentManager
@@ -203,20 +193,22 @@ describe('HighlightSymbolProvider', () => {
 
             const highlightRanges: Range[] = res.map(highlight => highlight.range)
 
-            assertDeepStrictEqualToSet(
-                highlightRanges, new Set([range1, range2]),
+            assertDeepStrictEqualIgnoringOrder(
+                highlightRanges, [range1, range2],
                 'Highlight ranges in result should represent the two references found'
             )
         })
 
         it('should return highlights only for references in the current file', async () => {
-            sinon.stub(SymbolSearchService, 'findReferences').returns([
-                locationOtherFileRange3,
-                locationCurrentFileRange1,
-                locationOtherFileRange4,
-                locationCurrentFileRange2
-            ])
-            sinon.stub(SymbolSearchService, 'findDefinitions').resolves([])
+            setFindReferencesAndDefinitionsStub(() => ({
+                references: [
+                    locationOtherFileRange3,
+                    locationCurrentFileRange1,
+                    locationOtherFileRange4,
+                    locationCurrentFileRange2
+                ],
+                definitions: []
+            }))
 
             const res = await highlightSymbolProvider.handleDocumentHighlightRequest(
                 mockParams, documentManager
@@ -226,22 +218,25 @@ describe('HighlightSymbolProvider', () => {
 
             const highlightRanges: Range[] = res.map(highlight => highlight.range)
 
-            assertDeepStrictEqualToSet(
-                highlightRanges, new Set([range1, range2]),
+            assertDeepStrictEqualIgnoringOrder(
+                highlightRanges, [range1, range2],
                 'Highlight ranges in result should include those from current file, but not those from other file'
             )
         })
 
         it('should distinguish between write and read references', async () => {
-            sinon.stub(SymbolSearchService, 'findReferences').returns([
-                locationCurrentFileRange1,
-                locationCurrentFileRange2,
-                locationCurrentFileRange3
-            ])
-            sinon.stub(SymbolSearchService, 'findDefinitions').resolves([
-                locationCurrentFileRange1,
-                locationCurrentFileRange3To4,
-            ])
+            setFindReferencesAndDefinitionsStub(() => ({
+                references: [
+                    locationCurrentFileRange1,
+                    locationCurrentFileRange2,
+                    locationCurrentFileRange3
+                ],
+                definitions: [
+                    locationCurrentFileRange1,
+                    locationOtherFileRange3,
+                    locationCurrentFileRange2Dup
+                ]
+            }))
 
             const res = await highlightSymbolProvider.handleDocumentHighlightRequest(
                 mockParams, documentManager
@@ -249,21 +244,15 @@ describe('HighlightSymbolProvider', () => {
 
             assert.ok(res instanceof Array, 'Result should be an array')
 
-            assertDeepStrictEqualToSet(
+            assertDeepStrictEqualIgnoringOrder(
                 res,
-                new Set([
+                [
                     DocumentHighlight.create(range1, DocumentHighlightKind.Write),
-                    DocumentHighlight.create(range2, DocumentHighlightKind.Read),
-                    DocumentHighlight.create(range3, DocumentHighlightKind.Write)
-                ]),
+                    DocumentHighlight.create(range2, DocumentHighlightKind.Write),
+                    DocumentHighlight.create(range3, DocumentHighlightKind.Read)
+                ],
                 'Document highlights should be classified as write vs. read based on the definitions found'
             )
         })
     })
 })
-
-// Used to check for deep strict equality, ignoring order
-function assertDeepStrictEqualToSet<T> (actual: T[], expected: Set<T>, message?: string | Error) {
-    assert.ok(actual.length === expected.size, message)
-    assert.deepStrictEqual(new Set(actual), expected, message)
-}

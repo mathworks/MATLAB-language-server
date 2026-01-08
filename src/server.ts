@@ -36,6 +36,7 @@ import { URI } from 'vscode-uri'
 import GraphicsPrewarmService from './lifecycle/GraphicsPrewarmService'
 
 import { handleDefaultEditorConfigChange, setDefaultEditorVsCode } from './utils/DefaultEditorUtils'
+import FileInfoIndex from './indexing/FileInfoIndex'
 
 export async function startServer (): Promise<void> {
     cacheAndClearProxyEnvironmentVariables()
@@ -56,9 +57,10 @@ export async function startServer (): Promise<void> {
     const matlabDebugAdaptor = new MatlabDebugAdaptorServer(mvm, new DebugServices(mvm));
 
     const pathResolver = new PathResolver(mvm)
-    const indexer = new Indexer(matlabLifecycleManager, mvm, pathResolver)
+    const fileInfoIndex = new FileInfoIndex()
+    const indexer = new Indexer(matlabLifecycleManager, mvm, fileInfoIndex)
     const workspaceIndexer = new WorkspaceIndexer(indexer)
-    const documentIndexer = new DocumentIndexer(indexer)
+    const documentIndexer = new DocumentIndexer(indexer, fileInfoIndex)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const graphicsPrewarmService = new GraphicsPrewarmService(mvm, ConfigurationManager)
@@ -68,9 +70,9 @@ export async function startServer (): Promise<void> {
     const lintingSupportProvider = new LintingSupportProvider(matlabLifecycleManager, mvm)
     const executeCommandProvider = new ExecuteCommandProvider(lintingSupportProvider)
     const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager, mvm)
-    const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, indexer, documentIndexer, pathResolver)
-    const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer)
-    const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, pathResolver, indexer)
+    const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, fileInfoIndex, indexer, documentIndexer, pathResolver)
+    const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
+    const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, indexer, fileInfoIndex)
 
     let pathSynchronizer: PathSynchronizer | null
 

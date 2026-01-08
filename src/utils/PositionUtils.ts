@@ -1,6 +1,17 @@
-// Copyright 2022 - 2023 The MathWorks, Inc.
+// Copyright 2022 - 2025 The MathWorks, Inc.
 
-import { Position } from 'vscode-languageserver'
+import { Position, Range } from 'vscode-languageserver'
+
+/**
+ * Determines whether two positions are equivalent.
+ *
+ * @param a The first position
+ * @param b The second position
+ * @returns true if position A and position B represent the same position
+ */
+export function arePositionsEqual (a: Position, b: Position): boolean {
+    return a.line === b.line && a.character === b.character
+}
 
 /**
  * Determines whether a position is less than another position.
@@ -44,6 +55,17 @@ export function isPositionGreaterThan (a: Position, b: Position): boolean {
  */
 export function isPositionGreaterThanOrEqualTo (a: Position, b: Position): boolean {
     return checkGreaterThan(a, b, true)
+}
+
+/**
+ * Determines whether a position is within a given range.
+ *
+ * @param position The position
+ * @param range The range
+ * @returns True if the position is within the given range; false otherwise
+ */
+export function isPositionWithinRange (position: Position, range: Range): boolean {
+    return isPositionGreaterThanOrEqualTo(position, range.start) && isPositionLessThanOrEqualTo(position, range.end)
 }
 
 /**

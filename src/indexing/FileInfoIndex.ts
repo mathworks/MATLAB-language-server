@@ -1,556 +1,537 @@
 // Copyright 2022 - 2025 The MathWorks, Inc.
 
-import { Position, Range } from 'vscode-languageserver'
-import { isPositionGreaterThan, isPositionLessThanOrEqualTo } from '../utils/PositionUtils'
+import { Range } from 'vscode-languageserver'
+import Logger from '../logging/Logger'
+import { URI } from 'vscode-uri'
+
+// NOTE: Things like "variable definitions" and "function references" refer
+// to whether the *first component* of an identifier, not the entity
+// referred to by the identifier as a whole, is a variable or function
 
 /**
- * Defines the structure of the raw data retrieved from MATLAB®.
+ * Representation of a file's code data
  */
-export interface RawCodeData {
-    classInfo: CodeDataClassInfo
-    functionInfo: CodeDataFunctionInfo[]
-    packageName: string
-    references: CodeDataReference[]
-    sections: CodeDataSectionInfoRaw[]
-    errorInfo: CodeDataErrorInfo | undefined
-}
-
-interface CodeDataErrorInfo {
-    message: string
-}
-
-/**
- * Contains raw information about the file's class data
- */
-interface CodeDataClassInfo {
-    isClassDef: boolean // Whether or not the file represents a class definition
-    hasClassInfo: boolean // Whether or not the file contains data related to a class (could be a class definition, or within a classdef folder)
-    name: string
-    range: CodeDataRange
-    declaration: CodeDataRange
-    properties: CodeDataMemberInfo[]
-    enumerations: CodeDataMemberInfo[]
-    propertiesBlocks: CodeDataMemberInfo[]
-    enumerationsBlocks: CodeDataMemberInfo[]
-    methodsBlocks: CodeDataMemberInfo[]
-    methods: CodeDataMemberInfo[]
-    classDefFolder: string
-    baseClasses: string[]
+export interface CodeInfo {
+    package: string
+    sections: RawSectionInfo[]
+    classReferences: RawNamedRange[]
+    globalScope: GlobalScope
+    hasClassInfo: boolean
+    classDefFolder?: string
+    errorInfo?: string
 }
 
 /**
- * Section data of MATLAB. Sections are groupings formed in MATLAB using %% comments.
+ * Representation of the global scope of a file
  */
-interface CodeDataSectionInfoRaw {
-    title: string
-    range: CodeDataRange
-    isExplicit: boolean
-}
-
-interface CodeDataSectionInfo {
-    title: string
-    range: Range
-    isExplicit: boolean
-}
-
-/**
- * Contains raw information about a function
- */
-interface CodeDataFunctionInfo {
-    name: string
-    range: CodeDataRange
-    parentClass: string
-    isPublic: boolean
-    declaration?: CodeDataRange // Will be undefined if function is prototype
-    variableInfo: CodeDataFunctionVariableInfo
+interface GlobalScope {
+    variableDefinitions: RawIdentifier[]
+    variableReferences: RawIdentifier[]
+    functionOrUnboundReferences: RawFunctionOrUnboundIdentifier[]
     globals: string[]
-    isPrototype: boolean
+    classScope?: ClassDefinition
+    functionScopes: FunctionDefinition[]
 }
 
-/**
- * Contains raw information about variables within a function
- */
-interface CodeDataFunctionVariableInfo {
-    definitions: CodeDataReference[]
-    references: CodeDataReference[]
-}
-
-/**
- * Represents a reference to a variable or function. The first element is the
- * name of the variable. The second element is the range of that reference.
- */
-type CodeDataReference = [string, CodeDataRange]
-
-/**
- * Represents members of a class (e.g. Properties or Enumerations)
- */
-interface CodeDataMemberInfo {
-    name: string
-    range: CodeDataRange
-    parentClass: string
+interface NamedScope {
+    declarationNameId: RawNamedRange
+    range: RangeArray
     isPublic: boolean
 }
 
 /**
- * Represents a range in the document.
- * Line and column values are 1-based.
+ * Representation of a class definition
  */
-interface CodeDataRange {
-    lineStart: number
-    charStart: number
-    lineEnd: number
-    charEnd: number
-}
-
-export enum FunctionVisibility {
-    Public,
-    Private
+interface ClassDefinition extends NamedScope {
+    baseClasses: RawNamedRange[]
+    propertiesBlocks: RawNamedRange[]
+    enumerationsBlocks: RawNamedRange[]
+    methodsBlocks: RawNamedRange[]
+    properties: RawScopedNamedRange[]
+    enumerations: RawScopedNamedRange[]
+    nestedScopes: FunctionDefinition[]
 }
 
 /**
- * Serves as an cache of data extracted from files
+ * Representation of a function
+ */
+interface FunctionDefinition extends NamedScope {
+    isPrototype: boolean
+    variableDefinitions: RawIdentifier[]
+    variableReferences: RawIdentifier[]
+    functionOrUnboundReferences: RawFunctionOrUnboundIdentifier[]
+    globals: string[]
+    nestedScopes: FunctionDefinition[]
+    isConstructor: boolean
+    isStaticMethod: boolean
+    inputArgs: string[]
+    outputArgs: string[]
+}
+
+/**** Define "Raw" interfaces to define the structure coming from `computeCodeData` ****/
+type RangeArray = [startLine: number, startCharacter: number, endLine: number, endCharacter: number]
+
+interface RawNamedRange {
+    name: string
+    range: RangeArray
+}
+
+interface RawIdentifier extends RawNamedRange {
+    components: RawNamedRange[]
+}
+
+interface RawFunctionOrUnboundIdentifier extends RawIdentifier {
+    firstArgIdName?: string
+}
+
+interface RawScopedNamedRange extends RawNamedRange {
+    isPublic: boolean
+}
+
+interface RawSectionInfo extends RawNamedRange {
+    isExplicit: boolean
+}
+
+/**** Define standard interfaces which adhere to LSP ranges ****/
+
+/**
+ * Represents a range associated with a name
+ */
+export interface NamedRange {
+    name: string
+    range: Range
+}
+
+export interface Identifier extends NamedRange {
+    components: NamedRange[]
+}
+
+export interface FunctionOrUnboundIdentifier extends Identifier {
+    firstArgIdName?: string
+}
+
+export interface ScopedNamedRange extends NamedRange {
+    isPublic: boolean
+}
+
+export interface SectionInfo extends NamedRange {
+    isExplicit: boolean
+}
+
+/**** Define conversion helper functions ****/
+
+// These helper functions convert from "Raw" interfaces (which use
+// simple arrays for ranges) to standard interfaces (which use LSP
+// Range objects).
+
+function convertRange (rangeArr: RangeArray): Range {
+    return Range.create(rangeArr[0], rangeArr[1], rangeArr[2], rangeArr[3])
+}
+
+function convertNamedRange (rawNamedRange: RawNamedRange): NamedRange {
+    return {
+        name: rawNamedRange.name,
+        range: convertRange(rawNamedRange.range)
+    }
+}
+
+function convertIdentifier (rawIdentifier: RawIdentifier): Identifier {
+    return {
+        name: rawIdentifier.name,
+        range: convertRange(rawIdentifier.range),
+        components: rawIdentifier.components.map(convertNamedRange)
+    }
+}
+
+function convertFunctionOrUnboundIdentifier (rawFunctionOrUnboundIdentifier: RawFunctionOrUnboundIdentifier): FunctionOrUnboundIdentifier {
+    return {
+        name: rawFunctionOrUnboundIdentifier.name,
+        range: convertRange(rawFunctionOrUnboundIdentifier.range),
+        components: rawFunctionOrUnboundIdentifier.components.map(convertNamedRange),
+        firstArgIdName: rawFunctionOrUnboundIdentifier.firstArgIdName
+    }
+}
+
+function convertScopedNamedRange (rawScopedNamedRange: RawScopedNamedRange): ScopedNamedRange {
+    return {
+        name: rawScopedNamedRange.name,
+        range: convertRange(rawScopedNamedRange.range),
+        isPublic: rawScopedNamedRange.isPublic
+    }
+}
+
+function convertSectionInfo (rawSectionInfo: RawSectionInfo): SectionInfo {
+    return {
+        name: rawSectionInfo.name,
+        range: convertRange(rawSectionInfo.range),
+        isExplicit: rawSectionInfo.isExplicit
+    }
+}
+
+/**
+ * Serves as a cache of data extracted from files
  */
 class FileInfoIndex {
-    private static instance: FileInfoIndex
+    readonly codeInfoCache = new Map<string, MatlabCodeInfo>() // Maps URI to code info
+    private readonly classInfoMap = new Map<string, MatlabClassInfo>() // Maps URI of classdef to class info
 
-    /**
-     * Maps document URI to the code data
-     */
-    readonly codeDataCache = new Map<string, MatlabCodeData>()
+    parseAndStoreCodeInfo (uri: string, rawCodeInfo: CodeInfo): MatlabCodeInfo {
+        let associatedClassInfo: MatlabClassInfo | undefined = undefined
+        if (rawCodeInfo.hasClassInfo) {
+            try {
+                const associatedClassUri = this.getAssociatedClassUri(uri, rawCodeInfo)
+                associatedClassInfo = this.classInfoMap.get(associatedClassUri)
 
-    /**
-     * Maps class name to class info
-     */
-    readonly classInfoCache = new Map<string, MatlabClassInfo>()
-
-    public static getInstance (): FileInfoIndex {
-        if (FileInfoIndex.instance == null) {
-            FileInfoIndex.instance = new FileInfoIndex()
-        }
-
-        return FileInfoIndex.instance
-    }
-
-    /**
-     * Parses the raw data into a more usable form. Caches the resulting data
-     * in the code data index.
-     *
-     * @param uri The uri of the document from which the data was extracted
-     * @param rawCodeData The raw data
-     * @returns An object containing the parsed data
-     */
-    parseAndStoreCodeData (uri: string, rawCodeData: RawCodeData): MatlabCodeData {
-        let parsedCodeData: MatlabCodeData
-
-        if (rawCodeData.classInfo.hasClassInfo) {
-            let classInfo = this.classInfoCache.get(rawCodeData.classInfo.name)
-            if (classInfo == null) {
-                // Class not discovered yet - need to create info object
-                classInfo = new MatlabClassInfo(rawCodeData.classInfo, uri)
-                this.classInfoCache.set(classInfo.name, classInfo)
-            } else {
-                // Class already known - update data
-                classInfo.appendClassData(rawCodeData.classInfo, uri)
+                if (!associatedClassInfo) {
+                    associatedClassInfo = new MatlabClassInfo()
+                    this.classInfoMap.set(associatedClassUri, associatedClassInfo)
+                }
+            } catch (e) {
+                Logger.error(`Error determining associated class URI for file ${uri}: ${e}`)
             }
-            parsedCodeData = new MatlabCodeData(uri, rawCodeData, classInfo)
-        } else {
-            parsedCodeData = new MatlabCodeData(uri, rawCodeData)
         }
 
-        // Store in cache
-        this.codeDataCache.set(uri, parsedCodeData)
+        const parsedCodeInfo = new MatlabCodeInfo(uri, rawCodeInfo, associatedClassInfo)
+        this.codeInfoCache.set(uri, parsedCodeInfo)
 
-        return parsedCodeData
+        return parsedCodeInfo
+    }
+
+    private getAssociatedClassUri (uri: string, rawCodeInfo: CodeInfo): string {
+        if (rawCodeInfo.globalScope.classScope) {
+            // Handle class definition
+            return uri
+        } else {
+            // Handle file in class folder
+
+            // Find the URI of the class folder (%40 represents
+            // the @ sign)
+            const classFolderUriMatch = uri.match(/.*%40[a-zA-Z]\w*/)
+            // Find the name of the class within the part of
+            // the URI naming the class folder (%40 represents
+            // the @ sign)
+            const classNameMatch = uri.match(/%40([a-zA-Z]\w*)/)
+            if (classFolderUriMatch && classNameMatch) {
+                return `${classFolderUriMatch[0]}/${classNameMatch[1]}.m`
+            } else {
+                throw new Error(`Unable to determine associated class URI of file with URI: ${uri}`)
+            }
+        }
     }
 }
 
-/**
- * Class to contain info about a class
- */
-export class MatlabClassInfo {
-    readonly methods: Map<string, MatlabFunctionInfo>
-    readonly properties: Map<string, MatlabClassMemberInfo>
-    readonly enumerations: Map<string, MatlabClassMemberInfo>
-    readonly propertiesBlocks: Map<string, MatlabClassMemberInfo>
-    readonly enumerationsBlocks: Map<string, MatlabClassMemberInfo>
-    readonly methodsBlocks: Map<string, MatlabClassMemberInfo>
+export class MatlabCodeInfo {
+    readonly package: string
+    readonly sections: SectionInfo[]
+    readonly classReferences: IdentifierMap<MatlabClassReferenceInfo> = new Map()
+    readonly globalScopeInfo: MatlabGlobalScopeInfo
+    readonly classDefFolder?: string
 
-    readonly name: string
+    constructor (readonly uri: string, rawCodeInfo: CodeInfo, readonly associatedClassInfo?: MatlabClassInfo) {
+        this.package = rawCodeInfo.package
+        this.classDefFolder = rawCodeInfo.classDefFolder ? URI.file(rawCodeInfo.classDefFolder).toString() : undefined
+        this.sections = rawCodeInfo.sections.map(convertSectionInfo)
 
-    baseClasses: string[]
-    readonly classDefFolder: string
+        parseClassReferences(rawCodeInfo.classReferences.map(convertNamedRange), this.classReferences)
 
-    range?: Range
-    declaration?: Range
+        this.globalScopeInfo = new MatlabGlobalScopeInfo(rawCodeInfo.globalScope, associatedClassInfo, this)
+    }
+}
 
-    constructor (rawClassInfo: CodeDataClassInfo, public uri?: string) {
-        this.methods = new Map<string, MatlabFunctionInfo>()
-        this.properties = new Map<string, MatlabClassMemberInfo>()
-        this.enumerations = new Map<string, MatlabClassMemberInfo>()
-        this.propertiesBlocks = new Map<string, MatlabClassMemberInfo>()
-        this.enumerationsBlocks = new Map<string, MatlabClassMemberInfo>()
-        this.methodsBlocks = new Map<string, MatlabClassMemberInfo>()
+export class MatlabGlobalScopeInfo {
+    readonly variables: IdentifierMap<MatlabVariableInfo> = new Map()
+    readonly globals: Set<string>
+    readonly functionOrUnboundReferences: IdentifierMap<MatlabFunctionOrUnboundReferenceInfo> = new Map()
+    readonly classScope?: MatlabClassInfo
+    readonly functionScopes = new Map<string, MatlabFunctionInfo>()
 
-        this.name = rawClassInfo.name
-
-        this.baseClasses = rawClassInfo.baseClasses
-        this.classDefFolder = rawClassInfo.classDefFolder
-
-        if (rawClassInfo.isClassDef) {
-            this.range = convertRange(rawClassInfo.range)
-            this.declaration = convertRange(rawClassInfo.declaration)
+    constructor (rawGlobalScopeInfo: GlobalScope, associatedClassInfo: MatlabClassInfo | undefined, readonly codeInfo: MatlabCodeInfo) {
+        if (rawGlobalScopeInfo.classScope) {
+            if (!associatedClassInfo) {
+                Logger.error('No associated class info for a global scope containing a class scope')
+            } else {
+                associatedClassInfo.addClassdefInfo(rawGlobalScopeInfo.classScope, this)
+                this.classScope = associatedClassInfo
+            }
         }
+        
+        this.globals = new Set(rawGlobalScopeInfo.globals)
 
-        this.parsePropertiesAndEnums(rawClassInfo)
+        this.parseFunctions(rawGlobalScopeInfo.functionScopes, associatedClassInfo)
+        parseVariableReferences(rawGlobalScopeInfo.variableReferences.map(convertIdentifier), this.variables)
+        parseVariableDefinitions(rawGlobalScopeInfo.variableDefinitions.map(convertIdentifier), this.variables)
+        parseFunctionOrUnboundReferences(rawGlobalScopeInfo.functionOrUnboundReferences.map(convertFunctionOrUnboundIdentifier), this.functionOrUnboundReferences)
     }
 
-    /**
-     * Appends the new data to the existing class data.
-     *
-     * Specifically, when the new data represents the classdef file, information about
-     * the URI, base classes, and range/declaration are added to the existing data.
-     *
-     * @param rawClassInfo The raw class data being appended
-     * @param uri The document URI corresponding to the class data
-     */
-    appendClassData (rawClassInfo: CodeDataClassInfo, uri?: string): void {
-        if (rawClassInfo.isClassDef) {
-            // Data contains class definition
-            this.uri = uri
-            this.baseClasses = rawClassInfo.baseClasses
-            this.range = convertRange(rawClassInfo.range)
-            this.declaration = convertRange(rawClassInfo.declaration)
+    private parseFunctions (rawFunctionScopes: FunctionDefinition[], associatedClassInfo?: MatlabClassInfo): void {
+        rawFunctionScopes.forEach((rawFunctionInfo, index) => {
+            let parsedFunc: MatlabFunctionInfo
 
-            // Since this is the classdef, we'll update all members. Clear them out here.
-            this.enumerations.clear()
-            this.properties.clear()
-            this.methods.clear()
-            this.enumerationsBlocks.clear()
-            this.propertiesBlocks.clear()
-            this.methodsBlocks.clear()
-            this.parsePropertiesAndEnums(rawClassInfo)
-        } else {
-            // Data contains supplementary class info - nothing to do in this situation
-        }
-    }
+            // If this is the first function in a non-classdef file in a class folder,
+            // add its info to the associated class so that the class info will hold
+            // info about all the class's methods, even those outside the classdef file
+            if (index === 0 && associatedClassInfo && !this.classScope) {
+                parsedFunc = associatedClassInfo.addMethodInfo(rawFunctionInfo, this)
+            } else {
+                parsedFunc = new MatlabFunctionInfo(rawFunctionInfo, this)
+            }
 
-    /**
-     * Appends info about a method to the class's info.
-     *
-     * This will not replace info about a method's implementation with info about a method prototype.
-     *
-     * @param functionInfo The method's information
-     */
-    addMethod (functionInfo: MatlabFunctionInfo): void {
-        // Only store the method if a non-prototype version of it is not
-        // already stored, as that will contain better information.
-        const name = functionInfo.name
-        const shouldStoreMethod = !functionInfo.isPrototype || (this.methods.get(name)?.isPrototype ?? true)
-
-        if (shouldStoreMethod) {
-            this.methods.set(name, functionInfo)
-        }
-    }
-
-    /**
-     * Creates a unique identifier for a symbol by combining its name and position
-     * @param name The name of the symbol
-     * @param range The CodeDataRange containing the position information
-     * @returns A string identifier in the format "name::lineStart:charStart"
-     */
-    private createSymbolId(name: string, range: CodeDataRange): string {
-        return `${name}::${range.lineStart}:${range.charStart}`;
-    }
-
-    /**
-     * Parses information about the class's properties and enums from the raw data.
-     *
-     * @param rawClassInfo The raw class info
-     */
-    private parsePropertiesAndEnums (rawClassInfo: CodeDataClassInfo): void {
-        rawClassInfo.properties.forEach(propertyInfo => {
-            const name = propertyInfo.name
-            this.properties.set(name, new MatlabClassMemberInfo(propertyInfo))
-        })
-        rawClassInfo.enumerations.forEach(enumerationInfo => {
-            const name = enumerationInfo.name
-            this.enumerations.set(name, new MatlabClassMemberInfo(enumerationInfo))
-        })
-        rawClassInfo.propertiesBlocks.forEach(propertiesInfo => {
-            const symbolId = this.createSymbolId(propertiesInfo.name, propertiesInfo.range)
-            this.propertiesBlocks.set(symbolId, new MatlabClassMemberInfo(propertiesInfo))
-        })
-        rawClassInfo.enumerationsBlocks.forEach(enumerationsInfo => {
-            const symbolId = this.createSymbolId(enumerationsInfo.name, enumerationsInfo.range)
-            this.enumerationsBlocks.set(symbolId, new MatlabClassMemberInfo(enumerationsInfo))
-        })
-        rawClassInfo.methodsBlocks.forEach(methodInfo => {
-            const symbolId = this.createSymbolId(methodInfo.name, methodInfo.range)
-            this.methodsBlocks.set(symbolId, new MatlabClassMemberInfo(methodInfo))
+            this.functionScopes.set(rawFunctionInfo.declarationNameId.name, parsedFunc)
         })
     }
 }
 
-/**
- * Class to contain info about members of a class (e.g. Properties or Enumerations)
- */
-export class MatlabClassMemberInfo {
-    readonly name: string
+export type FunctionParentScope = MatlabGlobalScopeInfo | MatlabClassdefInfo | MatlabFunctionScopeInfo
+
+export class MatlabFunctionScopeInfo {
+    readonly declarationNameId: NamedRange
     readonly range: Range
-    readonly parentClass: string
+    readonly variables: IdentifierMap<MatlabVariableInfo> = new Map()
+    readonly globals: Set<string>
+    readonly functionOrUnboundReferences: IdentifierMap<MatlabFunctionOrUnboundReferenceInfo> = new Map()
+    readonly functionScopes = new Map<string, MatlabFunctionInfo>()
+    readonly inputArgs: Set<string>
+    readonly outputArgs: Set<string>
 
-    constructor (rawPropertyInfo: CodeDataMemberInfo) {
-        this.name = rawPropertyInfo.name
-        this.range = convertRange(rawPropertyInfo.range)
-        this.parentClass = rawPropertyInfo.parentClass
-    }
-}
-
-/**
- * Class to contain info about functions
- */
-export class MatlabFunctionInfo {
-    name: string
-
-    range: Range
-    declaration: Range | null
-
-    isPrototype: boolean
-
-    parentClass: string
-    isClassMethod: boolean
-    visibility: FunctionVisibility
-
-    variableInfo: Map<string, MatlabVariableInfo>
-
-    constructor (rawFunctionInfo: CodeDataFunctionInfo, public uri: string) {
-        this.name = rawFunctionInfo.name
-
+    constructor (rawFunctionInfo: FunctionDefinition, readonly parentScope: FunctionParentScope, readonly functionInfo: MatlabFunctionInfo) {
+        this.declarationNameId = convertNamedRange(rawFunctionInfo.declarationNameId)
         this.range = convertRange(rawFunctionInfo.range)
-        this.declaration = rawFunctionInfo.declaration != null ? convertRange(rawFunctionInfo.declaration) : null
+        this.globals = new Set(rawFunctionInfo.globals)
+        this.inputArgs = new Set(rawFunctionInfo.inputArgs)
+        this.outputArgs = new Set(rawFunctionInfo.outputArgs)
 
-        this.isPrototype = rawFunctionInfo.isPrototype
-
-        this.parentClass = rawFunctionInfo.parentClass
-        this.isClassMethod = this.parentClass !== ''
-        this.visibility = rawFunctionInfo.isPublic ? FunctionVisibility.Public : FunctionVisibility.Private
-
-        this.variableInfo = new Map<string, MatlabVariableInfo>()
-        this.parseVariableInfo(rawFunctionInfo)
+        this.parseFunctions(rawFunctionInfo.nestedScopes)
+        parseVariableReferences(rawFunctionInfo.variableReferences.map(convertIdentifier), this.variables)
+        parseVariableDefinitions(rawFunctionInfo.variableDefinitions.map(convertIdentifier), this.variables)
+        parseFunctionOrUnboundReferences(rawFunctionInfo.functionOrUnboundReferences.map(convertFunctionOrUnboundIdentifier), this.functionOrUnboundReferences)
     }
 
-    /**
-     * Parses information about variables within the function from the raw data.
-     *
-     * @param rawFunctionInfo The raw function info
-     */
-    private parseVariableInfo (rawFunctionInfo: CodeDataFunctionInfo): void {
-        const variableInfo = rawFunctionInfo.variableInfo
-        const globals = rawFunctionInfo.globals
-
-        variableInfo.definitions.forEach(varDefinition => {
-            const name = varDefinition[0]
-            const range = convertRange(varDefinition[1])
-
-            const varInfo = this.getOrCreateVariableInfo(name, globals)
-            varInfo.addDefinition(range)
-        })
-
-        variableInfo.references.forEach(varReference => {
-            const name = varReference[0]
-            const range = convertRange(varReference[1])
-
-            const varInfo = this.getOrCreateVariableInfo(name, globals)
-            varInfo.addReference(range)
-        })
-    }
-
-    /**
-     * Attempts to retrieve an existing MatlabVariableInfo object for the requested variable.
-     * Creates a new instance if one does not already exist.
-     *
-     * @param name The variable's name
-     * @param globals The list of global variables
-     * @returns The MatlabVariableInfo object for the variable
-     */
-    private getOrCreateVariableInfo (name: string, globals: string[]): MatlabVariableInfo {
-        let variableInfo = this.variableInfo.get(name)
-        if (variableInfo == null) {
-            const isGlobal = globals.includes(name)
-            variableInfo = new MatlabVariableInfo(name, isGlobal)
-            this.variableInfo.set(name, variableInfo)
+    private parseFunctions (rawFunctionScopes: FunctionDefinition[]): void {
+        for (const rawFunctionInfo of rawFunctionScopes) {
+            const parsedFunc = new MatlabFunctionInfo(rawFunctionInfo, this)
+            this.functionScopes.set(rawFunctionInfo.declarationNameId.name, parsedFunc)
         }
-        return variableInfo
     }
 }
 
-/**
- * Class to contain info about variables
- */
-class MatlabVariableInfo {
-    readonly definitions: Range[] = []
-    readonly references: Range[] = []
+export class MatlabFunctionInfo {
+    isPublic: boolean
+    hasPrototypeInfo: boolean
+    isStaticMethod: boolean
+    isConstructor: boolean
 
-    constructor (public name: string, public isGlobal: boolean) {}
+    functionScopeInfo?: MatlabFunctionScopeInfo
 
-    /**
-     * Add a definition for the variable
-     *
-     * @param range The range of the definition
-     */
-    addDefinition (range: Range): void {
-        this.definitions.push(range)
+    constructor (rawFunctionInfo: FunctionDefinition, parentScope: FunctionParentScope, readonly isMethod = false) {
+        this.isPublic = rawFunctionInfo.isPublic
+        this.hasPrototypeInfo = rawFunctionInfo.isPrototype
+        this.isStaticMethod = rawFunctionInfo.isStaticMethod
+        this.isConstructor = rawFunctionInfo.isConstructor
+
+        if (!rawFunctionInfo.isPrototype) {
+            this.functionScopeInfo = new MatlabFunctionScopeInfo(rawFunctionInfo, parentScope, this)
+        }
     }
 
-    /**
-     * Add a reference for the variable
-     *
-     * @param range The range of the reference
-     */
-    addReference (range: Range): void {
-        this.references.push(range)
-    }
-}
-
-/**
- * Class to contain info about an entire file
- */
-export class MatlabCodeData {
-    readonly functions: Map<string, MatlabFunctionInfo>
-    readonly references: Map<string, Range[]>
-    readonly sections: CodeDataSectionInfo[]
-    readonly packageName: string
-    errorMessage: string | undefined
-
-    constructor (public uri: string, rawCodeData: RawCodeData, public classInfo?: MatlabClassInfo) {
-        this.functions = new Map<string, MatlabFunctionInfo>()
-        this.references = new Map<string, Range[]>()
-        this.sections = []
-        this.packageName = rawCodeData.packageName
-        this.errorMessage = undefined
-        this.parseFunctions(rawCodeData.functionInfo)
-        this.parseReferences(rawCodeData.references)
-        this.parseSectionInfo(rawCodeData.sections)
-        this.parseErrorInfo(rawCodeData.errorInfo)
-    }
-
-    parseErrorInfo (errorInfo: CodeDataErrorInfo | undefined): void {
-        if (errorInfo === undefined) {
-            this.errorMessage = undefined
+    addAdditionalInfo (rawFunctionInfo: FunctionDefinition, parentScope: FunctionParentScope): void {
+        if (this.hasPrototypeInfo && rawFunctionInfo.isPrototype) {
             return
         }
-        this.errorMessage = errorInfo.message
-    }
-
-    /**
-     * Whether or not the code data represents a class definition
-     */
-    get isClassDef (): boolean {
-        return this.classInfo != null
-    }
-
-    /**
-     * Whether or not the code data represents a main classdef file.
-     * For @aclass/aclass.m this returns true
-     * For @aclass/amethod.m this returns false.
-     */
-    get isMainClassDefDocument (): boolean {
-        return this.isClassDef && this.uri === this.classInfo?.uri
-    }
-
-    /**
-     * Finds the info for the function containing the given position.
-     *
-     * @param position A position in the document
-     * @returns The info for the function containing the position, or null if no function contains that position.
-     */
-    findContainingFunction (position: Position): MatlabFunctionInfo | null {
-        let containingFunction: MatlabFunctionInfo | null = null
-
-        for (const functionInfo of this.functions.values()) {
-            const start = functionInfo.range.start
-            const end = functionInfo.range.end
-
-            // Check if position is within range
-            if (isPositionLessThanOrEqualTo(start, position) && isPositionGreaterThan(end, position)) {
-                if (containingFunction == null) {
-                    containingFunction = functionInfo
-                } else {
-                    // Prefer a narrower function if we already have a match (e.g. nested functions)
-                    if (isPositionGreaterThan(start, containingFunction.range.start)) {
-                        containingFunction = functionInfo
-                    }
-                }
-            }
+        if (this.functionScopeInfo && !rawFunctionInfo.isPrototype) {
+            return
         }
 
-        return containingFunction
-    }
-
-    /**
-     * Parses information about the file's functions.
-     *
-     * @param functionInfos The raw information about the functions in the file
-     */
-    private parseFunctions (functionInfos: CodeDataFunctionInfo[]): void {
-        functionInfos.forEach(functionInfo => {
-            const fcnInfo = new MatlabFunctionInfo(functionInfo, this.uri)
-            this.functions.set(fcnInfo.name, fcnInfo)
-
-            if (fcnInfo.isClassMethod) {
-                // Store the function info with the class as well
-                this.classInfo?.addMethod(fcnInfo)
-            }
-        })
-    }
-
-    /**
-     * Parses information about the file's variable and function references.
-     *
-     * @param references The raw information about the references in the file
-     */
-    private parseReferences (references: CodeDataReference[]): void {
-        references.forEach(reference => {
-            const funcName = reference[0]
-            const range = convertRange(reference[1])
-
-            if (!this.references.has(funcName)) {
-                // First time seeing this reference
-                this.references.set(funcName, [range])
-            } else {
-                this.references.get(funcName)?.push(range)
-            }
-        })
-    }
-
-    /**
-     * Parse raw section info to the section and set to this.sections
-     * @param sectionsInfo Array of the section information of the file retrieved from MATLAB
-     */
-    private parseSectionInfo (sectionsInfo: CodeDataSectionInfoRaw[]): void {
-        const sections = sectionsInfo.map((sectionInfo) => ({
-            title: sectionInfo.title,
-            range: convertRange(sectionInfo.range),
-            isExplicit: sectionInfo.isExplicit
-        }))
-        this.sections.splice(0, 0, ...sections)
+        if (rawFunctionInfo.isPrototype) {
+            this.isPublic = rawFunctionInfo.isPublic
+            this.isStaticMethod = rawFunctionInfo.isStaticMethod
+            this.hasPrototypeInfo = true
+        } else {
+            this.functionScopeInfo = new MatlabFunctionScopeInfo(rawFunctionInfo, parentScope, this)
+        }
     }
 }
 
-/**
- * Converts from a CodeDataRange to a Range as expected by the language server APIs.
- *
- * @param codeDataRange The CodeDataRange
- * @returns A Range corresponding to the inputted range
- */
-function convertRange (codeDataRange: CodeDataRange): Range {
-    // When converting, need to change value from 1-based to 0-based
-    return Range.create(
-        codeDataRange.lineStart - 1,
-        codeDataRange.charStart - 1,
-        codeDataRange.lineEnd - 1,
-        codeDataRange.charEnd - 1
-    )
+export class MatlabClassdefInfo {
+    readonly declarationNameId: NamedRange
+    readonly range: Range
+    readonly isPublic: boolean
+    readonly baseClasses: NamedRange[]
+    readonly propertiesBlocks: NamedRange[]
+    readonly enumerationsBlocks: NamedRange[]
+    readonly methodsBlocks: NamedRange[]
+
+    constructor (rawClassDefinition: ClassDefinition, readonly parentScope: MatlabGlobalScopeInfo, readonly classInfo: MatlabClassInfo) {
+        this.declarationNameId = convertNamedRange(rawClassDefinition.declarationNameId)
+        this.range = convertRange(rawClassDefinition.range)
+        this.isPublic = rawClassDefinition.isPublic
+        this.baseClasses = rawClassDefinition.baseClasses.map(convertNamedRange)
+        this.propertiesBlocks = rawClassDefinition.propertiesBlocks.map(convertNamedRange)
+        this.enumerationsBlocks = rawClassDefinition.enumerationsBlocks.map(convertNamedRange)
+        this.methodsBlocks = rawClassDefinition.methodsBlocks.map(convertNamedRange)
+    }
 }
 
-export default FileInfoIndex.getInstance()
+// May initially only have information from a file in a class folder -
+// may not have come across the classdef file yet!
+export class MatlabClassInfo {
+    readonly properties = new Map<string, ScopedNamedRange>()
+    readonly enumerations = new Map<string, ScopedNamedRange>()
+    readonly functionScopes = new Map<string, MatlabFunctionInfo>()
+
+    classdefInfo?: MatlabClassdefInfo
+
+    addClassdefInfo (rawClassdefInfo: ClassDefinition, parentScope: MatlabGlobalScopeInfo): void {
+        if (this.classdefInfo) {
+            return
+        }
+
+        const classdefInfo = new MatlabClassdefInfo(rawClassdefInfo, parentScope, this)
+
+        this.parseClassdefProperties(rawClassdefInfo.properties.map(convertScopedNamedRange))
+        this.parseClassdefEnumerations(rawClassdefInfo.enumerations.map(convertScopedNamedRange))
+        this.parseClassdefFunctions(rawClassdefInfo.nestedScopes, classdefInfo)
+
+        this.classdefInfo = classdefInfo
+    }
+
+    addMethodInfo (rawFunctionInfo: FunctionDefinition, parentScope: FunctionParentScope): MatlabFunctionInfo {
+        const methodName = rawFunctionInfo.declarationNameId.name
+        let methodInfo: MatlabFunctionInfo | undefined = this.functionScopes.get(methodName)
+
+        if (methodInfo) {
+            methodInfo.addAdditionalInfo(rawFunctionInfo, parentScope)
+        } else {
+            methodInfo = new MatlabFunctionInfo(rawFunctionInfo, parentScope, true)
+            this.functionScopes.set(methodName, methodInfo)
+        }
+
+        return methodInfo
+    }
+
+    clear (): void {
+        this.properties.clear()
+        this.enumerations.clear()
+        this.functionScopes.clear()
+
+        this.classdefInfo = undefined
+    }
+
+    private parseClassdefFunctions (rawFunctionScopes: FunctionDefinition[], classdefInfo: MatlabClassdefInfo): void {
+        for (const rawFunctionInfo of rawFunctionScopes) {
+            this.addMethodInfo(rawFunctionInfo, classdefInfo)
+        }
+    }
+
+    private parseClassdefProperties (properties: ScopedNamedRange[]): void {
+        for (const propertyInfo of properties) {
+            this.properties.set(propertyInfo.name, propertyInfo)
+        }
+    }
+
+    private parseClassdefEnumerations (enums: ScopedNamedRange[]): void {
+        for (const enumInfo of enums) {
+            this.enumerations.set(enumInfo.name, enumInfo)
+        }
+    }
+}
+
+export type FunctionContainer =
+    | MatlabGlobalScopeInfo
+    | MatlabFunctionScopeInfo
+    | MatlabClassInfo
+
+export interface ReferenceInfo<T extends NamedRange> {
+    references: T[]
+}
+
+// for Identifiers with components: first component name -> reference info
+// otherwise: name -> reference info
+export type IdentifierMap<T extends ReferenceInfo<any>> = Map<string, T>
+
+function parseVariableReferences (
+    references: Identifier[], variableMap: IdentifierMap<MatlabVariableInfo>
+): void {
+    for (const ref of references) {
+        const variableInfo = getOrCreateIdentifierInfo(
+            variableMap, ref.components[0].name, MatlabVariableInfo
+        )
+        variableInfo.addReference(ref)
+    }
+}
+
+function parseVariableDefinitions (
+    definitions: Identifier[], variableMap: IdentifierMap<MatlabVariableInfo>
+): void {
+    for (const def of definitions) {
+        const variableInfo = getOrCreateIdentifierInfo(
+            variableMap, def.components[0].name, MatlabVariableInfo
+        )
+        variableInfo.addDefinition(def)
+    }
+}
+
+function parseFunctionOrUnboundReferences (
+    references: FunctionOrUnboundIdentifier[], functionOrUnboundReferenceMap: IdentifierMap<MatlabFunctionOrUnboundReferenceInfo>
+): void {
+    for (const ref of references) {
+        const referenceInfo = getOrCreateIdentifierInfo(
+            functionOrUnboundReferenceMap, ref.components[0].name, MatlabFunctionOrUnboundReferenceInfo
+        )
+        referenceInfo.addReference(ref)
+    }
+}
+
+function parseClassReferences (
+    references: NamedRange[], classReferenceMap: IdentifierMap<MatlabClassReferenceInfo>
+): void {
+    for (const ref of references) {
+        const referenceInfo = getOrCreateIdentifierInfo(
+            classReferenceMap, ref.name, MatlabClassReferenceInfo
+        )
+        referenceInfo.addReference(ref)
+    }
+}
+
+type Constructor<T> = { new (): T }
+
+function getOrCreateIdentifierInfo<T extends ReferenceInfo<any>> (
+    identifierMap: IdentifierMap<T>, key: string, IdentifierInfoFactory: Constructor<T>
+): T {
+    let identifierInfo: T | undefined = identifierMap.get(key)
+    if (!identifierInfo) {
+        identifierInfo = new IdentifierInfoFactory()
+        identifierMap.set(key, identifierInfo)
+    }
+    return identifierInfo
+}
+
+export class MatlabVariableInfo implements ReferenceInfo<Identifier> {
+    readonly definitions: Identifier[] = []
+    readonly references: Identifier[] = []
+
+    addDefinition (identifier: Identifier): void {
+        this.definitions.push(identifier)
+    }
+
+    addReference (identifier: Identifier): void {
+        this.references.push(identifier)
+    }
+}
+
+export class MatlabFunctionOrUnboundReferenceInfo implements ReferenceInfo<FunctionOrUnboundIdentifier> {
+    readonly references: FunctionOrUnboundIdentifier[] = []
+
+    addReference (identifier: FunctionOrUnboundIdentifier): void {
+        this.references.push(identifier)
+    }
+}
+
+export class MatlabClassReferenceInfo implements ReferenceInfo<NamedRange> {
+    readonly references: NamedRange[] = []
+
+    addReference (reference: NamedRange): void {
+        this.references.push(reference)
+    }
+}
+
+export default FileInfoIndex

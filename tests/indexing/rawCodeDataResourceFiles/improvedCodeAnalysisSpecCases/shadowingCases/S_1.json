@@ -1,0 +1,228 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        10,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "A",
+        "components": [
+          {
+            "name": "A",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "A",
+          "range": [
+            2,
+            9,
+            2,
+            10
+          ]
+        },
+        "range": [
+          2,
+          0,
+          3,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      },
+      {
+        "declarationNameId": {
+          "name": "func",
+          "range": [
+            5,
+            9,
+            5,
+            13
+          ]
+        },
+        "range": [
+          5,
+          0,
+          9,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [
+          {
+            "name": "A",
+            "components": [
+              {
+                "name": "A",
+                "range": [
+                  7,
+                  4,
+                  7,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              7,
+              4,
+              7,
+              5
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "A",
+            "components": [
+              {
+                "name": "A",
+                "range": [
+                  6,
+                  9,
+                  6,
+                  10
+                ]
+              }
+            ],
+            "range": [
+              6,
+              9,
+              6,
+              10
+            ]
+          },
+          {
+            "name": "A",
+            "components": [
+              {
+                "name": "A",
+                "range": [
+                  7,
+                  4,
+                  7,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              7,
+              4,
+              7,
+              5
+            ]
+          },
+          {
+            "name": "A",
+            "components": [
+              {
+                "name": "A",
+                "range": [
+                  8,
+                  9,
+                  8,
+                  10
+                ]
+              }
+            ],
+            "range": [
+              8,
+              9,
+              8,
+              10
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [
+          {
+            "firstArgIdName": "A",
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  6,
+                  4,
+                  6,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              6,
+              4,
+              6,
+              8
+            ]
+          },
+          {
+            "firstArgIdName": "A",
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  8,
+                  4,
+                  8,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              8,
+              4,
+              8,
+              8
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0119257
+}

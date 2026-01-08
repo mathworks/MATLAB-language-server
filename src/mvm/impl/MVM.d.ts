@@ -27,6 +27,7 @@ export default class MVM extends EventEmitter implements IMVM {
     clearBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     unpause(): void;
     interrupt(): void;
+    pauseInDebugger(): void;
     getMatlabRelease(): string | null;
     isReady(): boolean;
     waitUntilReady(): Promise<void>;

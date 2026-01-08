@@ -1,0 +1,464 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "classDefFolder": "C:\\Users\\sschumac\\OneDrive - MathWorks\\Documents\\Code Analysis Improvements\\Generate Raw Code Data Resource Files\\testData\\@MyClass",
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        27,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "MyClass",
+      "range": [
+        0,
+        9,
+        0,
+        16
+      ]
+    },
+    {
+      "name": "Base1",
+      "range": [
+        0,
+        19,
+        0,
+        24
+      ]
+    },
+    {
+      "name": "Base2",
+      "range": [
+        0,
+        27,
+        0,
+        32
+      ]
+    },
+    {
+      "name": "Base3",
+      "range": [
+        0,
+        35,
+        0,
+        40
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [
+        {
+          "name": "Base1",
+          "range": [
+            0,
+            19,
+            0,
+            24
+          ]
+        },
+        {
+          "name": "Base2",
+          "range": [
+            0,
+            27,
+            0,
+            32
+          ]
+        },
+        {
+          "name": "Base3",
+          "range": [
+            0,
+            35,
+            0,
+            40
+          ]
+        }
+      ],
+      "declarationNameId": {
+        "name": "MyClass",
+        "range": [
+          0,
+          9,
+          0,
+          16
+        ]
+      },
+      "range": [
+        0,
+        0,
+        26,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [
+        {
+          "name": "properties",
+          "range": [
+            1,
+            4,
+            3,
+            7
+          ]
+        },
+        {
+          "name": "properties (Constant)",
+          "range": [
+            5,
+            4,
+            7,
+            7
+          ]
+        }
+      ],
+      "enumerationsBlocks": [
+        {
+          "name": "enumeration",
+          "range": [
+            9,
+            4,
+            11,
+            7
+          ]
+        },
+        {
+          "name": "enumeration",
+          "range": [
+            13,
+            4,
+            15,
+            7
+          ]
+        }
+      ],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            17,
+            4,
+            21,
+            7
+          ]
+        },
+        {
+          "name": "methods (Static)",
+          "range": [
+            23,
+            4,
+            25,
+            7
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "Prop",
+          "range": [
+            2,
+            8,
+            2,
+            12
+          ],
+          "isPublic": true
+        },
+        {
+          "name": "ConstantProperty",
+          "range": [
+            6,
+            8,
+            6,
+            24
+          ],
+          "isPublic": true
+        }
+      ],
+      "enumerations": [
+        {
+          "name": "A",
+          "range": [
+            10,
+            8,
+            10,
+            9
+          ],
+          "isPublic": true
+        },
+        {
+          "name": "B",
+          "range": [
+            10,
+            11,
+            10,
+            12
+          ],
+          "isPublic": true
+        },
+        {
+          "name": "C",
+          "range": [
+            14,
+            8,
+            14,
+            9
+          ],
+          "isPublic": true
+        },
+        {
+          "name": "D",
+          "range": [
+            14,
+            11,
+            14,
+            12
+          ],
+          "isPublic": true
+        }
+      ],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "myMethod",
+            "range": [
+              18,
+              17,
+              18,
+              25
+            ]
+          },
+          "range": [
+            18,
+            8,
+            20,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj"
+          ],
+          "outputArgs": [],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    26,
+                    18,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                26,
+                18,
+                29
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    26,
+                    18,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                26,
+                18,
+                29
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    19,
+                    17,
+                    19,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                19,
+                17,
+                19,
+                20
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "firstArgIdName": "obj",
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    19,
+                    12,
+                    19,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                19,
+                12,
+                19,
+                16
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "staticMethod",
+            "range": [
+              24,
+              19,
+              24,
+              31
+            ]
+          },
+          "range": [
+            24,
+            8,
+            24,
+            40
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": true,
+          "isPrototype": true,
+          "inputArgs": [
+            "protoIn"
+          ],
+          "outputArgs": [
+            "protoOut"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "protoIn",
+              "components": [
+                {
+                  "name": "protoIn",
+                  "range": [
+                    24,
+                    32,
+                    24,
+                    39
+                  ]
+                }
+              ],
+              "range": [
+                24,
+                32,
+                24,
+                39
+              ]
+            },
+            {
+              "name": "protoOut",
+              "components": [
+                {
+                  "name": "protoOut",
+                  "range": [
+                    24,
+                    8,
+                    24,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                24,
+                8,
+                24,
+                16
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "protoOut",
+              "components": [
+                {
+                  "name": "protoOut",
+                  "range": [
+                    24,
+                    8,
+                    24,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                24,
+                8,
+                24,
+                16
+              ]
+            },
+            {
+              "name": "protoIn",
+              "components": [
+                {
+                  "name": "protoIn",
+                  "range": [
+                    24,
+                    32,
+                    24,
+                    39
+                  ]
+                }
+              ],
+              "range": [
+                24,
+                32,
+                24,
+                39
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": []
+  },
+  "timeToIndex": 1.1155165
+}

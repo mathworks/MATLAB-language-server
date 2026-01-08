@@ -1,0 +1,366 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        11,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "f1",
+          "range": [
+            0,
+            9,
+            0,
+            11
+          ]
+        },
+        "range": [
+          0,
+          0,
+          4,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              1,
+              4,
+              1,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  2,
+                  4,
+                  2,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              2,
+              4,
+              2,
+              5
+            ]
+          },
+          {
+            "name": "y",
+            "components": [
+              {
+                "name": "y",
+                "range": [
+                  3,
+                  4,
+                  3,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              3,
+              4,
+              3,
+              5
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              1,
+              4,
+              1,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  2,
+                  4,
+                  2,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              2,
+              4,
+              2,
+              5
+            ]
+          },
+          {
+            "name": "y",
+            "components": [
+              {
+                "name": "y",
+                "range": [
+                  3,
+                  4,
+                  3,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              3,
+              4,
+              3,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  3,
+                  8,
+                  3,
+                  9
+                ]
+              }
+            ],
+            "range": [
+              3,
+              8,
+              3,
+              9
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      },
+      {
+        "declarationNameId": {
+          "name": "f2",
+          "range": [
+            6,
+            9,
+            6,
+            11
+          ]
+        },
+        "range": [
+          6,
+          0,
+          10,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  7,
+                  4,
+                  7,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              7,
+              4,
+              7,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  8,
+                  4,
+                  8,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              8,
+              4,
+              8,
+              5
+            ]
+          },
+          {
+            "name": "y",
+            "components": [
+              {
+                "name": "y",
+                "range": [
+                  9,
+                  4,
+                  9,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              9,
+              4,
+              9,
+              5
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  7,
+                  4,
+                  7,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              7,
+              4,
+              7,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  8,
+                  4,
+                  8,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              8,
+              4,
+              8,
+              5
+            ]
+          },
+          {
+            "name": "y",
+            "components": [
+              {
+                "name": "y",
+                "range": [
+                  9,
+                  4,
+                  9,
+                  5
+                ]
+              }
+            ],
+            "range": [
+              9,
+              4,
+              9,
+              5
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  9,
+                  8,
+                  9,
+                  9
+                ]
+              }
+            ],
+            "range": [
+              9,
+              8,
+              9,
+              9
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0158939
+}

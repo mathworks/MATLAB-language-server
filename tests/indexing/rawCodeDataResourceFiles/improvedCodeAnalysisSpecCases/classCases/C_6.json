@@ -1,0 +1,257 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        21,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "C_6",
+      "range": [
+        0,
+        9,
+        0,
+        12
+      ]
+    },
+    {
+      "name": "C_6",
+      "range": [
+        17,
+        4,
+        17,
+        7
+      ]
+    },
+    {
+      "name": "C_6",
+      "range": [
+        18,
+        4,
+        18,
+        7
+      ]
+    },
+    {
+      "name": "C_6",
+      "range": [
+        19,
+        4,
+        19,
+        7
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [],
+      "declarationNameId": {
+        "name": "C_6",
+        "range": [
+          0,
+          9,
+          0,
+          12
+        ]
+      },
+      "range": [
+        0,
+        0,
+        14,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [
+        {
+          "name": "properties (Constant)",
+          "range": [
+            1,
+            4,
+            3,
+            7
+          ]
+        }
+      ],
+      "enumerationsBlocks": [],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            5,
+            4,
+            8,
+            7
+          ]
+        },
+        {
+          "name": "methods (Static)",
+          "range": [
+            10,
+            4,
+            13,
+            7
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "ConstantProperty",
+          "range": [
+            2,
+            8,
+            2,
+            24
+          ],
+          "isPublic": true
+        }
+      ],
+      "enumerations": [],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "C_6",
+            "range": [
+              6,
+              23,
+              6,
+              26
+            ]
+          },
+          "range": [
+            6,
+            8,
+            7,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": true,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [],
+          "outputArgs": [
+            "obj"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    6,
+                    17,
+                    6,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                6,
+                17,
+                6,
+                20
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    6,
+                    17,
+                    6,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                6,
+                17,
+                6,
+                20
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "staticMethod",
+            "range": [
+              11,
+              17,
+              11,
+              29
+            ]
+          },
+          "range": [
+            11,
+            8,
+            12,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": true,
+          "isPrototype": false,
+          "inputArgs": [],
+          "outputArgs": [],
+          "variableDefinitions": [],
+          "variableReferences": [],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "local",
+          "range": [
+            16,
+            9,
+            16,
+            14
+          ]
+        },
+        "range": [
+          16,
+          0,
+          20,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0251549
+}

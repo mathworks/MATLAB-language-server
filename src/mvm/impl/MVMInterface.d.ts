@@ -108,6 +108,7 @@ export interface IMVM extends EventEmitter {
     setBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     clearBreakpoint(fileName: string, lineNumber: number, condition?: string, anonymousIndex?: number): Promise<void>;
     unpause(): void;
+    pauseInDebugger(): void;
     interrupt: () => void;
 }
 export declare namespace IMVM {

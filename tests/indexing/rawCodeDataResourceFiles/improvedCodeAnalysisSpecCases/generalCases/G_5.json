@@ -1,0 +1,67 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        4,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ],
+    "variableReferences": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": []
+  },
+  "timeToIndex": 0.0067074
+}

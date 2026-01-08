@@ -1,14 +1,14 @@
 // Copyright 2025 The MathWorks, Inc.
 
-import { DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams, Location, TextDocuments } from 'vscode-languageserver'
+import { DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams, Range, TextDocuments } from 'vscode-languageserver'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
-import SymbolSearchService, { reportTelemetry, RequestType } from '../../indexing/SymbolSearchService'
-import { getExpressionAtPosition } from '../../utils/ExpressionUtils'
+import { reportTelemetry, RequestType } from '../../indexing/SymbolSearchService'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
-import PathResolver from '../navigation/PathResolver'
 import Indexer from '../../indexing/Indexer'
-import { rangeContains } from '../../utils/RangeUtils'
+import { areRangesEqual } from '../../utils/RangeUtils'
+import * as SymbolSearchService from '../../indexing/SymbolSearchService'
+import FileInfoIndex from '../../indexing/FileInfoIndex'
 
 /**
  * Handles requests for document highlights, given a position in a file.
@@ -20,8 +20,8 @@ class HighlightSymbolProvider {
     constructor (
         protected readonly matlabLifecycleManager: MatlabLifecycleManager,
         protected readonly documentIndexer: DocumentIndexer,
-        protected readonly pathResolver: PathResolver,
-        protected readonly indexer: Indexer
+        protected readonly indexer: Indexer,
+        protected readonly fileInfoIndex: FileInfoIndex
     ) {}
 
     /**
@@ -58,49 +58,25 @@ class HighlightSymbolProvider {
             return []
         }
 
-        // Determine the expression the user's cursor is on
-        const expression = getExpressionAtPosition(textDocument, params.position)
-        if (expression == null) {
-            // There may still be an expression at the cursor position in this case,
-            // but not one for which finding references is supported (e.g., it may
-            // be a numeric literal)
-            return []
-        }
-
         await this.documentIndexer.ensureDocumentIndexIsUpdated(textDocument)
 
-        // Find all references to the selected expression in the current file;
-        // these will be highlighted
-        const references: Location[] = SymbolSearchService
-            .findReferences(
-                currentDocumentUri, params.position, expression, documentManager, RequestType.DocumentHighlight
-            )
-            .filter(ref => ref.uri === currentDocumentUri)
-
-        /* This helps to determine which references are "write references" - e.g.,
-         * variable assignments, function definitions - and which are "read
-         * references" - e.g., variable accesses, function calls.
-         *
-         * If the selected identifier refers to a variable, we find the locations
-         * where it is used in an assignment statement (in the current file). If
-         * it refers to a function, we find the location of the function definition
-         * (if it is in the current file).
+        /* All references to the selected identifier component that are in the current
+         * file will be highlighted. If a reference coincides with a definition - e.g.,
+         * a variable assignment or function declaration - we highlight it as a write
+         * reference; other references are highlighted as read references.
          */
-        const definitions: Location[] = await SymbolSearchService
-            .findDefinitions(
-                currentDocumentUri, params.position, expression, this.pathResolver, this.indexer, RequestType.DocumentHighlight
-            )
 
-        return references.map(ref => {
-            /* Since for function definitions, the location of the entire definition
-             * header is reported (not just the name of the function in the definition),
-             * we determine that a reference to a variable/function/etc. is a write
-             * reference if it is contained within the location of a definition of that
-             * variable/function/etc.
-             */
-            const isWriteReference = definitions.some(def => rangeContains(def.range, ref.range))
+        const { references, definitions } = SymbolSearchService.findReferencesAndDefinitions(
+            currentDocumentUri, params.position, this.fileInfoIndex, documentManager, RequestType.DocumentHighlight
+        )
+
+        const currentFileRefRanges: Range[] = references.filter(ref => ref.uri === currentDocumentUri).map(ref => ref.range)
+        const currentFileDefRanges: Range[] = definitions.filter(def => def.uri === currentDocumentUri).map(def => def.range)
+
+        return currentFileRefRanges.map(refRange => {
+            const isWriteReference = currentFileDefRanges.some(defRange => areRangesEqual(defRange, refRange))
             return DocumentHighlight.create(
-                ref.range,
+                refRange,
                 isWriteReference ? DocumentHighlightKind.Write : DocumentHighlightKind.Read
             )
         })

@@ -6,3 +6,13 @@ y = sin(x);
 
 %% Plot
 plot(x, y)
+
+%% Additional Variable Definitions
+global a;
+
+for i = 1:5
+    global b;
+    
+    parfor j = 1:5
+    end
+end
