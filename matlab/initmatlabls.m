@@ -8,8 +8,9 @@ function initmatlabls (outFile)
         disp('matlabls: Beginning initialization')
         fprintf('matlabls: matlabroot is \n%s\n', matlabroot)
 
-        % Ensure the language server code is on the path
+        % Ensure the language server code is on the path, but cannot be saved to the path
         folder = fileparts(mfilename('fullpath'));
+        matlabls.utils.preventSavingFolderToPath(genpath(folder));
 
         % Shadow necessary functions
         matlabls.setupShadows(folder);

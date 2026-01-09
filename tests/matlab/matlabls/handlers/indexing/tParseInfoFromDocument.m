@@ -10,279 +10,400 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
     end
 
     methods (Test)
-        % Test parsing info from a script file
         function testParsingScriptFile (testCase)
+            import matlab.unittest.constraints.HasField
+            
             filePath = fullfile(pwd, 'testData', 'sampleScript.m');
             code = fileread(filePath);
 
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
 
-            testCase.assertEmpty(result.packageName);
-            testCase.assertFalse(result.classInfo.hasClassInfo);
-            testCase.assertEmpty(result.functionInfo);
+            testCase.assertEmpty(result.package);
+            testCase.assertEmpty(result.classReferences);
+            testCase.assertFalse(result.hasClassInfo);
+            testCase.assertThat(result, ~HasField("classDefFolder"));
+            testCase.assertThat(result, ~HasField("errorInfo"));
 
-            % Note: Function references appear first in the list
-            expectedReferences = {
-                {'disp', toRange(1, 1, 1, 5)},...
-                {'linspace', toRange(4, 5, 4, 13)},...
-                {'sin', toRange(5, 5, 5, 8)},...
-                {'plot', toRange(8, 1, 8, 5)},...
-                {'x', toRange(4, 1, 4, 2)},...
-                {'y', toRange(5, 1, 5, 2)},...
-                {'x', toRange(5, 9, 5, 10)},...
-                {'x', toRange(8, 6, 8, 7)},...
-                {'y', toRange(8, 9, 8, 10)}
+            expectedFunctionOrUnboundReferences = {
+                ... In order of appearance
+                createSingleComponentIdentifier('disp', [1, 1, 1, 5]),...
+                createSingleComponentIdentifier('linspace', [4, 5, 4, 13]),...
+                createSingleComponentIdentifier('sin', [5, 5, 5, 8], 'x'),...
+                createSingleComponentIdentifier('plot', [8, 1, 8, 5], 'x')
             };
-            testCase.assertEqual(result.references, expectedReferences);
+            testCase.assertEqual(...
+                result.globalScope.functionOrUnboundReferences,...
+                expectedFunctionOrUnboundReferences...
+            );
+
+            expectedVariableReferences = {
+                ... In order of appearance
+                createSingleComponentIdentifier('x', [4, 1, 4, 2]),...
+                createSingleComponentIdentifier('y', [5, 1, 5, 2]),...
+                createSingleComponentIdentifier('x', [5, 9, 5, 10]),...
+                createSingleComponentIdentifier('x', [8, 6, 8, 7]),...
+                createSingleComponentIdentifier('y', [8, 9, 8, 10]),...
+                createSingleComponentIdentifier('a', [11, 8, 11, 9]),...
+                createSingleComponentIdentifier('i', [13, 5, 13, 6]),...
+                createSingleComponentIdentifier('b', [14, 12, 14, 13]),...
+                createSingleComponentIdentifier('j', [16, 12, 16, 13])
+            };
+            testCase.assertEqual(...
+                result.globalScope.variableReferences,...
+                expectedVariableReferences...
+            );
+
+            expectedVariableDefinitions = {
+                ... Global variables
+                createSingleComponentIdentifier('a', [11, 8, 11, 9]),...
+                createSingleComponentIdentifier('b', [14, 12, 14, 13]),...
+                ... Variable assignments
+                createSingleComponentIdentifier('x', [4, 1, 4, 2]),...
+                createSingleComponentIdentifier('y', [5, 1, 5, 2]),...
+                ... For and parfor loop index variables
+                createSingleComponentIdentifier('i', [13, 5, 13, 6]),...
+                createSingleComponentIdentifier('j', [16, 12, 16, 13])
+            };
+            testCase.assertEqual(...
+                result.globalScope.variableDefinitions,...
+                expectedVariableDefinitions...
+            );
+
+            testCase.assertEqual(result.globalScope.globals, {'a', 'b'});
+            testCase.assertThat(result.globalScope, ~HasField("classScope"));
+            testCase.assertEmpty(result.globalScope.functionScopes);
 
             expectedSections = {
-                struct(title = "Section 1", range = toRange(1, 1, 2, 1), isExplicit = false),...
-                struct(title = "Create Data", range = toRange(3, 1, 6, 1), isExplicit = true),...
-                struct(title = "Plot", range = toRange(7, 1, 8, 11), isExplicit = true)
+                createSection("Section 1", [1, 1, 2, 1], false),...
+                createSection("Create Data", [3, 1, 6, 1], true),...
+                createSection("Plot", [7, 1, 9, 1], true),...
+                createSection("Additional Variable Definitions", [10, 1, 18, 4], true)
             };
-
             testCase.assertEqual(result.sections, expectedSections);
         end
 
-        % Test parsing info from a function file
         function testParsingFunctionFile (testCase)
+            import matlab.unittest.constraints.HasField
+
             filePath = fullfile(pwd, 'testData', '+package', 'sampleFunction.m');
             code = fileread(filePath);
 
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
 
-            testCase.assertEqual(result.packageName, "package");
-            testCase.assertFalse(result.classInfo.hasClassInfo);
-            testCase.assertEqual(numel(result.functionInfo), 3);
+            testCase.assertEqual(result.package, "package");
+            testCase.assertEmpty(result.classReferences);
+            testCase.assertFalse(result.hasClassInfo);
+            testCase.assertThat(result, ~HasField("classDefFolder"));
+            testCase.assertThat(result, ~HasField("errorInfo"));
 
-            % ---------- Local Function ---------- %
-            fcnInfo = result.functionInfo{1};
-            testCase.assertEqual(fcnInfo.name, 'localFunction');
-            testCase.assertEqual(fcnInfo.range, toRange(11, 1, 14, 4));
-            testCase.assertEmpty(fcnInfo.parentClass);
-            testCase.assertFalse(fcnInfo.isPublic);
-
-            expectedVarDefs = {
-                ... Input variables
-                {'in1Local', toRange(12, 24, 12, 32)},...
-                {'in2Local', toRange(12, 34, 12, 42)},...
-                ... Output variables
-                {'outLocal', toRange(11, 10, 11, 18)},...
-                ... Definitions within function body
-                {'outLocal', toRange(13, 5, 13, 13)}
-            };
-            testCase.assertEqual(fcnInfo.variableInfo.definitions, expectedVarDefs);
-
-            expectedVarRefs = {
-                ... In order of appearance
-                {'outLocal', toRange(11, 10, 11, 18)},...
-                {'in1Local', toRange(12, 24, 12, 32)},...
-                {'in2Local', toRange(12, 34, 12, 42)},...
-                {'outLocal', toRange(13, 5, 13, 13)},...
-                {'in1Local', toRange(13, 20, 13, 28)},...
-                {'in2Local', toRange(13, 30, 13, 38)},
-            };
-            testCase.assertEqual(fcnInfo.variableInfo.references, expectedVarRefs);
-
-            testCase.assertEmpty(fcnInfo.globals);
-            testCase.assertFalse(fcnInfo.isPrototype);
-            testCase.assertEqual(fcnInfo.declaration, toRange(11, 1, 12, 43));
-
-            % ---------- Nested Function ---------- %
-            fcnInfo = result.functionInfo{2};
-
-            testCase.assertEqual(fcnInfo.name, 'nestedFunction');
-            testCase.assertEqual(fcnInfo.range, toRange(5, 5, 8, 8));
-            testCase.assertEmpty(fcnInfo.parentClass);
-            testCase.assertFalse(fcnInfo.isPublic);
-
-            expectedVarDefs = {
-                ... Global variables
-                {'globalVar', toRange(6, 16, 6, 25)},...
-                ... Input variables
-                {'inNested', toRange(5, 42, 5, 50)},...
-                ... Output variables
-                {'outNested', toRange(5, 14, 5, 23)},...
-                ... Definitions within function body
-                {'outNested', toRange(7, 9, 7, 18)}
-            };
-            testCase.assertEqual(fcnInfo.variableInfo.definitions, expectedVarDefs);
-
-            expectedVarRefs = {
-                ... In order of appearance
-                {'outNested', toRange(5, 14, 5, 23)},...
-                {'inNested', toRange(5, 42, 5, 50)},...
-                {'globalVar', toRange(6, 16, 6, 25)},...
-                {'outNested', toRange(7, 9, 7, 18)},...
-                {'inNested', toRange(7, 25, 7, 33)}
-            };
-            testCase.assertEqual(fcnInfo.variableInfo.references, expectedVarRefs);
-
-            testCase.assertEqual(fcnInfo.globals, {'globalVar'});
-            testCase.assertFalse(fcnInfo.isPrototype);
-            testCase.assertEqual(fcnInfo.declaration, toRange(5, 5, 5, 51));
+            testCase.assertEqual(numel(result.globalScope.functionScopes), 2);
+            testCase.assertEqual(numel(result.globalScope.functionScopes{1}.nestedScopes), 1);
 
             % ---------- Main Function ---------- %
-            fcnInfo = result.functionInfo{3};
+            fcnInfo = result.globalScope.functionScopes{1};
 
-            testCase.assertEqual(fcnInfo.name, 'sampleFunction');
-            testCase.assertEqual(fcnInfo.range, toRange(1, 1, 9, 4));
-            testCase.assertEmpty(fcnInfo.parentClass);
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'sampleFunction');
+            testCase.assertEqual(fcnInfo.declarationNameId.range, convertRange([1, 25, 1, 39]));
+            testCase.assertEqual(fcnInfo.range, convertRange([1, 1, 9, 4]));
             testCase.assertTrue(fcnInfo.isPublic);
 
             expectedVarDefs = {
-                ... Global variables
-                {'globalVar', toRange(6, 16, 6, 25)},...
                 ... Input variables
-                {'in1', toRange(1, 41, 1, 44)},...
-                {'in2', toRange(1, 46, 1, 49)},...
-                {'in3', toRange(1, 51, 1, 54)},...
+                createSingleComponentIdentifier('in1', [1, 41, 1, 44]),...
+                createSingleComponentIdentifier('in2', [1, 46, 1, 49]),...
+                createSingleComponentIdentifier('in3', [1, 51, 1, 54]),...
                 ... Output variables
-                {'out1', toRange(1, 11, 1, 15)},...
-                {'out2', toRange(1, 17, 1, 21)},...
-                ... Definitions within function body
-                {'out1', toRange(2, 5, 2, 9)},...
-                {'out2', toRange(3, 5, 3, 9)},...
-                {'outNested', toRange(7, 9, 7, 18)}
+                createSingleComponentIdentifier('out1', [1, 11, 1, 15]),...
+                createSingleComponentIdentifier('out2', [1, 17, 1, 21]),...
+                ... Assignments within function body
+                createSingleComponentIdentifier('out1', [2, 5, 2, 9]),...
+                createSingleComponentIdentifier('out2', [3, 5, 3, 9])
             };
-            testCase.assertEqual(fcnInfo.variableInfo.definitions, expectedVarDefs);
+            testCase.assertEqual(fcnInfo.variableDefinitions, expectedVarDefs);
 
             expectedVarRefs = {
                 ... In order of appearance
-                {'out1', toRange(1, 11, 1, 15)},...
-                {'out2', toRange(1, 17, 1, 21)},...
-                {'in1', toRange(1, 41, 1, 44)},...
-                {'in2', toRange(1, 46, 1, 49)},...
-                {'in3', toRange(1, 51, 1, 54)},...
-                {'out1', toRange(2, 5, 2, 9)},...
-                {'in1', toRange(2, 26, 2, 29)},...
-                {'in2', toRange(2, 31, 2, 34)},...
-                {'out2', toRange(3, 5, 3, 9)},...
-                {'in3', toRange(3, 27, 3, 30)},...
-                {'outNested', toRange(5, 14, 5, 23)},...
-                {'inNested', toRange(5, 42, 5, 50)},...
-                {'globalVar', toRange(6, 16, 6, 25)},...
-                {'outNested', toRange(7, 9, 7, 18)},...
-                {'inNested', toRange(7, 25, 7, 33)}
+                createSingleComponentIdentifier('out1', [1, 11, 1, 15]),...
+                createSingleComponentIdentifier('out2', [1, 17, 1, 21]),...
+                createSingleComponentIdentifier('in1', [1, 41, 1, 44]),...
+                createSingleComponentIdentifier('in2', [1, 46, 1, 49]),...
+                createSingleComponentIdentifier('in3', [1, 51, 1, 54]),...
+                createSingleComponentIdentifier('out1', [2, 5, 2, 9]),...
+                createSingleComponentIdentifier('in1', [2, 26, 2, 29]),...
+                createSingleComponentIdentifier('in2', [2, 31, 2, 34]),...
+                createSingleComponentIdentifier('out2', [3, 5, 3, 9]),...
+                createSingleComponentIdentifier('in3', [3, 27, 3, 30])
             };
-            testCase.assertEqual(fcnInfo.variableInfo.references, expectedVarRefs);
+            testCase.assertEqual(fcnInfo.variableReferences, expectedVarRefs);
 
-            testCase.assertEqual(fcnInfo.globals, {'globalVar'});
+            expectedFunctionOrUnboundRefs = {
+                ... In order of appearance
+                createSingleComponentIdentifier('localFunction', [2, 12, 2, 25], 'in1'),...
+                createSingleComponentIdentifier('nestedFunction', [3, 12, 3, 26], 'in3')
+            };
+            testCase.assertEqual(fcnInfo.functionOrUnboundReferences, expectedFunctionOrUnboundRefs);
+
             testCase.assertFalse(fcnInfo.isPrototype);
-            testCase.assertEqual(fcnInfo.declaration, toRange(1, 1, 1, 55));
+            testCase.assertEmpty(fcnInfo.globals);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
+            testCase.assertEqual(fcnInfo.inputArgs, {'in1', 'in2', 'in3'});
+            testCase.assertEqual(fcnInfo.outputArgs, {'out1', 'out2'});
+
+            % ---------- Nested Function ---------- %
+            fcnInfo = result.globalScope.functionScopes{1}.nestedScopes{1};
+
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'nestedFunction');
+            testCase.assertEqual(fcnInfo.declarationNameId.range, convertRange([5, 26, 5, 40]));
+            testCase.assertEqual(fcnInfo.range, convertRange([5, 5, 8, 8]));
+            testCase.assertFalse(fcnInfo.isPublic);
+
+            expectedVarDefs = {
+                ... Global variables
+                createSingleComponentIdentifier('globalVar', [6, 16, 6, 25]),...
+                ... Input variables
+                createSingleComponentIdentifier('inNested', [5, 42, 5, 50]),...
+                ... Output variables
+                createSingleComponentIdentifier('outNested', [5, 14, 5, 23]),...
+                ... Assignments within function body
+                createSingleComponentIdentifier('outNested', [7, 9, 7, 18])
+            };
+            testCase.assertEqual(fcnInfo.variableDefinitions, expectedVarDefs);
+
+            expectedVarRefs = {
+                ... In order of appearance
+                createSingleComponentIdentifier('outNested', [5, 14, 5, 23]),...
+                createSingleComponentIdentifier('inNested', [5, 42, 5, 50]),...
+                createSingleComponentIdentifier('globalVar', [6, 16, 6, 25]),...
+                createSingleComponentIdentifier('outNested', [7, 9, 7, 18]),...
+                createSingleComponentIdentifier('inNested', [7, 25, 7, 33])
+            };
+            testCase.assertEqual(fcnInfo.variableReferences, expectedVarRefs);
+
+            expectedFunctionOrUnboundRefs = {
+                createSingleComponentIdentifier('abs', [7, 21, 7, 24], 'inNested')
+            };
+            testCase.assertEqual(fcnInfo.functionOrUnboundReferences, expectedFunctionOrUnboundRefs);
+
+            testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertEqual(fcnInfo.globals, {'globalVar'});
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
+            testCase.assertEqual(fcnInfo.inputArgs, {'inNested'});
+            testCase.assertEqual(fcnInfo.outputArgs, {'outNested'});
+
+            % ---------- Local Function ---------- %
+            fcnInfo = result.globalScope.functionScopes{2};
+
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'localFunction');
+            testCase.assertEqual(fcnInfo.declarationNameId.range, convertRange([12, 9, 12, 22]));
+            testCase.assertEqual(fcnInfo.range, convertRange([11, 1, 14, 4]));
+            testCase.assertFalse(fcnInfo.isPublic);
+
+            expectedVarDefs = {
+                ... Input variables
+                createSingleComponentIdentifier('in1Local', [12, 24, 12, 32]),...
+                createSingleComponentIdentifier('in2Local', [12, 34, 12, 42]),...
+                ... Output variables
+                createSingleComponentIdentifier('outLocal', [11, 10, 11, 18]),...
+                ... Assignments within function body
+                createSingleComponentIdentifier('outLocal', [13, 5, 13, 13]),...
+            };
+            testCase.assertEqual(fcnInfo.variableDefinitions, expectedVarDefs);
+
+            expectedVarRefs = {
+                ... In order of appearance
+                createSingleComponentIdentifier('outLocal', [11, 10, 11, 18]),...
+                createSingleComponentIdentifier('in1Local', [12, 24, 12, 32]),...
+                createSingleComponentIdentifier('in2Local', [12, 34, 12, 42]),...
+                createSingleComponentIdentifier('outLocal', [13, 5, 13, 13]),...
+                createSingleComponentIdentifier('in1Local', [13, 20, 13, 28]),...
+                createSingleComponentIdentifier('in2Local', [13, 30, 13, 38])
+            };
+            testCase.assertEqual(fcnInfo.variableReferences, expectedVarRefs);
+
+            expectedFunctionOrUnboundRefs = {
+                createSingleComponentIdentifier('sum', [13, 16, 13, 19], 'in1Local')
+            };
+            testCase.assertEqual(fcnInfo.functionOrUnboundReferences, expectedFunctionOrUnboundRefs);
+
+            testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertEmpty(fcnInfo.globals);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
+            testCase.assertEqual(fcnInfo.inputArgs, {'in1Local', 'in2Local'});
+            testCase.assertEqual(fcnInfo.outputArgs, {'outLocal'});
         end
 
-        % Test parsing info from a class file
         function testParsingClassFile (testCase)
+            import matlab.unittest.constraints.HasField
+            
             filePath = fullfile(pwd, 'testData', 'SampleClass.m');
             code = fileread(filePath);
 
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
 
-            testCase.assertEmpty(result.packageName);
+            testCase.assertEmpty(result.package);
+            testCase.assertTrue(result.hasClassInfo);
+            testCase.assertThat(result, ~HasField("classDefFolder"));
+            testCase.assertThat(result, ~HasField("errorInfo"));
+            
+            expectedClassRefs = {
+                ... In order of appearance
+                createNamedRange('SampleClass', [1, 10, 1, 21]),...
+                createNamedRange('SuperA', [2, 9, 2, 15]),...
+                createNamedRange('SuperB', [2, 18, 2, 24]),...
+                createNamedRange('SampleClass', [33, 13, 33, 24]),...
+                createNamedRange('SuperB', [34, 13, 34, 19]),...
+                createNamedRange('SampleClass', [45, 10, 45, 21]),...
+                createNamedRange('SampleClass', [46, 5, 46, 16])
+            };
+            testCase.assertEqual(result.classReferences, expectedClassRefs);
 
             % ---------- Class Info ---------- %
-            classInfo = result.classInfo;
-            testCase.assertTrue(classInfo.isClassDef);
-            testCase.assertTrue(classInfo.hasClassInfo);
-            testCase.assertEqual(classInfo.name, 'SampleClass');
-            testCase.assertEqual(classInfo.range, toRange(1, 1, 34, 4));
-            testCase.assertEqual(classInfo.declaration, toRange(1, 1, 2, 24))
+            classInfo = result.globalScope.classScope;
+            testCase.assertEqual(classInfo.declarationNameId.name, 'SampleClass');
+            testCase.assertEqual(classInfo.declarationNameId.range, convertRange([1, 10, 1, 21]));
+            testCase.assertEqual(classInfo.range, convertRange([1, 1, 42, 4]));
+
+            expectedBaseClasses = {
+                createNamedRange('SuperA', [2, 9, 2, 15]),...
+                createNamedRange('SuperB', [2, 18, 2, 24])
+            };
+            testCase.assertEqual(classInfo.baseClasses, expectedBaseClasses);
+
+            expectedPropertiesBlocks = {
+                createNamedRange('properties', [9, 5, 12, 8])
+            };
+            testCase.assertEqual(classInfo.propertiesBlocks, expectedPropertiesBlocks);
+
+            expectedEnumerationsBlocks = {
+                createNamedRange('enumeration', [3, 5, 7, 8])
+            };
+            testCase.assertEqual(classInfo.enumerationsBlocks, expectedEnumerationsBlocks);
+
+            expectedMethodsBlocks = {
+                createNamedRange('methods', [14, 5, 22, 8]),...
+                createNamedRange('methods (Abstract)', [24, 5, 26, 8]),...
+                createNamedRange('methods (Access=private)', [28, 5, 36, 8]),...
+                createNamedRange('methods (Static)', [38, 5, 41, 8])
+            };
+            testCase.assertEqual(classInfo.methodsBlocks, expectedMethodsBlocks);
 
             expectedProperties = {
-                struct(name = 'PropA', range = toRange(10, 9, 10, 14), parentClass = 'SampleClass', isPublic = false),...
-                struct(name = 'PropB', range = toRange(11, 9, 11, 14), parentClass = 'SampleClass', isPublic = false)
+                createScopedNamedRange('PropA', [10, 9, 10, 14], true),...
+                createScopedNamedRange('PropB', [11, 9, 11, 14], true)
             };
             testCase.assertEqual(classInfo.properties, expectedProperties);
 
             expectedEnumerations = {
-                struct(name = 'A', range = toRange(4, 9, 4, 10), parentClass = 'SampleClass', isPublic = false),...
-                struct(name = 'B', range = toRange(5, 9, 5, 10), parentClass = 'SampleClass', isPublic = false),...
-                struct(name = 'C', range = toRange(6, 9, 6, 10), parentClass = 'SampleClass', isPublic = false)
+                createScopedNamedRange('A', [4, 9, 4, 10], true),...
+                createScopedNamedRange('B', [5, 9, 5, 10], true),...
+                createScopedNamedRange('C', [6, 9, 6, 10], true)
             };
             testCase.assertEqual(classInfo.enumerations, expectedEnumerations);
 
-            % Add tests for properties blocks
-            expectedPropertiesBlocks = {
-                struct(name = 'properties', range = toRange(9, 5, 12, 8), parentClass = 'SampleClass', isPublic = true)
-            };
-            testCase.assertEqual(classInfo.propertiesBlocks, expectedPropertiesBlocks);
+            testCase.assertEqual(numel(classInfo.nestedScopes), 5);
 
-            % Add tests for methods blocks  
-            expectedMethodsBlocks = {
-                struct(name = 'methods', range = toRange(14, 5, 22, 8), parentClass = 'SampleClass', isPublic = true),...
-                struct(name = 'methods (Abstract)', range = toRange(24, 5, 26, 8), parentClass = 'SampleClass', isPublic = true),...
-                struct(name = 'methods (Hidden)', range = toRange(28, 5, 33, 8), parentClass = 'SampleClass', isPublic = true)
-            };
-            testCase.assertEqual(classInfo.methodsBlocks, expectedMethodsBlocks);
-
-            % Add tests for enumeration blocks
-            expectedEnumerationBlocks = {
-                struct(name = 'enumeration', range = toRange(3, 5, 7, 8), parentClass = 'SampleClass', isPublic = true)
-            };
-            testCase.assertEqual(classInfo.enumerationsBlocks, expectedEnumerationBlocks);
-
-            testCase.assertEmpty(classInfo.classDefFolder);
-            testCase.assertEqual(classInfo.baseClasses, {'SuperA', 'SuperB'});
-
-            testCase.assertEqual(numel(result.functionInfo), 4);
-
-            % Note: Only checking certain attributes of functions, as the
-            % majority of other cases should be covered by the above test.
+            % Note: Only checking certain attributes of methods, as the
+            % majority of other cases should be covered by other tests.
 
             % ---------- Constructor ---------- %
-            fcnInfo = result.functionInfo{1};
-            testCase.assertEqual(fcnInfo.name, 'SampleClass');
-            testCase.assertEqual(fcnInfo.parentClass, 'SampleClass');
+            fcnInfo = classInfo.nestedScopes{1};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'SampleClass');
             testCase.assertTrue(fcnInfo.isPublic);
             testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertTrue(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
 
-            % ---------- Abstract Function ---------- %
-            fcnInfo = result.functionInfo{2};
-            testCase.assertEqual(fcnInfo.name, 'abstractFcn');
-            testCase.assertEqual(fcnInfo.parentClass, 'SampleClass');
+            expectedVarDefs = {
+                ... Input variables
+                createSingleComponentIdentifier('a', [15, 37, 15, 38]),...
+                createSingleComponentIdentifier('b', [15, 40, 15, 41]),...
+                ... Output variables
+                createSingleComponentIdentifier('obj', [15, 18, 15, 21]),...
+                ... Assignments within function body
+                createIdentifier(...
+                    'obj.PropA',...
+                    [16, 13, 16, 22],...
+                    {{'obj', [16, 13, 16, 16]}, {'PropA', [16, 17, 16, 22]}}...
+                ),...
+                createIdentifier(...
+                    'obj.PropB',...
+                    [17, 13, 17, 22],...
+                    {{'obj', [17, 13, 17, 16]}, {'PropB', [17, 17, 17, 22]}}...
+                )
+            };
+            testCase.assertEqual(fcnInfo.variableDefinitions, expectedVarDefs);
+
+            expectedVarRefs = {
+                ... In order of appearance
+                createSingleComponentIdentifier('obj', [15, 18, 15, 21]),...
+                createSingleComponentIdentifier('a', [15, 37, 15, 38]),...
+                createSingleComponentIdentifier('b', [15, 40, 15, 41]),...
+                createIdentifier(...
+                    'obj.PropA',...
+                    [16, 13, 16, 22],...
+                    {{'obj', [16, 13, 16, 16]}, {'PropA', [16, 17, 16, 22]}}...
+                ),...
+                createSingleComponentIdentifier('a', [16, 25, 16, 26]),...
+                createIdentifier(...
+                    'obj.PropB',...
+                    [17, 13, 17, 22],...
+                    {{'obj', [17, 13, 17, 16]}, {'PropB', [17, 17, 17, 22]}}...
+                ),...
+                createSingleComponentIdentifier('b', [17, 25, 17, 26])
+            };
+            testCase.assertEqual(fcnInfo.variableReferences, expectedVarRefs);
+
+            % ---------- Public Method ---------- %
+            fcnInfo = classInfo.nestedScopes{2};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'publicFcn');
+            testCase.assertTrue(fcnInfo.isPublic);
+            testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
+
+            % ---------- Abstract Method ---------- %
+            fcnInfo = classInfo.nestedScopes{3};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'abstractFcn');
             testCase.assertTrue(fcnInfo.isPublic);
             testCase.assertTrue(fcnInfo.isPrototype);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
 
-
-            % ---------- Private Function ---------- %
-            fcnInfo = result.functionInfo{3};
-            testCase.assertEqual(fcnInfo.name, 'privateFcn');
-            testCase.assertEqual(fcnInfo.parentClass, 'SampleClass');
-            testCase.assertTrue(fcnInfo.isPublic); % This is currently marked as public, despite being hidden
+            % ---------- Private Method ---------- %
+            fcnInfo = classInfo.nestedScopes{4};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'privateFcn');
+            testCase.assertFalse(fcnInfo.isPublic);
             testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
 
-
-            % ---------- Public Function ---------- %
-            fcnInfo = result.functionInfo{4};
-            testCase.assertEqual(fcnInfo.name, 'publicFcn');
-            testCase.assertEqual(fcnInfo.parentClass, 'SampleClass');
+            % ---------- Static Method ---------- %
+            fcnInfo = classInfo.nestedScopes{5};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'staticFcn');
             testCase.assertTrue(fcnInfo.isPublic);
             testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertTrue(fcnInfo.isStaticMethod);
 
-            % ---------- References ---------- %
-            % Note: Property references appear first, then function references
-            expectedReferences = {
-                {'obj.PropA', toRange(16, 13, 16, 22)},...
-                {'obj.PropB', toRange(17, 13, 17, 22)},...
-                {'obj.PropA', toRange(30, 38, 30, 47)},...
-                {'obj.PropB', toRange(31, 30, 31, 39)},...
-                {'SampleClass', toRange(15, 24, 15, 35)},...
-                {'publicFcn', toRange(20, 18, 20, 27)},...
-                {'abstractFcn', toRange(25, 15, 25, 26)},...
-                {'privateFcn', toRange(29, 18, 29, 28)},...
-                {'disp', toRange(30, 13, 30, 17)},...
-                {'num2str', toRange(30, 30, 30, 37)},...
-                {'disp', toRange(31, 13, 31, 17)}
-            };
-            testCase.assertEqual(result.references, expectedReferences);
+            % ---------- Local Function ---------- %
+            fcnInfo = result.globalScope.functionScopes{1};
+            testCase.assertEqual(fcnInfo.declarationNameId.name, 'local');
+            testCase.assertFalse(fcnInfo.isPublic);
+            testCase.assertFalse(fcnInfo.isPrototype);
+            testCase.assertFalse(fcnInfo.isConstructor);
+            testCase.assertFalse(fcnInfo.isStaticMethod);
         end
 
-        % Test parsing info from a @folder test
+        % Test parsing info from an @folder
         function testParsingFolderClass (testCase)
             % Note: Only checking certain attributes of functions and
             % classes, as the majority of other cases should be covered
-            % by the above tests.
+            % by other tests.
+
+            import matlab.unittest.constraints.HasField
 
             classFolder = fullfile(pwd, 'testData', '@FolderClass');
 
@@ -291,28 +412,37 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
             code = fileread(filePath);
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
 
-            testCase.assertEmpty(result.packageName);
-            testCase.assertEqual(numel(result.functionInfo), 1);
+            testCase.assertEmpty(result.package);
+            testCase.assertTrue(result.hasClassInfo);
+            testCase.assertEqual(result.classDefFolder, classFolder);
+            testCase.assertThat(result, ~HasField("errorInfo"));
             
-            classInfo = result.classInfo;
-            testCase.assertTrue(classInfo.isClassDef);
-            testCase.assertTrue(classInfo.hasClassInfo);
-            testCase.assertEqual(classInfo.name, 'FolderClass');
-            testCase.assertEqual(classInfo.classDefFolder, classFolder);
+            expectedClassRefs = {
+                createNamedRange('FolderClass', [1, 10, 1, 21]),...
+                createNamedRange('handle', [1, 24, 1, 30])
+            };
+            testCase.assertEqual(result.classReferences, expectedClassRefs);
+
+            testCase.assertEmpty(result.globalScope.functionScopes);
+
+            classInfo = result.globalScope.classScope;
+            testCase.assertEqual(classInfo.declarationNameId.name, 'FolderClass');
+            testCase.assertEqual(classInfo.declarationNameId.range, convertRange([1, 10, 1, 21]));
+            testCase.assertEqual(classInfo.range, convertRange([1, 1, 13, 4]));
 
             % ---------- Function File ---------- %
             filePath = fullfile(classFolder, 'folderFunction.m');
             code = fileread(filePath);
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
 
-            testCase.assertEmpty(result.packageName);
-            testCase.assertEqual(numel(result.functionInfo), 1);
+            testCase.assertEmpty(result.package);
+            testCase.assertTrue(result.hasClassInfo);
+            testCase.assertEqual(result.classDefFolder, classFolder);
+            testCase.assertThat(result, ~HasField("errorInfo"));
             
-            classInfo = result.classInfo;
-            testCase.assertFalse(classInfo.isClassDef);
-            testCase.assertTrue(classInfo.hasClassInfo);
-            testCase.assertEqual(classInfo.name, 'FolderClass');
-            testCase.assertEqual(classInfo.classDefFolder, classFolder);
+            testCase.assertEmpty(result.classReferences);
+            testCase.assertEqual(numel(result.globalScope.functionScopes), 1);
+            testCase.assertThat(result.globalScope, ~HasField("classScope"));
         end
 
         % Test parsing info with different analysis limits
@@ -322,20 +452,109 @@ classdef tParseInfoFromDocument < matlab.unittest.TestCase
 
             % Case 1: Ensure data is returned with unlimited analysis limit
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
-            testCase.assertNotEmpty(result.functionInfo);
+            testCase.assertNotEmpty(result.globalScope.functionScopes);
 
             % Case 2: Ensure no data is returned with small limit
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 10);
-            testCase.assertEmpty(result.functionInfo);
+            testCase.assertEmpty(result.globalScope.functionScopes);
 
             % Case 3: Ensure data is returned with large limit
             result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 100);
-            testCase.assertNotEmpty(result.functionInfo);
+            testCase.assertNotEmpty(result.globalScope.functionScopes);
+        end
+
+        function testParsingEmptyFile (testCase)
+            import matlab.unittest.constraints.HasField
+
+            code = "";
+            filePath = "some/path/foo.m";
+
+            result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
+
+            % Important that parsing an empty file does not
+            % return an error, so that we know to still
+            % overwrite the file's code data in the Indexer
+            testCase.assertThat(result, ~HasField("errorInfo"));
+
+            testCase.assertNotEmpty(result.sections);
+
+            testCase.assertEmpty(result.package);
+            testCase.assertEmpty(result.classReferences);
+            testCase.assertFalse(result.hasClassInfo);
+            testCase.assertThat(result, ~HasField("classDefFolder"));
+
+            testCase.assertEmpty(result.globalScope.variableDefinitions);
+            testCase.assertEmpty(result.globalScope.variableReferences);
+            testCase.assertEmpty(result.globalScope.functionOrUnboundReferences);
+            testCase.assertEmpty(result.globalScope.globals);
+            testCase.assertEmpty(result.globalScope.functionScopes);
+            testCase.assertThat(result.globalScope, ~HasField("classScope"));
+        end
+
+        function testParsingSyntaxErrorFile (testCase)
+            code = "end";
+            filePath = "some/path/foo.m";
+
+            result = matlabls.handlers.indexing.parseInfoFromDocument(code, filePath, 0);
+            
+            % Ensures we will not overwrite the file's code data
+            % in the Indexer
+            testCase.assertNotEmpty(result.errorInfo);
         end
     end
 end
 
 % Helper functions:
-function range = toRange(lineStart, charStart, lineEnd, charEnd)
-    range = struct(lineStart = lineStart, charStart = charStart, lineEnd = lineEnd, charEnd = charEnd);
+
+function identifierStruct = createSingleComponentIdentifier(name, oneBasedRange, firstArgIdName)
+    identifierStruct = struct(...
+        name = name,...
+        range = convertRange(oneBasedRange),...
+        ... identifierStruct.components is a single-layer cell array;
+        ... the extra braces make sure it is still a cell array after
+        ... vectorization
+        components = {{ createNamedRange(name, oneBasedRange) }}...
+    );
+
+    if nargin >= 3
+        identifierStruct.firstArgIdName = firstArgIdName;
+    end
+end
+
+function identifierStruct = createIdentifier(name, range, components, firstArgIdName)
+    numComponents = numel(components);
+
+    componentStructs = cell(1, numComponents);
+    for i = 1:numComponents
+        componentStructs{i} = createNamedRange(components{i}{1}, components{i}{2});
+    end
+
+    identifierStruct = struct(...
+        name = name,...
+        range = convertRange(range),...
+        ... identifierStruct.components is a single-layer cell array;
+        ... the extra braces make sure it is still a cell array after
+        ... vectorization
+        components = {componentStructs}...
+    );
+
+    if nargin >= 4
+        identifierStruct.firstArgIdName = firstArgIdName;
+    end
+end
+
+function namedRangeStruct = createNamedRange(name, oneBasedRange)
+    namedRangeStruct = struct(name = name, range = convertRange(oneBasedRange));
+end
+
+function scopedNamedRangeStruct = createScopedNamedRange(name, oneBasedRange, isPublic)
+    scopedNamedRangeStruct = struct(name = name, range = convertRange(oneBasedRange), isPublic = isPublic);
+end
+
+function sectionStruct = createSection(name, oneBasedRange, isExplicit)
+    sectionStruct = struct(name = name, range = convertRange(oneBasedRange), isExplicit = isExplicit);
+end
+
+function zeroBasedRange = convertRange(oneBasedRange)
+    zeroBasedRange = oneBasedRange - 1;
 end

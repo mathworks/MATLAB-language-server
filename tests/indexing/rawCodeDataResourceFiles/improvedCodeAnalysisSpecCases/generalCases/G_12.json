@@ -1,0 +1,146 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        3,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "disp",
+        "components": [
+          {
+            "name": "disp",
+            "range": [
+              0,
+              0,
+              0,
+              4
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          4
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              5,
+              0,
+              6
+            ]
+          }
+        ],
+        "range": [
+          0,
+          5,
+          0,
+          6
+        ]
+      },
+      {
+        "name": "disp",
+        "components": [
+          {
+            "name": "disp",
+            "range": [
+              1,
+              0,
+              1,
+              4
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          4
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              1,
+              5,
+              1,
+              6
+            ]
+          }
+        ],
+        "range": [
+          1,
+          5,
+          1,
+          6
+        ]
+      },
+      {
+        "name": "disp",
+        "components": [
+          {
+            "name": "disp",
+            "range": [
+              2,
+              0,
+              2,
+              4
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          4
+        ]
+      },
+      {
+        "name": "y",
+        "components": [
+          {
+            "name": "y",
+            "range": [
+              2,
+              5,
+              2,
+              6
+            ]
+          }
+        ],
+        "range": [
+          2,
+          5,
+          2,
+          6
+        ]
+      }
+    ],
+    "functionScopes": []
+  },
+  "timeToIndex": 0.0076803
+}

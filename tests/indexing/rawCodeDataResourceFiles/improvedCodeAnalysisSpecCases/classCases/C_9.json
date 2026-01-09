@@ -1,0 +1,234 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        12,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "C_9",
+      "range": [
+        0,
+        9,
+        0,
+        12
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [],
+      "declarationNameId": {
+        "name": "C_9",
+        "range": [
+          0,
+          9,
+          0,
+          12
+        ]
+      },
+      "range": [
+        0,
+        0,
+        7,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [],
+      "enumerationsBlocks": [],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            1,
+            4,
+            6,
+            7
+          ]
+        }
+      ],
+      "properties": [],
+      "enumerations": [],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "fun",
+            "range": [
+              2,
+              17,
+              2,
+              20
+            ]
+          },
+          "range": [
+            2,
+            8,
+            5,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj"
+          ],
+          "outputArgs": [],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    21,
+                    2,
+                    24
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                21,
+                2,
+                24
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    21,
+                    2,
+                    24
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                21,
+                2,
+                24
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "name": "local",
+              "components": [
+                {
+                  "name": "local",
+                  "range": [
+                    3,
+                    12,
+                    3,
+                    17
+                  ]
+                }
+              ],
+              "range": [
+                3,
+                12,
+                3,
+                17
+              ]
+            },
+            {
+              "name": "local",
+              "components": [
+                {
+                  "name": "local",
+                  "range": [
+                    4,
+                    12,
+                    4,
+                    17
+                  ]
+                }
+              ],
+              "range": [
+                4,
+                12,
+                4,
+                17
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "local",
+          "range": [
+            9,
+            9,
+            9,
+            14
+          ]
+        },
+        "range": [
+          9,
+          0,
+          11,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [
+          {
+            "name": "local",
+            "components": [
+              {
+                "name": "local",
+                "range": [
+                  10,
+                  4,
+                  10,
+                  9
+                ]
+              }
+            ],
+            "range": [
+              10,
+              4,
+              10,
+              9
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0164199
+}

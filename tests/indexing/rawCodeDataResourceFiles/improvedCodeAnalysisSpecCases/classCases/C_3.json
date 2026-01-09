@@ -1,0 +1,697 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        26,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "C_3",
+      "range": [
+        0,
+        9,
+        0,
+        12
+      ]
+    },
+    {
+      "name": "C_3",
+      "range": [
+        13,
+        17,
+        13,
+        20
+      ]
+    },
+    {
+      "name": "C_3",
+      "range": [
+        24,
+        9,
+        24,
+        12
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [],
+      "declarationNameId": {
+        "name": "C_3",
+        "range": [
+          0,
+          9,
+          0,
+          12
+        ]
+      },
+      "range": [
+        0,
+        0,
+        21,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [
+        {
+          "name": "properties",
+          "range": [
+            1,
+            4,
+            3,
+            7
+          ]
+        },
+        {
+          "name": "properties (Constant)",
+          "range": [
+            4,
+            4,
+            6,
+            7
+          ]
+        }
+      ],
+      "enumerationsBlocks": [],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            8,
+            4,
+            20,
+            7
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "MyProperty",
+          "range": [
+            2,
+            8,
+            2,
+            18
+          ],
+          "isPublic": true
+        },
+        {
+          "name": "ConstantProperty",
+          "range": [
+            5,
+            8,
+            5,
+            24
+          ],
+          "isPublic": true
+        }
+      ],
+      "enumerations": [],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "C_3",
+            "range": [
+              9,
+              23,
+              9,
+              26
+            ]
+          },
+          "range": [
+            9,
+            8,
+            14,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": true,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [],
+          "outputArgs": [
+            "obj"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    9,
+                    17,
+                    9,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                9,
+                17,
+                9,
+                20
+              ]
+            },
+            {
+              "name": "obj.MyProperty",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    11,
+                    12,
+                    11,
+                    15
+                  ]
+                },
+                {
+                  "name": "MyProperty",
+                  "range": [
+                    11,
+                    16,
+                    11,
+                    26
+                  ]
+                }
+              ],
+              "range": [
+                11,
+                12,
+                11,
+                26
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    9,
+                    17,
+                    9,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                9,
+                17,
+                9,
+                20
+              ]
+            },
+            {
+              "name": "obj.MyProperty",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    10,
+                    17,
+                    10,
+                    20
+                  ]
+                },
+                {
+                  "name": "MyProperty",
+                  "range": [
+                    10,
+                    21,
+                    10,
+                    31
+                  ]
+                }
+              ],
+              "range": [
+                10,
+                17,
+                10,
+                31
+              ]
+            },
+            {
+              "name": "obj.MyProperty",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    11,
+                    12,
+                    11,
+                    15
+                  ]
+                },
+                {
+                  "name": "MyProperty",
+                  "range": [
+                    11,
+                    16,
+                    11,
+                    26
+                  ]
+                }
+              ],
+              "range": [
+                11,
+                12,
+                11,
+                26
+              ]
+            },
+            {
+              "name": "obj.ConstantProperty",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    12,
+                    17,
+                    12,
+                    20
+                  ]
+                },
+                {
+                  "name": "ConstantProperty",
+                  "range": [
+                    12,
+                    21,
+                    12,
+                    37
+                  ]
+                }
+              ],
+              "range": [
+                12,
+                17,
+                12,
+                37
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    10,
+                    12,
+                    10,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                10,
+                12,
+                10,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    12,
+                    12,
+                    12,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                12,
+                12,
+                12,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    13,
+                    12,
+                    13,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                13,
+                12,
+                13,
+                16
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "get.MyProperty",
+            "range": [
+              16,
+              23,
+              16,
+              37
+            ]
+          },
+          "range": [
+            16,
+            8,
+            17,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj"
+          ],
+          "outputArgs": [
+            "val"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    16,
+                    38,
+                    16,
+                    41
+                  ]
+                }
+              ],
+              "range": [
+                16,
+                38,
+                16,
+                41
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    16,
+                    17,
+                    16,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                16,
+                17,
+                16,
+                20
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    16,
+                    17,
+                    16,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                16,
+                17,
+                16,
+                20
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    16,
+                    38,
+                    16,
+                    41
+                  ]
+                }
+              ],
+              "range": [
+                16,
+                38,
+                16,
+                41
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "set.MyProperty",
+            "range": [
+              18,
+              23,
+              18,
+              37
+            ]
+          },
+          "range": [
+            18,
+            8,
+            19,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj",
+            "val"
+          ],
+          "outputArgs": [
+            "obj"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    38,
+                    18,
+                    41
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                38,
+                18,
+                41
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    18,
+                    43,
+                    18,
+                    46
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                43,
+                18,
+                46
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    17,
+                    18,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                17,
+                18,
+                20
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    17,
+                    18,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                17,
+                18,
+                20
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    18,
+                    38,
+                    18,
+                    41
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                38,
+                18,
+                41
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    18,
+                    43,
+                    18,
+                    46
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                43,
+                18,
+                46
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "local",
+          "range": [
+            23,
+            9,
+            23,
+            14
+          ]
+        },
+        "range": [
+          23,
+          0,
+          25,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [
+          {
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  24,
+                  4,
+                  24,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              24,
+              4,
+              24,
+              8
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.1187228
+}

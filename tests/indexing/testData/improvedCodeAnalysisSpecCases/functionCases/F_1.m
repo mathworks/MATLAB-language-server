@@ -1,0 +1,4 @@
+function fun()
+end
+
+fun();

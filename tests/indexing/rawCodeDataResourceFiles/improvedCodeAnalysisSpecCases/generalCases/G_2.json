@@ -1,0 +1,95 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        6,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "fun",
+        "components": [
+          {
+            "name": "fun",
+            "range": [
+              0,
+              0,
+              0,
+              3
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          3
+        ]
+      },
+      {
+        "name": "fun",
+        "components": [
+          {
+            "name": "fun",
+            "range": [
+              5,
+              0,
+              5,
+              3
+            ]
+          }
+        ],
+        "range": [
+          5,
+          0,
+          5,
+          3
+        ]
+      }
+    ],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "fun",
+          "range": [
+            2,
+            9,
+            2,
+            12
+          ]
+        },
+        "range": [
+          2,
+          0,
+          3,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0083835
+}

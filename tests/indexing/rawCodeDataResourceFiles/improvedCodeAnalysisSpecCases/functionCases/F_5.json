@@ -1,0 +1,197 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        6,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "y",
+        "components": [
+          {
+            "name": "y",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          1
+        ]
+      }
+    ],
+    "variableReferences": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "y",
+        "components": [
+          {
+            "name": "y",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          1
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              1,
+              4,
+              1,
+              5
+            ]
+          }
+        ],
+        "range": [
+          1,
+          4,
+          1,
+          5
+        ]
+      }
+    ],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "fun",
+          "range": [
+            3,
+            9,
+            3,
+            12
+          ]
+        },
+        "range": [
+          3,
+          0,
+          5,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [
+          {
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  4,
+                  4,
+                  4,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              4,
+              4,
+              4,
+              8
+            ]
+          },
+          {
+            "name": "x",
+            "components": [
+              {
+                "name": "x",
+                "range": [
+                  4,
+                  9,
+                  4,
+                  10
+                ]
+              }
+            ],
+            "range": [
+              4,
+              9,
+              4,
+              10
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0108758
+}

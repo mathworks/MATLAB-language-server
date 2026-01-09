@@ -1,0 +1,300 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        12,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "C_2",
+      "range": [
+        0,
+        9,
+        0,
+        12
+      ]
+    },
+    {
+      "name": "OtherClass",
+      "range": [
+        0,
+        15,
+        0,
+        25
+      ]
+    },
+    {
+      "name": "OtherClass",
+      "range": [
+        3,
+        21,
+        3,
+        31
+      ]
+    },
+    {
+      "name": "OtherClass",
+      "range": [
+        9,
+        4,
+        9,
+        14
+      ]
+    },
+    {
+      "name": "OtherClass",
+      "range": [
+        10,
+        4,
+        10,
+        14
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [
+        {
+          "name": "OtherClass",
+          "range": [
+            0,
+            15,
+            0,
+            25
+          ]
+        }
+      ],
+      "declarationNameId": {
+        "name": "C_2",
+        "range": [
+          0,
+          9,
+          0,
+          12
+        ]
+      },
+      "range": [
+        0,
+        0,
+        6,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [],
+      "enumerationsBlocks": [],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            1,
+            4,
+            5,
+            7
+          ]
+        }
+      ],
+      "properties": [],
+      "enumerations": [],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "OtherClass",
+            "range": [
+              2,
+              26,
+              2,
+              36
+            ]
+          },
+          "range": [
+            2,
+            8,
+            4,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj"
+          ],
+          "outputArgs": [
+            "newObj"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    37,
+                    2,
+                    40
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                37,
+                2,
+                40
+              ]
+            },
+            {
+              "name": "newObj",
+              "components": [
+                {
+                  "name": "newObj",
+                  "range": [
+                    2,
+                    17,
+                    2,
+                    23
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                17,
+                2,
+                23
+              ]
+            },
+            {
+              "name": "newObj",
+              "components": [
+                {
+                  "name": "newObj",
+                  "range": [
+                    3,
+                    12,
+                    3,
+                    18
+                  ]
+                }
+              ],
+              "range": [
+                3,
+                12,
+                3,
+                18
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "newObj",
+              "components": [
+                {
+                  "name": "newObj",
+                  "range": [
+                    2,
+                    17,
+                    2,
+                    23
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                17,
+                2,
+                23
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    37,
+                    2,
+                    40
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                37,
+                2,
+                40
+              ]
+            },
+            {
+              "name": "newObj",
+              "components": [
+                {
+                  "name": "newObj",
+                  "range": [
+                    3,
+                    12,
+                    3,
+                    18
+                  ]
+                }
+              ],
+              "range": [
+                3,
+                12,
+                3,
+                18
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "local",
+          "range": [
+            8,
+            9,
+            8,
+            14
+          ]
+        },
+        "range": [
+          8,
+          0,
+          11,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [],
+        "variableReferences": [],
+        "functionOrUnboundReferences": [],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0427382
+}

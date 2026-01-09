@@ -2,22 +2,26 @@
 
 import { DefinitionParams, DocumentSymbolParams, Location, Range, ReferenceParams, SymbolInformation, SymbolKind, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import FileInfoIndex, { MatlabCodeData } from '../../indexing/FileInfoIndex'
+import FileInfoIndex, {
+    FunctionContainer, MatlabClassdefInfo, MatlabClassInfo, MatlabCodeInfo, MatlabFunctionScopeInfo,
+    MatlabGlobalScopeInfo
+} from '../../indexing/FileInfoIndex'
 import { MatlabConnection } from '../../lifecycle/MatlabCommunicationManager'
 import LifecycleNotificationHelper from '../../lifecycle/LifecycleNotificationHelper'
 import { ActionErrorConditions } from '../../logging/TelemetryUtils'
-import { getExpressionAtPosition } from '../../utils/ExpressionUtils'
-import SymbolSearchService, { RequestType, reportTelemetry } from '../../indexing/SymbolSearchService'
+import { RequestType, reportTelemetry } from '../../indexing/SymbolSearchService'
 import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import Indexer from '../../indexing/Indexer'
 import DocumentIndexer from '../../indexing/DocumentIndexer'
 import PathResolver from './PathResolver'
 import NotificationService, { Notification } from '../../notifications/NotificationService'
+import * as SymbolSearchService from '../../indexing/SymbolSearchService'
 import { DocumentUri } from 'vscode-languageserver-types'
 
 class NavigationSupportProvider {
     constructor (
         protected matlabLifecycleManager: MatlabLifecycleManager,
+        protected fileInfoIndex: FileInfoIndex,
         protected indexer: Indexer,
         protected documentIndexer: DocumentIndexer,
         protected pathResolver: PathResolver
@@ -47,31 +51,16 @@ class NavigationSupportProvider {
             return []
         }
 
-        // Find ID for which to find the definition or references
-        const expression = getExpressionAtPosition(textDocument, params.position)
-
-        if (expression == null) {
-            // No target found
-            reportTelemetry(requestType, 'No navigation target')
-            return []
-        }
+        await this.documentIndexer.ensureDocumentIndexIsUpdated(textDocument)
 
         if (requestType === RequestType.Definition) {
             return await SymbolSearchService.findDefinitions(
-                uri, params.position, expression, this.pathResolver, this.indexer, requestType
+                uri, params.position, this.fileInfoIndex, documentManager, this.pathResolver, this.indexer, requestType
             )
         } else {
-            return SymbolSearchService.findReferences(uri, params.position, expression, documentManager, requestType)
+            return SymbolSearchService.findReferences(uri, params.position, this.fileInfoIndex, documentManager, requestType)
         }
     }
-
-    /**
-     * Caches document symbols for URIs to deal with the case when indexing
-     * temporarily fails while the user is in the middle of an edit. We might
-     * consider moving logic like this into the indexer logic later as clearing
-     * out index data in the middle of an edit will have other ill effects.
-     */
-    private readonly _documentSymbolCache = new Map<string, SymbolInformation[]>()
 
     /**
      *
@@ -109,62 +98,81 @@ class NavigationSupportProvider {
             reportTelemetry(requestType, 'No document')
             return []
         }
-        // Ensure document index is up to date
+
         await this.documentIndexer.ensureDocumentIndexIsUpdated(textDocument)
-        const codeData = FileInfoIndex.codeDataCache.get(uri)
-        if (codeData == null) {
+
+        const codeInfo = this.fileInfoIndex.codeInfoCache.get(uri)
+        if (codeInfo == null) {
             reportTelemetry(requestType, 'No code data')
             return []
         }
-        // Result symbols in documented
+
+        // Result symbols in document
         const result: SymbolInformation[] = []
-        // Avoid duplicates coming from different data sources
-        const visitedRanges: Set<Range> = new Set()
+
         /**
          * Push symbol info to result set
          */
         function pushSymbol (name: string, kind: SymbolKind, symbolRange: Range): void {
-            if (!visitedRanges.has(symbolRange)) {
-                result.push(SymbolInformation.create(name, kind, symbolRange, uri))
-                visitedRanges.add(symbolRange)
-            }
+            result.push(SymbolInformation.create(name, kind, symbolRange, uri))
         }
-        if (codeData.isMainClassDefDocument && codeData.classInfo != null) {
-            const classInfo = codeData.classInfo
-            if (codeData.classInfo.range != null) {
-                pushSymbol(classInfo.name, SymbolKind.Class, codeData.classInfo.range)
-            }
-            classInfo.enumerations.forEach((info, name) => pushSymbol(name, SymbolKind.EnumMember, info.range))
-            classInfo.properties.forEach((info, name) => pushSymbol(name, SymbolKind.Property, info.range))
-            classInfo.methodsBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.Method, info.range))
-            classInfo.enumerationsBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.EnumMember, info.range))
-            classInfo.propertiesBlocks.forEach((info) => pushSymbol(info.name, SymbolKind.Property, info.range))
+
+        const classdef: MatlabClassdefInfo | undefined = codeInfo.globalScopeInfo.classScope?.classdefInfo
+        if (classdef) {
+            pushSymbol(classdef.declarationNameId.name, SymbolKind.Class, classdef.range)
+
+            const classInfo = classdef.classInfo
+
+            classInfo.enumerations.forEach(enumInfo => pushSymbol(enumInfo.name, SymbolKind.EnumMember, enumInfo.range))
+            classInfo.properties.forEach(propInfo => pushSymbol(propInfo.name, SymbolKind.Property, propInfo.range))
+            classdef.methodsBlocks.forEach(blockInfo => pushSymbol(blockInfo.name, SymbolKind.Method, blockInfo.range))
+            classdef.enumerationsBlocks.forEach(blockInfo => pushSymbol(blockInfo.name, SymbolKind.EnumMember, blockInfo.range))
+            classdef.propertiesBlocks.forEach(blockInfo => pushSymbol(blockInfo.name, SymbolKind.Property, blockInfo.range))
         }
-        codeData.functions.forEach((info, name) => pushSymbol(name, info.isClassMethod ? SymbolKind.Method : SymbolKind.Function, info.range))
-        codeData.sections.forEach((sectionData) => {
-            if (sectionData.isExplicit) {
-                pushSymbol(sectionData.title, SymbolKind.Module, sectionData.range)
+
+        this._getAllFunctionScopesInFile(codeInfo).forEach(functionScopeInfo => pushSymbol(
+            functionScopeInfo.declarationNameId.name,
+            functionScopeInfo.functionInfo.isMethod ? SymbolKind.Method : SymbolKind.Function,
+            functionScopeInfo.range
+        ))
+
+        codeInfo.sections.forEach(sectionInfo => {
+            if (sectionInfo.isExplicit) {
+                pushSymbol(sectionInfo.name, SymbolKind.Module, sectionInfo.range)
             }
         })
 
-        /**
-         * Handle a case when the indexer fails due to the user being in the middle of an edit.
-         * Here the documentSymbol cache has some symbols but the codeData cache has none. So we
-         * assume that the user will soon fix their code and just fall back to what we knew for now.
-         */
-        if (result.length === 0 && codeData.errorMessage !== undefined) {
-            const cached = this._documentSymbolCache.get(uri) ?? result
-            if (cached.length > 0) {
-                return cached
-            }
-        }
-        this._documentSymbolCache.set(uri, result)
-        this._sendSectionRangesForHighlighting(codeData, uri)
+        this._sendSectionRangesForHighlighting(codeInfo, uri)
+
         return result
     }
 
-    private _sendSectionRangesForHighlighting (result: MatlabCodeData, uri: string): void {
-        const sectionRanges = result.sections.map((sectionData) => ({ range: sectionData.range, isExplicit: sectionData.isExplicit }));
+    private _getAllFunctionScopesInFile (codeInfo: MatlabCodeInfo): MatlabFunctionScopeInfo[] {
+        const functionScopes: MatlabFunctionScopeInfo[] = []
+        this._getAllFunctionScopesInFileAcc(codeInfo.globalScopeInfo, functionScopes)
+        return functionScopes
+    }
+
+    private _getAllFunctionScopesInFileAcc (scope: FunctionContainer, functionScopes: MatlabFunctionScopeInfo[]): void {
+        if (scope instanceof MatlabGlobalScopeInfo && scope.classScope) {
+            this._getAllFunctionScopesInFileAcc(scope.classScope, functionScopes)
+        }
+
+        for (const functionInfo of scope.functionScopes.values()) {
+            const functionScopeInfo = functionInfo.functionScopeInfo
+            if (functionScopeInfo && (!(scope instanceof MatlabClassInfo)
+                                      || functionScopeInfo.parentScope instanceof MatlabClassdefInfo))
+            {
+                functionScopes.push(functionScopeInfo)
+                this._getAllFunctionScopesInFileAcc(functionScopeInfo, functionScopes)
+            }
+        }
+    }
+
+    private _sendSectionRangesForHighlighting (codeInfo: MatlabCodeInfo, uri: string): void {
+        const sectionRanges = codeInfo.sections.map(sectionData => (
+            { range: sectionData.range, isExplicit: sectionData.isExplicit }
+        ))
         NotificationService.sendNotification(Notification.MatlabSections, { uri, sectionRanges })
     }
 }

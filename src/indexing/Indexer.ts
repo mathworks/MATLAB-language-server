@@ -3,9 +3,8 @@
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import MatlabLifecycleManager from '../lifecycle/MatlabLifecycleManager'
-import FileInfoIndex, { MatlabCodeData, RawCodeData } from './FileInfoIndex'
+import FileInfoIndex, { CodeInfo, MatlabClassInfo } from './FileInfoIndex'
 import * as fs from 'fs/promises'
-import PathResolver from '../providers/navigation/PathResolver'
 import ConfigurationManager from '../lifecycle/ConfigurationManager'
 import MVM from '../mvm/impl/MVM'
 import Logger from '../logging/Logger'
@@ -15,7 +14,7 @@ import * as FileNameUtils from '../utils/FileNameUtils'
 interface WorkspaceFileIndexedResponse {
     isDone: boolean
     filePath: string
-    codeData: RawCodeData
+    codeData: CodeInfo
 }
 
 export default class Indexer {
@@ -24,7 +23,7 @@ export default class Indexer {
     constructor (
         private readonly matlabLifecycleManager: MatlabLifecycleManager,
         private readonly mvm: MVM,
-        private readonly pathResolver: PathResolver
+        private readonly fileInfoIndex: FileInfoIndex
     ) {}
 
     /**
@@ -38,15 +37,30 @@ export default class Indexer {
             return
         }
 
-        const rawCodeData = await this.getCodeData(textDocument.getText(), textDocument.uri)
+        const codeInfo = await this.getCodeInfo(textDocument.getText(), textDocument.uri)
 
-        if (rawCodeData === null) {
+        if (codeInfo === null) {
             return
         }
 
-        const parsedCodeData = FileInfoIndex.parseAndStoreCodeData(textDocument.uri, rawCodeData)
+        const existingAssociatedClassInfo: MatlabClassInfo | undefined =
+            this.fileInfoIndex.codeInfoCache.get(textDocument.uri)?.associatedClassInfo
 
-        void this.indexAdditionalClassData(parsedCodeData, textDocument.uri)
+        // if this file has previously contributed its info
+        // to parsed class info
+        if (existingAssociatedClassInfo) {
+            existingAssociatedClassInfo.clear()
+
+            const parsedCodeInfo = this.fileInfoIndex.parseAndStoreCodeInfo(textDocument.uri, codeInfo)
+
+            // Queue indexing for other files in @ class directory
+            const classDefFolder = parsedCodeInfo.classDefFolder
+            if (classDefFolder) {
+                this.indexFolders([classDefFolder])
+            }
+        } else {
+            this.fileInfoIndex.parseAndStoreCodeInfo(textDocument.uri, codeInfo)
+        }
     }
 
     /**
@@ -74,9 +88,11 @@ export default class Indexer {
                 matlabConnection.unsubscribe(responseSub)
             }
 
-            // Convert file path to URI, which is used as an index when storing the code data
-            const fileUri = URI.file(fileResults.filePath).toString()
-            FileInfoIndex.parseAndStoreCodeData(fileUri, fileResults.codeData)
+            if (fileResults.codeData.errorInfo === undefined) {
+                // Convert file path to URI, which is used as an index when storing the code data
+                const fileUri = URI.file(fileResults.filePath).toString()
+                this.fileInfoIndex.parseAndStoreCodeInfo(fileUri, fileResults.codeData)
+            }
         })
 
         try {
@@ -119,13 +135,13 @@ export default class Indexer {
         const filePath = FileNameUtils.getFilePathFromUri(uri)
         const fileContentBuffer = await fs.readFile(filePath)
         const code = fileContentBuffer.toString()
-        const rawCodeData = await this.getCodeData(code, uri)
+        const codeInfo = await this.getCodeInfo(code, uri)
 
-        if (rawCodeData === null) {
+        if (codeInfo === null) {
             return
         }
 
-        FileInfoIndex.parseAndStoreCodeData(uri, rawCodeData)
+        this.fileInfoIndex.parseAndStoreCodeInfo(uri, codeInfo)
     }
 
     /**
@@ -133,11 +149,10 @@ export default class Indexer {
      *
      * @param code The code being parsed
      * @param uri The URI associated with the code
-     * @param matlabConnection The connection to MATLAB®
      *
      * @returns The raw data extracted from the document
      */
-    private async getCodeData (code: string, uri: string): Promise<RawCodeData | null> {
+    private async getCodeInfo (code: string, uri: string): Promise<CodeInfo | null> {
         const filePath = FileNameUtils.getFilePathFromUri(uri)
         const analysisLimit = (await ConfigurationManager.getConfiguration()).maxFileSizeForAnalysis
 
@@ -154,41 +169,17 @@ export default class Indexer {
                 return null
             }
 
-            return parse(response.result[0]) as RawCodeData
+            const codeInfo = parse(response.result[0]) as CodeInfo
+
+            if (codeInfo.errorInfo === undefined) {
+                return codeInfo
+            } else {
+                return null
+            }
         } catch (err) {
             Logger.error('Error caught while parsing file:')
             Logger.error(err as string)
             return null
         }
-    }
-
-    /**
-     * Indexes any supplemental files if the parsed code data represents a class.
-     * This will index any other files in a @ directory, as well as any direct base classes.
-     *
-     * @param parsedCodeData The parsed code data
-     * @param matlabConnection The connection to MATLAB
-     * @param uri The document's URI
-     */
-    private async indexAdditionalClassData (parsedCodeData: MatlabCodeData, uri: string): Promise<void> {
-        if (parsedCodeData.classInfo == null) {
-            return
-        }
-
-        // Queue indexing for other files in @ class directory
-        const classDefFolder = parsedCodeData.classInfo.classDefFolder
-        if (classDefFolder !== '') {
-            void this.indexFolders([classDefFolder])
-        }
-
-        // Find and queue indexing for parent classes
-        const baseClasses = parsedCodeData.classInfo.baseClasses
-
-        baseClasses.forEach(async baseClass => {
-            const resolvedUri = await this.pathResolver.resolvePath(baseClass, uri)
-            if (resolvedUri !== '' && resolvedUri !== null) {
-                void this.indexFile(resolvedUri)
-            }
-        })
     }
 }

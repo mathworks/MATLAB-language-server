@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "**/*",
+    "indexing/rawCodeDataResourceFiles/**/*.json",
+    "../src/**/*"
+  ],
+  "exclude": [
+    "matlab"
+  ]
+}

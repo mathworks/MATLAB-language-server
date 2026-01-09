@@ -1,0 +1,167 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        3,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          1
+        ]
+      },
+      {
+        "name": "y",
+        "components": [
+          {
+            "name": "y",
+            "range": [
+              2,
+              0,
+              2,
+              1
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          1
+        ]
+      }
+    ],
+    "variableReferences": [
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          1
+        ]
+      },
+      {
+        "name": "y",
+        "components": [
+          {
+            "name": "y",
+            "range": [
+              2,
+              0,
+              2,
+              1
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "name": "x",
+        "components": [
+          {
+            "name": "x",
+            "range": [
+              2,
+              4,
+              2,
+              5
+            ]
+          }
+        ],
+        "range": [
+          2,
+          4,
+          2,
+          5
+        ]
+      }
+    ],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "functionScopes": []
+  },
+  "timeToIndex": 0.006726
+}

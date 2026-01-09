@@ -1,0 +1,149 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        3,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "pkg1.mypkg.pkg2.a",
+        "components": [
+          {
+            "name": "pkg1",
+            "range": [
+              0,
+              0,
+              0,
+              4
+            ]
+          },
+          {
+            "name": "mypkg",
+            "range": [
+              0,
+              5,
+              0,
+              10
+            ]
+          },
+          {
+            "name": "pkg2",
+            "range": [
+              0,
+              11,
+              0,
+              15
+            ]
+          },
+          {
+            "name": "a",
+            "range": [
+              0,
+              16,
+              0,
+              17
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          17
+        ]
+      },
+      {
+        "name": "pkg1.mypkg.b",
+        "components": [
+          {
+            "name": "pkg1",
+            "range": [
+              1,
+              0,
+              1,
+              4
+            ]
+          },
+          {
+            "name": "mypkg",
+            "range": [
+              1,
+              5,
+              1,
+              10
+            ]
+          },
+          {
+            "name": "b",
+            "range": [
+              1,
+              11,
+              1,
+              12
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          12
+        ]
+      },
+      {
+        "name": "pkg3.mypkg.c",
+        "components": [
+          {
+            "name": "pkg3",
+            "range": [
+              2,
+              0,
+              2,
+              4
+            ]
+          },
+          {
+            "name": "mypkg",
+            "range": [
+              2,
+              5,
+              2,
+              10
+            ]
+          },
+          {
+            "name": "c",
+            "range": [
+              2,
+              11,
+              2,
+              12
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          12
+        ]
+      }
+    ],
+    "functionScopes": []
+  },
+  "timeToIndex": 0.0204163
+}

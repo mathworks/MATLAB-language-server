@@ -3,7 +3,7 @@
 import assert from 'assert'
 
 import { Position, Range } from 'vscode-languageserver'
-import { rangeContains } from '../../src/utils/RangeUtils'
+import { areRangesEqual, rangeContains } from '../../src/utils/RangeUtils'
 
 const posL1C7 = Position.create(1, 7)
 const posL3C3 = Position.create(3, 3)
@@ -58,6 +58,24 @@ describe('RangeUtils', () => {
 
         it('should correctly take argument order into account', () => {
             assert.ok(!rangeContains(rangeL3C3ToL5C5, rangeL1C7ToL7C4))
+        })
+    })
+
+    describe('#areRangesEqual', () => {
+        it('should return true when A and B represent the same range', () => {
+            assert.ok(areRangesEqual(rangeL3C3ToL5C5, rangeL3C3ToL5C5Dup))
+        })
+
+        it('should return false when ranges have the same start but different end', () => {
+            assert.ok(!areRangesEqual(rangeL3C3ToL5C5, rangeL3C3ToL5C6))
+        })
+
+        it('should return false when ranges have the same end but different start', () => {
+            assert.ok(!areRangesEqual(rangeL3C3ToL3C6, rangeL3C4ToL3C6))
+        })
+
+        it('should return false when ranges have different start and end', () => {
+            assert.ok(!areRangesEqual(rangeL3C3ToL5C5, rangeL5C5ToL5C6))
         })
     })
 })

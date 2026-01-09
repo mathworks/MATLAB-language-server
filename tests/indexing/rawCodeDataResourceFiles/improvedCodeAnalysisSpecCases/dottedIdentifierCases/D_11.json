@@ -1,0 +1,338 @@
+{
+  "package": "",
+  "hasClassInfo": false,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        5,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [],
+  "globalScope": {
+    "variableDefinitions": [
+      {
+        "name": "a",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "a.field",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              1,
+              2,
+              1,
+              7
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          7
+        ]
+      },
+      {
+        "name": "b.field",
+        "components": [
+          {
+            "name": "b",
+            "range": [
+              2,
+              0,
+              2,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              2,
+              2,
+              2,
+              7
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          7
+        ]
+      },
+      {
+        "name": "a.field.subfield",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              4,
+              0,
+              4,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              4,
+              2,
+              4,
+              7
+            ]
+          },
+          {
+            "name": "subfield",
+            "range": [
+              4,
+              8,
+              4,
+              16
+            ]
+          }
+        ],
+        "range": [
+          4,
+          0,
+          4,
+          16
+        ]
+      }
+    ],
+    "variableReferences": [
+      {
+        "name": "a",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        ],
+        "range": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "a.field",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              1,
+              2,
+              1,
+              7
+            ]
+          }
+        ],
+        "range": [
+          1,
+          0,
+          1,
+          7
+        ]
+      },
+      {
+        "name": "b.field",
+        "components": [
+          {
+            "name": "b",
+            "range": [
+              2,
+              0,
+              2,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              2,
+              2,
+              2,
+              7
+            ]
+          }
+        ],
+        "range": [
+          2,
+          0,
+          2,
+          7
+        ]
+      },
+      {
+        "name": "a.field",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              3,
+              5,
+              3,
+              6
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              3,
+              7,
+              3,
+              12
+            ]
+          }
+        ],
+        "range": [
+          3,
+          5,
+          3,
+          12
+        ]
+      },
+      {
+        "name": "a.field",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              3,
+              15,
+              3,
+              16
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              3,
+              17,
+              3,
+              22
+            ]
+          }
+        ],
+        "range": [
+          3,
+          15,
+          3,
+          22
+        ]
+      },
+      {
+        "name": "a.field.subfield",
+        "components": [
+          {
+            "name": "a",
+            "range": [
+              4,
+              0,
+              4,
+              1
+            ]
+          },
+          {
+            "name": "field",
+            "range": [
+              4,
+              2,
+              4,
+              7
+            ]
+          },
+          {
+            "name": "subfield",
+            "range": [
+              4,
+              8,
+              4,
+              16
+            ]
+          }
+        ],
+        "range": [
+          4,
+          0,
+          4,
+          16
+        ]
+      }
+    ],
+    "globals": [],
+    "functionOrUnboundReferences": [
+      {
+        "name": "disp",
+        "components": [
+          {
+            "name": "disp",
+            "range": [
+              3,
+              0,
+              3,
+              4
+            ]
+          }
+        ],
+        "range": [
+          3,
+          0,
+          3,
+          4
+        ]
+      }
+    ],
+    "functionScopes": []
+  },
+  "timeToIndex": 0.0231952
+}

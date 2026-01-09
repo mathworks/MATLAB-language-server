@@ -1,0 +1,999 @@
+{
+  "package": "",
+  "hasClassInfo": true,
+  "sections": [
+    {
+      "name": "Section1",
+      "range": [
+        0,
+        0,
+        28,
+        0
+      ],
+      "isExplicit": false
+    }
+  ],
+  "classReferences": [
+    {
+      "name": "D_3",
+      "range": [
+        0,
+        9,
+        0,
+        12
+      ]
+    },
+    {
+      "name": "D_3",
+      "range": [
+        14,
+        17,
+        14,
+        20
+      ]
+    },
+    {
+      "name": "D_3",
+      "range": [
+        25,
+        10,
+        25,
+        13
+      ]
+    }
+  ],
+  "globalScope": {
+    "variableDefinitions": [],
+    "variableReferences": [],
+    "globals": [],
+    "functionOrUnboundReferences": [],
+    "classScope": {
+      "baseClasses": [],
+      "declarationNameId": {
+        "name": "D_3",
+        "range": [
+          0,
+          9,
+          0,
+          12
+        ]
+      },
+      "range": [
+        0,
+        0,
+        22,
+        3
+      ],
+      "isPublic": true,
+      "propertiesBlocks": [],
+      "enumerationsBlocks": [],
+      "methodsBlocks": [
+        {
+          "name": "methods",
+          "range": [
+            1,
+            4,
+            16,
+            7
+          ]
+        },
+        {
+          "name": "methods (Static)",
+          "range": [
+            17,
+            4,
+            21,
+            7
+          ]
+        }
+      ],
+      "properties": [],
+      "enumerations": [],
+      "nestedScopes": [
+        {
+          "declarationNameId": {
+            "name": "D_3",
+            "range": [
+              2,
+              23,
+              2,
+              26
+            ]
+          },
+          "range": [
+            2,
+            8,
+            6,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": true,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "val"
+          ],
+          "outputArgs": [
+            "obj"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    2,
+                    27,
+                    2,
+                    30
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                27,
+                2,
+                30
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    17,
+                    2,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                17,
+                2,
+                20
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    2,
+                    17,
+                    2,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                17,
+                2,
+                20
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    2,
+                    27,
+                    2,
+                    30
+                  ]
+                }
+              ],
+              "range": [
+                2,
+                27,
+                2,
+                30
+              ]
+            },
+            {
+              "name": "obj.myMethod",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    3,
+                    17,
+                    3,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    3,
+                    21,
+                    3,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                3,
+                17,
+                3,
+                29
+              ]
+            },
+            {
+              "name": "val.myMethod",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    5,
+                    17,
+                    5,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    5,
+                    21,
+                    5,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                5,
+                17,
+                5,
+                29
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    3,
+                    12,
+                    3,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                3,
+                12,
+                3,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    5,
+                    12,
+                    5,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                5,
+                12,
+                5,
+                16
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "myMethod",
+            "range": [
+              7,
+              23,
+              7,
+              31
+            ]
+          },
+          "range": [
+            7,
+            8,
+            15,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": false,
+          "isPrototype": false,
+          "inputArgs": [
+            "obj",
+            "val"
+          ],
+          "outputArgs": [
+            "out"
+          ],
+          "variableDefinitions": [
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    7,
+                    32,
+                    7,
+                    35
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                32,
+                7,
+                35
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    7,
+                    37,
+                    7,
+                    40
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                37,
+                7,
+                40
+              ]
+            },
+            {
+              "name": "out",
+              "components": [
+                {
+                  "name": "out",
+                  "range": [
+                    7,
+                    17,
+                    7,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                17,
+                7,
+                20
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "out",
+              "components": [
+                {
+                  "name": "out",
+                  "range": [
+                    7,
+                    17,
+                    7,
+                    20
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                17,
+                7,
+                20
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    7,
+                    32,
+                    7,
+                    35
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                32,
+                7,
+                35
+              ]
+            },
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    7,
+                    37,
+                    7,
+                    40
+                  ]
+                }
+              ],
+              "range": [
+                7,
+                37,
+                7,
+                40
+              ]
+            },
+            {
+              "name": "obj.myMethod",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    8,
+                    17,
+                    8,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    8,
+                    21,
+                    8,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                8,
+                17,
+                8,
+                29
+              ]
+            },
+            {
+              "name": "obj",
+              "components": [
+                {
+                  "name": "obj",
+                  "range": [
+                    9,
+                    26,
+                    9,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                9,
+                26,
+                9,
+                29
+              ]
+            },
+            {
+              "name": "out.myMethod",
+              "components": [
+                {
+                  "name": "out",
+                  "range": [
+                    11,
+                    17,
+                    11,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    11,
+                    21,
+                    11,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                11,
+                17,
+                11,
+                29
+              ]
+            },
+            {
+              "name": "out",
+              "components": [
+                {
+                  "name": "out",
+                  "range": [
+                    12,
+                    26,
+                    12,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                12,
+                26,
+                12,
+                29
+              ]
+            },
+            {
+              "name": "val.myMethod",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    13,
+                    17,
+                    13,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    13,
+                    21,
+                    13,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                13,
+                17,
+                13,
+                29
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    8,
+                    12,
+                    8,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                8,
+                12,
+                8,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    9,
+                    12,
+                    9,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                9,
+                12,
+                9,
+                16
+              ]
+            },
+            {
+              "firstArgIdName": "obj",
+              "name": "myMethod",
+              "components": [
+                {
+                  "name": "myMethod",
+                  "range": [
+                    9,
+                    17,
+                    9,
+                    25
+                  ]
+                }
+              ],
+              "range": [
+                9,
+                17,
+                9,
+                25
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    11,
+                    12,
+                    11,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                11,
+                12,
+                11,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    12,
+                    12,
+                    12,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                12,
+                12,
+                12,
+                16
+              ]
+            },
+            {
+              "firstArgIdName": "out",
+              "name": "myMethod",
+              "components": [
+                {
+                  "name": "myMethod",
+                  "range": [
+                    12,
+                    17,
+                    12,
+                    25
+                  ]
+                }
+              ],
+              "range": [
+                12,
+                17,
+                12,
+                25
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    13,
+                    12,
+                    13,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                13,
+                12,
+                13,
+                16
+              ]
+            },
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    14,
+                    12,
+                    14,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                14,
+                12,
+                14,
+                16
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        },
+        {
+          "declarationNameId": {
+            "name": "staticMethod",
+            "range": [
+              18,
+              17,
+              18,
+              29
+            ]
+          },
+          "range": [
+            18,
+            8,
+            20,
+            11
+          ],
+          "isPublic": true,
+          "isConstructor": false,
+          "isStaticMethod": true,
+          "isPrototype": false,
+          "inputArgs": [
+            "val"
+          ],
+          "outputArgs": [],
+          "variableDefinitions": [
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    18,
+                    30,
+                    18,
+                    33
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                30,
+                18,
+                33
+              ]
+            }
+          ],
+          "variableReferences": [
+            {
+              "name": "val",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    18,
+                    30,
+                    18,
+                    33
+                  ]
+                }
+              ],
+              "range": [
+                18,
+                30,
+                18,
+                33
+              ]
+            },
+            {
+              "name": "val.myMethod",
+              "components": [
+                {
+                  "name": "val",
+                  "range": [
+                    19,
+                    17,
+                    19,
+                    20
+                  ]
+                },
+                {
+                  "name": "myMethod",
+                  "range": [
+                    19,
+                    21,
+                    19,
+                    29
+                  ]
+                }
+              ],
+              "range": [
+                19,
+                17,
+                19,
+                29
+              ]
+            }
+          ],
+          "functionOrUnboundReferences": [
+            {
+              "name": "disp",
+              "components": [
+                {
+                  "name": "disp",
+                  "range": [
+                    19,
+                    12,
+                    19,
+                    16
+                  ]
+                }
+              ],
+              "range": [
+                19,
+                12,
+                19,
+                16
+              ]
+            }
+          ],
+          "globals": [],
+          "nestedScopes": []
+        }
+      ]
+    },
+    "functionScopes": [
+      {
+        "declarationNameId": {
+          "name": "local",
+          "range": [
+            24,
+            9,
+            24,
+            14
+          ]
+        },
+        "range": [
+          24,
+          0,
+          27,
+          3
+        ],
+        "isPublic": false,
+        "isConstructor": false,
+        "isStaticMethod": false,
+        "isPrototype": false,
+        "inputArgs": [],
+        "outputArgs": [],
+        "variableDefinitions": [
+          {
+            "name": "obj",
+            "components": [
+              {
+                "name": "obj",
+                "range": [
+                  25,
+                  4,
+                  25,
+                  7
+                ]
+              }
+            ],
+            "range": [
+              25,
+              4,
+              25,
+              7
+            ]
+          }
+        ],
+        "variableReferences": [
+          {
+            "name": "obj",
+            "components": [
+              {
+                "name": "obj",
+                "range": [
+                  25,
+                  4,
+                  25,
+                  7
+                ]
+              }
+            ],
+            "range": [
+              25,
+              4,
+              25,
+              7
+            ]
+          },
+          {
+            "name": "obj.myMethod",
+            "components": [
+              {
+                "name": "obj",
+                "range": [
+                  26,
+                  9,
+                  26,
+                  12
+                ]
+              },
+              {
+                "name": "myMethod",
+                "range": [
+                  26,
+                  13,
+                  26,
+                  21
+                ]
+              }
+            ],
+            "range": [
+              26,
+              9,
+              26,
+              21
+            ]
+          }
+        ],
+        "functionOrUnboundReferences": [
+          {
+            "name": "disp",
+            "components": [
+              {
+                "name": "disp",
+                "range": [
+                  26,
+                  4,
+                  26,
+                  8
+                ]
+              }
+            ],
+            "range": [
+              26,
+              4,
+              26,
+              8
+            ]
+          }
+        ],
+        "globals": [],
+        "nestedScopes": []
+      }
+    ]
+  },
+  "timeToIndex": 0.0251284
+}

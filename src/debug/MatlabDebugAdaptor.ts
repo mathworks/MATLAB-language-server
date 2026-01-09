@@ -423,10 +423,18 @@ export default class MatlabDebugAdaptor {
         try {
             await this._waitForPendingBreakpointsRequest();
         } catch (e) {
+            this.sendResponse(response);
             return;
         }
 
-        const canonicalizedPath = await this._getCanonicalPath(source.path);
+        let canonicalizedPath : string;
+        try {
+            canonicalizedPath = await this._getCanonicalPath(source.path);
+        } catch (e) {
+            this.sendResponse(response);
+            return;            
+        }
+
         const pathToSetOrClear = this._mapToPFile(canonicalizedPath, true);
 
         const newBreakpoints: BreakpointInfo[] = (args.breakpoints != null)
@@ -763,6 +771,7 @@ export default class MatlabDebugAdaptor {
     }
 
     protected pauseRequest (response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments, request?: DebugProtocol.Request): void {
+        this._mvm.pauseInDebugger();
         this.sendResponse(response);
     }
 
