@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.8] - 2026-01-08
+## [1.3.8] - 2026-01-09
 
-Added:
+### Added
 - Support for using the pause button to pause in the debugger (Addresses [mathworks/MATLAB-extension-for-vscode#263](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/263))
 - Improvements to symbol renaming, symbol highlighting, find references, and go to definitions as a result of advanced MATLAB program file indexing (Addresses [mathworks/MATLAB-extension-for-vscode#94](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/94))
 
-Fixed:
+### Fixed
 - Changes the default value of `MATLAB.defaultEditor` to `true`
 - Resolves issues with the `savepath` function by ensuring that MATLAB language server files are not saved to the MATLAB search path (Addresses [mathworks/MATLAB-extension-for-vscode#299](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/299))
 - Resolves potential crashes when breakpoints are set
