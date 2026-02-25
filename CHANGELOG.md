@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.9] - 2026-02-19
+
+### Fixed
+- Resolves an issue starting MATLAB when the `HOME` environment variable is set to an invalid folder (Addresses [mathworks/MATLAB-extension-for-vscode#164](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/164))
+
 ## [1.3.8] - 2026-01-09
 
 ### Added

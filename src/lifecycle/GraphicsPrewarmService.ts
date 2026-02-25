@@ -1,7 +1,7 @@
-// Copyright 2025 The MathWorks, Inc.
+// Copyright 2025-2026 The MathWorks, Inc.
 
 import Logger from '../logging/Logger';
-import MVM, { IMVM, MatlabState } from '../mvm/impl/MVM';
+import MVM, { IMVM, MatlabMVMConnectionState } from '../mvm/impl/MVM';
 import { ConfigurationManager } from './ConfigurationManager';
 
 /**
@@ -27,10 +27,10 @@ export default class GraphicsPrewarmService {
      *
      * @param state The MVM state
      */
-    private async handleMvmStateChange (state: MatlabState): Promise<void> {
-        if (state === MatlabState.READY) {
+    private async handleMvmStateChange (state: MatlabMVMConnectionState): Promise<void> {
+        if (state === MatlabMVMConnectionState.CONNECTED) {
             await this.handleMatlabConnectionReady()
-        } else if (state === MatlabState.DISCONNECTED) {
+        } else if (state === MatlabMVMConnectionState.DISCONNECTED) {
             // Reset hasPrewarmed flag when MATLAB is disconnected
             this.hasPrewarmed = false
         }

@@ -23,8 +23,9 @@ MATLAB language server implements several Language Server Protocol features and 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:
 * Emacs - [Emacs-MATLAB-Mode](https://github.com/mathworks/Emacs-MATLAB-Mode)
-* Neovim — [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
-* Visual Studio&reg; Code — [MATLAB extension for Visual Studio Code](https://github.com/mathworks/MATLAB-extension-for-vscode)
+* Neovim - [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+* Visual Studio&reg; Code - [MATLAB extension for Visual Studio Code](https://github.com/mathworks/MATLAB-extension-for-vscode)
+* Zed - [MATLAB support for Zed](https://github.com/zed-extensions/matlab)
 
 ## Release Notes
 
