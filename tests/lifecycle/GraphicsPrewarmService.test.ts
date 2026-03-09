@@ -1,11 +1,11 @@
-// Copyright 2025 The MathWorks, Inc.
+// Copyright 2025-2026 The MathWorks, Inc.
 import assert from 'assert'
 import sinon from 'sinon'
 
 import getMockMvm from '../mocks/Mvm.mock'
 import getMockConfigurationManager from '../mocks/ConfigurationManager.mock'
 
-import { IMVM, MatlabState } from '../../src/mvm/impl/MVM'
+import { IMVM, MatlabMVMConnectionState } from '../../src/mvm/impl/MVM'
 
 import GraphicsPrewarmService from '../../src/lifecycle/GraphicsPrewarmService'
 
@@ -29,7 +29,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         assert.ok(!graphicsPrewarmService.hasPrewarmed, 'Should not have prewarmed yet')
         
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.READY)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.CONNECTED)
 
         // Wait for async operations to resolve
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -46,7 +46,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         assert.ok(!graphicsPrewarmService.hasPrewarmed, 'Should not have prewarmed yet')
 
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.READY)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.CONNECTED)
 
         sinon.assert.notCalled(mockMvm.feval)
         assert.ok(!graphicsPrewarmService.hasPrewarmed, 'Still should not have prewarmed because setting is disabled')
@@ -68,7 +68,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         assert.ok(!graphicsPrewarmService.hasPrewarmed, 'Should not have prewarmed yet')
 
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.READY)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.CONNECTED)
 
         // Wait for async operations to resolve
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -84,7 +84,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         assert.ok(!graphicsPrewarmService.hasPrewarmed, 'Should not have prewarmed yet')
 
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.READY)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.CONNECTED)
 
         // Wait for async operations to resolve
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -100,7 +100,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         graphicsPrewarmService.hasPrewarmed = true // Manually set prewarmed status
 
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.READY)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.CONNECTED)
 
         // Wait for async operations to resolve
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -116,7 +116,7 @@ describe('GraphicsPrewarmService', () => {
         const graphicsPrewarmService = new GraphicsPrewarmService(mockMvm, mockConfigurationManager)
         graphicsPrewarmService.hasPrewarmed = true // Manually set prewarmed status
 
-        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabState.DISCONNECTED)
+        mockMvm._emitEvent(IMVM.Events.stateChange, MatlabMVMConnectionState.DISCONNECTED)
 
         // Wait for async operations to resolve
         await new Promise(resolve => setTimeout(resolve, 0))

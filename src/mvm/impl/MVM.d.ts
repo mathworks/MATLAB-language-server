@@ -6,10 +6,9 @@ export * from './MVMInterface';
 /**
  * Used to represent the state of MATLAB
  */
-export declare enum MatlabState {
+export declare enum MatlabMVMConnectionState {
     DISCONNECTED = "disconnected",
-    READY = "ready",
-    BUSY = "busy"
+    CONNECTED = "connected"
 }
 /**
  * Provides an interface for sending evals and fevals and listening to the results.

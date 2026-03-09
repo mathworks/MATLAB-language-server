@@ -15,7 +15,7 @@ import LintingSupportProvider from './providers/linting/LintingSupportProvider'
 import ExecuteCommandProvider, { MatlabLSCommands } from './providers/lspCommands/ExecuteCommandProvider'
 import NavigationSupportProvider from './providers/navigation/NavigationSupportProvider'
 import LifecycleNotificationHelper from './lifecycle/LifecycleNotificationHelper'
-import MVM, { IMVM, MatlabState } from './mvm/impl/MVM'
+import MVM, { IMVM, MatlabMVMConnectionState } from './mvm/impl/MVM'
 import FoldingSupportProvider from './providers/folding/FoldingSupportProvider'
 import ClientConnection from './ClientConnection'
 import PathResolver from './providers/navigation/PathResolver'
@@ -87,8 +87,8 @@ export async function startServer (): Promise<void> {
         hasMatlabBeenRequested = false
     })
 
-    mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
-        if (state === MatlabState.READY) {
+    mvm.on(IMVM.Events.stateChange, (state: MatlabMVMConnectionState) => {
+        if (state === MatlabMVMConnectionState.CONNECTED) {
             // Handle when the MVM has connected
             mvm.feval('matlabls.utils.startupHelper', 0, [])
 

@@ -1,7 +1,7 @@
-// Copyright 2024-2025 The MathWorks, Inc.
+// Copyright 2024-2026 The MathWorks, Inc.
 
 import NotificationService, { Notification } from '../notifications/NotificationService'
-import MVM, { IMVM, MatlabState, EvalRequest, EvalResponse, FEvalRequest, FEvalResponse, BreakpointRequest, PromptState } from './impl/MVM'
+import MVM, { IMVM, MatlabMVMConnectionState, EvalRequest, EvalResponse, FEvalRequest, FEvalResponse, BreakpointRequest, PromptState } from './impl/MVM'
 
 /**
  * Provides an interface for sending evals and fevals and listening to the results.
@@ -32,7 +32,7 @@ export default class MVMServer {
         this._mvm.on(IMVM.Events.promptChange, this._handlePromptChange.bind(this));
     }
 
-    private _handleMvmStateChange (state: MatlabState, release?: string): void {
+    private _handleMvmStateChange (state: MatlabMVMConnectionState, release?: string): void {
         this._notificationService.sendNotification(Notification.MVMStateChange, { state, release });
     }
 

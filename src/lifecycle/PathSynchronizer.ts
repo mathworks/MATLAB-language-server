@@ -1,4 +1,4 @@
-// Copyright 2024-2025 The MathWorks, Inc.
+// Copyright 2024-2026 The MathWorks, Inc.
 
 import { WorkspaceFolder, WorkspaceFoldersChangeEvent } from 'vscode-languageserver'
 import ClientConnection, { Connection } from '../ClientConnection'
@@ -6,7 +6,7 @@ import Logger from '../logging/Logger'
 import MatlabLifecycleManager from './MatlabLifecycleManager'
 import * as os from 'os'
 import path from 'path'
-import MVM, { IMVM, MatlabState } from '../mvm/impl/MVM'
+import MVM, { IMVM, MatlabMVMConnectionState } from '../mvm/impl/MVM'
 import parse from '../mvm/MdaParser'
 import * as FileNameUtils from '../utils/FileNameUtils'
 
@@ -25,8 +25,8 @@ export default class PathSynchronizer {
     initialize (): void {
         const clientConnection = ClientConnection.getConnection()
 
-        this.mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
-            if (state === MatlabState.READY) {
+        this.mvm.on(IMVM.Events.stateChange, (state: MatlabMVMConnectionState) => {
+            if (state === MatlabMVMConnectionState.CONNECTED) {
                 void this.handleMatlabConnected(clientConnection)
             }
         })

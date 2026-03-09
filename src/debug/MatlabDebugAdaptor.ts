@@ -1,10 +1,10 @@
-// Copyright 2025 The MathWorks, Inc.
+// Copyright 2025-2026 The MathWorks, Inc.
 
 import * as debug from '@vscode/debugadapter'
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { DebugServices, BreakpointInfo } from './DebugServices'
 import { ResolvablePromise, createResolvablePromise } from '../utils/PromiseUtils'
-import { IMVM, MVMError, MatlabState } from '../mvm/impl/MVM';
+import { IMVM, MVMError, MatlabMVMConnectionState } from '../mvm/impl/MVM';
 import fs from 'node:fs';
 
 enum BreakpointChangeType {
@@ -92,8 +92,8 @@ export default class MatlabDebugAdaptor {
         this._pendingSetBreakpointPromise = undefined;
         this._pendingTemporaryStackChangePromise = undefined;
 
-        this._mvm.on(IMVM.Events.stateChange, (state: MatlabState) => {
-            if (state === MatlabState.DISCONNECTED) {
+        this._mvm.on(IMVM.Events.stateChange, (state: MatlabMVMConnectionState) => {
+            if (state === MatlabMVMConnectionState.DISCONNECTED) {
                 this._handleDisconnect();
                 this._matlabBreakpoints = [];
             }
