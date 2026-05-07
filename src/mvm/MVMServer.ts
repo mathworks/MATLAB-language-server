@@ -29,6 +29,7 @@ export default class MVMServer {
         this._mvm.on(IMVM.Events.stateChange, this._handleMvmStateChange.bind(this))
         this._mvm.on(IMVM.Events.output, this._handleOutput.bind(this));
         this._mvm.on(IMVM.Events.clc, this._handleClc.bind(this));
+        this._mvm.on(IMVM.Events.inputPrompt, this._handleInputPrompt.bind(this));
         this._mvm.on(IMVM.Events.promptChange, this._handlePromptChange.bind(this));
     }
 
@@ -103,6 +104,10 @@ export default class MVMServer {
 
     private _handleClc (): void {
         this._notificationService.sendNotification(Notification.MVMClc);
+    }
+
+    private _handleInputPrompt (promptString: string): void {
+        this._notificationService.sendNotification(Notification.MVMInputPrompt, promptString);
     }
 
     private _handlePromptChange (state: PromptState, isIdle: boolean): void {

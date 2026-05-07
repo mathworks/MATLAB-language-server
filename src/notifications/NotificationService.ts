@@ -32,6 +32,7 @@ export enum Notification {
 
     MVMText = 'text',
     MVMClc = 'clc',
+    MVMInputPrompt = 'mvmInputPrompt',
     MVMPromptChange = 'mvmPromptChange',
 
     MVMInterruptRequest = 'interruptRequest',
@@ -57,7 +58,11 @@ export enum Notification {
     LicensingError = 'licensing/error',
 
     // Default Editor
-    EditorExecutablePath = 'matlab/otherEditor'
+    EditorExecutablePath = 'matlab/otherEditor',
+
+    // MATLAB projects
+    ProjectOpened = 'matlab/project/opened',
+    ProjectClosed = 'matlab/project/closed'
 }
 
 class NotificationService {

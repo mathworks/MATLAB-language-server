@@ -6,6 +6,7 @@ function setupShadows(languageServerFolder)
         addRestoreDefaultPathShadow(languageServerFolder);
         addEditShadow(languageServerFolder);
         addClcShadow(languageServerFolder);
+        addInputShadow(languageServerFolder);
     catch ME
         disp('Error while attempting to add shadow directories to path')
         disp(ME.message)
@@ -42,4 +43,8 @@ function addClcShadow(languageServerFolder)
     if isMATLABReleaseOlderThan('R2023a')
         addpath(fullfile(languageServerFolder, 'shadows', 'clc'));
     end
+end
+
+function addInputShadow(languageServerFolder)
+    addpath(fullfile(languageServerFolder, 'shadows', 'input'));
 end
