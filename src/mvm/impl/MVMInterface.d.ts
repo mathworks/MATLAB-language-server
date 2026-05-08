@@ -116,6 +116,7 @@ export declare namespace IMVM {
         clc = "clc",
         output = "output",
         promptChange = "promptChange",
-        stateChange = "stateChange"
+        stateChange = "stateChange",
+        inputPrompt = "inputPrompt"
     }
 }

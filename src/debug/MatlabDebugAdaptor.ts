@@ -415,7 +415,7 @@ export default class MatlabDebugAdaptor {
     async setBreakPointsRequest (response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, request?: DebugProtocol.Request): Promise<void> {
         const source = args.source as debug.Source;
 
-        if (source.path === undefined) {
+        if (source.path === undefined || !fs.existsSync(source.path)) {
             this.sendResponse(response);
             return;
         }

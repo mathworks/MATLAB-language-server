@@ -38,6 +38,7 @@ import GraphicsPrewarmService from './lifecycle/GraphicsPrewarmService'
 
 import { handleDefaultEditorConfigChange, setDefaultEditorVsCode } from './utils/DefaultEditorUtils'
 import FileInfoIndex from './indexing/FileInfoIndex'
+import ProjectEventNotifier from './projects/ProjectEventNotifier'
 
 export async function startServer (): Promise<void> {
     cacheAndClearProxyEnvironmentVariables()
@@ -75,6 +76,8 @@ export async function startServer (): Promise<void> {
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
     const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, indexer, fileInfoIndex)
     const semanticTokensProvider = new SemanticTokensProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
+
+    const projectEventNotifier = new ProjectEventNotifier(matlabLifecycleManager)
 
     let pathSynchronizer: PathSynchronizer | null
 
@@ -273,7 +276,7 @@ export async function startServer (): Promise<void> {
         reportFileOpened(params.document)
         void lintingSupportProvider.lintDocument(params.document)
         void documentIndexer.indexDocument(params.document)
-
+        
         void navigationSupportProvider.handleDocumentSymbol(params.document.uri, documentManager, RequestType.DocumentSymbol)
     })
 

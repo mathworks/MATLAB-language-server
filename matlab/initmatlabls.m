@@ -14,6 +14,9 @@ function initmatlabls (outFile)
 
         % Shadow necessary functions
         matlabls.setupShadows(folder);
+
+        % Initialize project event manager
+        matlabls.internal.project.ProjectEventManager.setupListeners();
         
         try
             % Disable specific settings which may cause editor windows to open

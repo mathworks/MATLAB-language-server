@@ -19,6 +19,7 @@ MATLAB language server implements several Language Server Protocol features and 
 * Symbol rename - [renameProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename)
 * Code folding - [foldingRangeProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_foldingRange)
 * Document highlights - [highlightSymbolProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight)
+* Semantic tokens - [semanticTokensProvider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens)
 
 ## Clients
 MATLAB language server supports these editors by installing the corresponding extension:

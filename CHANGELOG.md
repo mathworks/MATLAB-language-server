@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.11] - 2026-05-08
+
+### Added
+- Support for semantic token resolution to improve syntax highlighting (Community contribution from @Gustaf-C - Addresses [mathworks/MATLAB-extension-for-vscode#45](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/45))
+
+### Fixed
+- Applied patches for CVE-2026-2950, CVE-2026-4800, CVE-2026-4867, CVE-2026-33228, CVE-2026-33671, CVE-2026-33672, and CVE-2026-39363
+
 ## [1.3.10] - 2026-04-02
 
 ### Fixed
