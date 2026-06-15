@@ -1,4 +1,4 @@
-// Copyright 2022 - 2025 The MathWorks, Inc.
+// Copyright 2022 - 2026 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { ClientCapabilities, InitializeParams, InitializeResult, TextDocuments, SemanticTokensRequest, SemanticTokensParams } from 'vscode-languageserver/node'
@@ -192,6 +192,17 @@ export async function startServer (): Promise<void> {
         }
 
         void startMatlabIfOnStartLaunch()
+
+        // Connect to Workspace Browser
+        matlabLifecycleManager.eventEmitter.on('connected', async ()=> {
+            const connection = await matlabLifecycleManager.getMatlabConnection();
+            connection?.subscribe('/MobileWSB/ServerMsg', (data) => {
+                NotificationService.sendNotification(Notification.WSBServerMessage, data);
+            });
+            NotificationService.registerNotificationListener(Notification.WSBClientMessage, (data) => {
+                connection?.publish('/MobileWSB/ClientMsg', data);
+            });
+        });
     })
 
     async function startMatlabIfOnStartLaunch (): Promise<void> {
