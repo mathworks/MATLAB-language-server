@@ -2,11 +2,12 @@
  * The capabilities of the text sink
  */
 export interface SinkTraits {
-    _supportsMore: boolean;
-    _supportsHotlinks: boolean;
-    _useDiary: boolean;
-    _useEcho: boolean;
-    _useLogging: boolean;
+    supportsMore: boolean;
+    supportsHotlinks: boolean;
+    useDiary: boolean;
+    useEcho: boolean;
+    useLogging: boolean;
+    needsFormattingForDisplay: boolean;
 }
 export declare enum Capability {
     InteractiveCommandLine = "InteractiveCommandLine",

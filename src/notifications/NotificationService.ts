@@ -1,4 +1,4 @@
-// Copyright 2022 - 2025 The MathWorks, Inc.
+// Copyright 2022 - 2026 The MathWorks, Inc.
 
 import { GenericNotificationHandler, Disposable } from 'vscode-languageserver/node'
 import ClientConnection from '../ClientConnection'
@@ -59,6 +59,10 @@ export enum Notification {
 
     // Default Editor
     EditorExecutablePath = 'matlab/otherEditor',
+
+    // Workspace Browser
+    WSBServerMessage = 'WSBServerMessage',
+    WSBClientMessage = 'WSBClientMessage',
 
     // MATLAB projects
     ProjectOpened = 'matlab/project/opened',
