@@ -1,9 +1,10 @@
 // Copyright 2022 - 2026 The MathWorks, Inc.
 
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { ClientCapabilities, InitializeParams, InitializeResult, TextDocuments, SemanticTokensRequest, SemanticTokensParams } from 'vscode-languageserver/node'
+import { InitializeParams, InitializeResult, TextDocuments, SemanticTokensRequest, SemanticTokensParams } from 'vscode-languageserver/node'
 import DocumentIndexer from './indexing/DocumentIndexer'
 import WorkspaceIndexer from './indexing/WorkspaceIndexer'
+import ClientCapabilitiesManager from './lifecycle/ClientCapabilitiesManager'
 import ConfigurationManager, { ConnectionTiming } from './lifecycle/ConfigurationManager'
 import MatlabLifecycleManager from './lifecycle/MatlabLifecycleManager'
 import Logger from './logging/Logger'
@@ -35,6 +36,7 @@ import { handleInstallPathSettingChanged, handleSignInChanged, setupLicensingNot
 import PathSynchronizer from './lifecycle/PathSynchronizer'
 import { URI } from 'vscode-uri'
 import GraphicsPrewarmService from './lifecycle/GraphicsPrewarmService'
+import TestingService from './providers/testing/TestingService'
 
 import { handleDefaultEditorConfigChange, setDefaultEditorVsCode } from './utils/DefaultEditorUtils'
 import FileInfoIndex from './indexing/FileInfoIndex'
@@ -66,6 +68,9 @@ export async function startServer (): Promise<void> {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const graphicsPrewarmService = new GraphicsPrewarmService(mvm, ConfigurationManager)
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const testingService = new TestingService(matlabLifecycleManager, mvm)
 
     const formatSupportProvider = new FormatSupportProvider(matlabLifecycleManager, mvm)
     const foldingSupportProvider = new FoldingSupportProvider(matlabLifecycleManager, mvm)
@@ -112,11 +117,9 @@ export async function startServer (): Promise<void> {
         }
     })
 
-    let capabilities: ClientCapabilities
-
     // Handles an initialization request
     connection.onInitialize((params: InitializeParams) => {
-        capabilities = params.capabilities
+        ClientCapabilitiesManager.initialize(params.capabilities)
 
         // Defines the capabilities supported by this language server
         const initResult: InitializeResult = {
@@ -164,7 +167,7 @@ export async function startServer (): Promise<void> {
     // Handles the initialized notification
     /* eslint-disable @typescript-eslint/no-explicit-any */
     connection.onInitialized(async () => {
-        ConfigurationManager.setup(capabilities)
+        ConfigurationManager.setup()
 
         // Add callbacks when settings change.
         ConfigurationManager.addSettingCallback('signIn', handleSignInChanged)
@@ -183,12 +186,17 @@ export async function startServer (): Promise<void> {
             }
         }
 
-        workspaceIndexer.setupCallbacks(capabilities)
+        workspaceIndexer.setupCallbacks()
 
-        if (capabilities.workspace?.workspaceFolders != null) {
+        if (ClientCapabilitiesManager.hasWorkspaceFolders()) {
             // If workspace folders are supported, try to synchronize the MATLAB path with the user's workspace.
             pathSynchronizer = new PathSynchronizer(matlabLifecycleManager, mvm)
             pathSynchronizer.initialize()
+        }
+
+        // Enable semantic token refresh if supported by client
+        if (ClientCapabilitiesManager.hasSemanticTokensRefresh()) {
+            setupSemanticTokensRefresh(connection, documentIndexer)
         }
 
         void startMatlabIfOnStartLaunch()
@@ -389,7 +397,6 @@ export async function startServer (): Promise<void> {
     connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
         return await semanticTokensProvider.handleSemanticTokensRequest(params, documentManager)
     })
-    setupSemanticTokensRefresh(connection, documentIndexer)
 }
 
 /** -------------------- Helper Functions -------------------- **/

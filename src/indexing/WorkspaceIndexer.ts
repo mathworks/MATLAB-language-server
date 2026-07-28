@@ -1,6 +1,7 @@
-// Copyright 2022 - 2024 The MathWorks, Inc.
+// Copyright 2022 - 2026 The MathWorks, Inc.
 
-import { ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent } from 'vscode-languageserver'
+import { WorkspaceFolder, WorkspaceFoldersChangeEvent } from 'vscode-languageserver'
+import ClientCapabilitiesManager from '../lifecycle/ClientCapabilitiesManager'
 import ConfigurationManager from '../lifecycle/ConfigurationManager'
 import Indexer from './Indexer'
 import ClientConnection from '../ClientConnection'
@@ -16,12 +17,9 @@ export default class WorkspaceIndexer {
 
     /**
      * Sets up workspace change listeners, if supported.
-     *
-     * @param capabilities The client capabilities, which contains information about
-     * whether the client supports workspaces.
      */
-    setupCallbacks (capabilities: ClientCapabilities): void {
-        this.isWorkspaceIndexingSupported = capabilities.workspace?.workspaceFolders ?? false
+    setupCallbacks (): void {
+        this.isWorkspaceIndexingSupported = ClientCapabilitiesManager.hasWorkspaceFolders()
 
         if (!this.isWorkspaceIndexingSupported) {
             // Workspace indexing not supported
