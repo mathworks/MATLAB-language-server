@@ -1,6 +1,6 @@
-// Copyright 2024 The MathWorks, Inc.
+// Copyright 2024-2026 The MathWorks, Inc.
 
-import { ChildProcess } from 'child_process'
+import { ChildProcess, execFile, ExecFileException } from 'child_process'
 import Logger from '../logging/Logger'
 import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils'
 import NotificationService, { Notification } from '../notifications/NotificationService'
@@ -10,6 +10,7 @@ import MatlabCommunicationManager, { LifecycleEventType, MatlabConnection } from
 
 import * as chokidar from 'chokidar'
 import * as fsPromises from 'fs/promises'
+import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 import { EventEmitter } from 'events'
@@ -22,6 +23,8 @@ import Licensing from '../licensing'
 import { startLicensingServer } from '../licensing/server'
 import { staticFolderPath } from '../licensing/config'
 import ClientConnection from '../ClientConnection'
+import { WorkspaceFolder } from 'vscode-languageserver'
+import ClientCapabilitiesManager from './ClientCapabilitiesManager'
 
 interface MatlabStartupInfo {
     pid: number
@@ -135,7 +138,11 @@ async function startMatlabSession (environmentVariables: NodeJS.ProcessEnv): Pro
 
         // Get launch directory for MATLAB
         const clientConnection = ClientConnection.getConnection()
-        const workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+        let workspaceFolders: WorkspaceFolder[] | null = null
+        if (ClientCapabilitiesManager.hasWorkspaceFolders()) {
+            workspaceFolders = await clientConnection.workspace.getWorkspaceFolders()
+        }
+
         let launchDirectory: string | null = null
         if (workspaceFolders != null && workspaceFolders.length > 0) {
             launchDirectory = path.normalize(FileNameUtils.getFilePathFromUri(workspaceFolders[0].uri))
@@ -447,15 +454,9 @@ async function readStartupInfo (file: string): Promise<MatlabStartupInfo> {
  * @returns The MATLAB launch command and arguments
  */
 async function getMatlabLaunchCommand (outFile: string, launchDirectory: string | null): Promise<{ command: string, args: string[] }> {
-    const matlabInstallPath = (await ConfigurationManager.getConfiguration()).installPath
-    let command = 'matlab'
-    if (matlabInstallPath !== '') {
-        command = path.normalize(path.join(
-            matlabInstallPath.trim(),
-            'bin',
-            'matlab'
-        ))
-    }
+    const matlabroot = (await ConfigurationManager.getConfiguration()).installPath.trim()
+
+    const command = (matlabroot === '') ? 'matlab' : await getMatlabExecutablePath(matlabroot)
 
     const args = [
         '-log',
@@ -479,9 +480,6 @@ async function getMatlabLaunchCommand (outFile: string, launchDirectory: string 
     }
 
     if (os.platform() === 'win32') {
-        // Append `.exe` on Windows
-        command += '.exe'
-
         args.push('-noDisplayDesktop') // Workaround for '-nodesktop' on Windows until a better solution is implemented
         args.push('-wait')
     }
@@ -495,6 +493,51 @@ async function getMatlabLaunchCommand (outFile: string, launchDirectory: string 
         command,
         args
     }
+}
+
+async function getMatlabExecutablePath (matlabroot: string): Promise<string> {
+    // Default case - use /bin/matlab
+    let executablePath = path.normalize(path.join(
+        matlabroot,
+        'bin',
+        'matlab'
+    ))
+
+    if (os.platform() === 'win32') {
+        // Append `.exe` on Windows
+        executablePath += '.exe'
+    } else if (os.platform() === 'darwin') {
+        const locatorExecutable = path.normalize(path.join(
+            matlabroot, 'bin', 'maca64', 'matlab_locator_exec'
+        ));
+
+        if (fs.existsSync(locatorExecutable)) {
+            return new Promise<string>(resolve => {
+                execFile(
+                    locatorExecutable,
+                    [],
+                    (error: ExecFileException | null, stdout: string, stderr: string) => {
+                        if (error !== null) {
+                            Logger.error(`Error from MATLAB locator executable: ${error.message}\n\tFalling back to 'bin/matlab'`)
+                            resolve(executablePath)
+                            return
+                        }
+
+                        // Response is of the format "app_path:<path_to_MATLAB.app>"
+                        const appPath = stdout.substring(9).trim() // Strip away "app_path:"
+                        executablePath = path.normalize(path.join(
+                            appPath, 'Contents', 'MacOS', 'MATLAB'
+                        ))
+                        resolve(executablePath)
+                    }
+                )
+            })
+        } else {
+            Logger.log('Unable to find MATLAB locator executable - falling back to \'bin/matlab\'')
+        }
+    }
+
+    return executablePath
 }
 
 /**

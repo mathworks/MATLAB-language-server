@@ -1,6 +1,7 @@
-// Copyright 2022 - 2025 The MathWorks, Inc.
+// Copyright 2022 - 2026 The MathWorks, Inc.
 
-import { ClientCapabilities, DidChangeConfigurationNotification, DidChangeConfigurationParams } from 'vscode-languageserver'
+import { DidChangeConfigurationNotification, DidChangeConfigurationParams } from 'vscode-languageserver'
+import ClientCapabilitiesManager from './ClientCapabilitiesManager'
 import { reportTelemetrySettingsChange } from '../logging/TelemetryUtils'
 import { getCliArgs } from '../utils/CliUtils'
 import ClientConnection from '../ClientConnection'
@@ -40,27 +41,25 @@ export interface Settings {
     signIn: boolean
     prewarmGraphics: boolean
     defaultEditor: boolean
+    [otherKey: string]: any // Other settings not explicitly used by the language server
 }
 
-type SettingName = 'installPath' | 'matlabConnectionTiming' | 'indexWorkspace' | 'telemetry' | 'maxFileSizeForAnalysis' | 'signIn' | 'prewarmGraphics' | 'defaultEditor'
-
-const SETTING_NAMES: SettingName[] = [
-    'installPath',
-    'matlabConnectionTiming',
-    'indexWorkspace',
-    'telemetry',
-    'maxFileSizeForAnalysis',
-    'signIn',
-    'prewarmGraphics',
-    'defaultEditor'
-]
+const DEFAULT_SETTINGS: Settings = {
+    installPath: '',
+    matlabConnectionTiming: ConnectionTiming.OnStart,
+    indexWorkspace: false,
+    telemetry: true,
+    maxFileSizeForAnalysis: 0,
+    signIn: false,
+    prewarmGraphics: true,
+    defaultEditor: true
+}
 
 export class ConfigurationManager {
     private static instance: ConfigurationManager
 
-    private configuration: Settings | null = null
-    private readonly defaultConfiguration: Settings
-    private globalSettings: Settings
+    private settings: Settings
+    private hasFetchedInitialConfiguration = false
 
     // Holds additional command line arguments that are not part of the configuration
     private readonly additionalArguments: CliArguments
@@ -68,31 +67,20 @@ export class ConfigurationManager {
     private hasConfigurationCapability = false
 
     // Map to keep track of callbacks to execute when a specific setting changes
-    private readonly settingChangeCallbacks: Map<SettingName, (configuration: Settings) => void> = new Map();
+    private readonly settingChangeCallbacks: Map<string, (configuration: Settings) => void> = new Map();
 
     constructor () {
         const cliArgs = getCliArgs()
 
-        this.defaultConfiguration = {
-            installPath: '',
-            matlabConnectionTiming: ConnectionTiming.OnStart,
-            indexWorkspace: false,
-            telemetry: true,
-            maxFileSizeForAnalysis: 0,
-            signIn: false,
-            prewarmGraphics: true,
-            defaultEditor: true
-        }
-
-        this.globalSettings = {
-            installPath: cliArgs[Argument.MatlabInstallationPath] ?? this.defaultConfiguration.installPath,
-            matlabConnectionTiming: cliArgs[Argument.MatlabConnectionTiming] as ConnectionTiming ?? this.defaultConfiguration.matlabConnectionTiming,
-            indexWorkspace: cliArgs[Argument.ShouldIndexWorkspace] ?? this.defaultConfiguration.indexWorkspace,
-            telemetry: this.defaultConfiguration.telemetry,
-            maxFileSizeForAnalysis: this.defaultConfiguration.maxFileSizeForAnalysis,
-            signIn: this.defaultConfiguration.signIn,
-            prewarmGraphics: this.defaultConfiguration.prewarmGraphics,
-            defaultEditor: this.defaultConfiguration.defaultEditor
+        this.settings = {
+            installPath: cliArgs[Argument.MatlabInstallationPath] ?? DEFAULT_SETTINGS.installPath,
+            matlabConnectionTiming: cliArgs[Argument.MatlabConnectionTiming] as ConnectionTiming ?? DEFAULT_SETTINGS.matlabConnectionTiming,
+            indexWorkspace: cliArgs[Argument.ShouldIndexWorkspace] ?? DEFAULT_SETTINGS.indexWorkspace,
+            telemetry: DEFAULT_SETTINGS.telemetry,
+            maxFileSizeForAnalysis: DEFAULT_SETTINGS.maxFileSizeForAnalysis,
+            signIn: DEFAULT_SETTINGS.signIn,
+            prewarmGraphics: DEFAULT_SETTINGS.prewarmGraphics,
+            defaultEditor: DEFAULT_SETTINGS.defaultEditor
         }
 
         this.additionalArguments = {
@@ -112,16 +100,13 @@ export class ConfigurationManager {
 
     /**
      * Sets up the configuration manager
-     *
-     * @param capabilities The client capabilities
      */
-    setup (capabilities: ClientCapabilities): void {
+    setup (): void {
         const connection = ClientConnection.getConnection()
 
-        this.hasConfigurationCapability = capabilities.workspace?.configuration != null
+        this.hasConfigurationCapability = ClientCapabilitiesManager.hasWorkspaceConfiguration()
 
-        if (this.hasConfigurationCapability) {
-            // Register for configuration changes
+        if (ClientCapabilitiesManager.hasDynamicConfigurationRegistration()) {
             void connection.client.register(DidChangeConfigurationNotification.type)
         }
 
@@ -135,28 +120,35 @@ export class ConfigurationManager {
      * @param onSettingChangeCallback - The callback invoked on setting change.
      * @throws {Error} For invalid setting names.
      */
-    addSettingCallback (settingName: SettingName, onSettingChangeCallback: (configuration: Settings) => void | Promise<void>): void {
+    addSettingCallback (settingName: string, onSettingChangeCallback: (configuration: Settings) => void | Promise<void>): void {
         if (this.settingChangeCallbacks.get(settingName) == null) {
             this.settingChangeCallbacks.set(settingName, onSettingChangeCallback)
         }
     }
 
     /**
-     * Gets the configuration for the langauge server
+     * Gets the configuration for the language server
      *
      * @returns The current configuration
      */
     async getConfiguration (): Promise<Settings> {
-        if (this.hasConfigurationCapability) {
-            if (this.configuration == null) {
-                const connection = ClientConnection.getConnection()
-                this.configuration = await connection.workspace.getConfiguration('MATLAB') as Settings
-            }
-
-            return Object.assign(this.defaultConfiguration, this.configuration)
+        if (this.hasConfigurationCapability && !this.hasFetchedInitialConfiguration) {
+            await this.fetchConfiguration()
         }
 
-        return Object.assign(this.defaultConfiguration, this.globalSettings)
+        return this.settings
+    }
+
+    /**
+     * Fetches the workspace configuration from the client and merges it into
+     * the current settings. The workspace configuration takes priority over
+     * the CLI-seeded initial values.
+     */
+    private async fetchConfiguration (): Promise<void> {
+        const connection = ClientConnection.getConnection()
+        const configuration = await connection.workspace.getConfiguration('MATLAB') as Settings
+        Object.assign(this.settings, configuration)
+        this.hasFetchedInitialConfiguration = true
     }
 
     /**
@@ -174,35 +166,29 @@ export class ConfigurationManager {
      * @param params The configuration changed params
      */
     private async handleConfigurationChanged (params: DidChangeConfigurationParams): Promise<void> {
-        let oldConfig: Settings | null
-        let newConfig: Settings
+        // If the initial configuration has not yet been fetched, skip the
+        // comparison — the "old" values are just the CLI-seeded defaults and
+        // there are no meaningful callbacks to fire.
+        const shouldCompare = !this.hasConfigurationCapability || this.hasFetchedInitialConfiguration
+
+        const oldConfig = { ...this.settings }
 
         if (this.hasConfigurationCapability) {
-            oldConfig = this.configuration
-
-            // Clear cached configuration
-            this.configuration = null
-
-            // Force load new configuration
-            newConfig = await this.getConfiguration()
+            await this.fetchConfiguration()
         } else {
-            oldConfig = this.globalSettings
-            this.globalSettings = params.settings?.matlab ?? this.defaultConfiguration
-
-            newConfig = this.globalSettings
+            this.settings = params.settings?.MATLAB ?? this.settings
         }
 
-        this.compareSettingChanges(oldConfig, newConfig)
+        if (shouldCompare) {
+            this.compareSettingChanges(oldConfig, this.settings)
+        }
     }
 
-    private compareSettingChanges (oldConfiguration: Settings | null, newConfiguration: Settings): void {
-        if (oldConfiguration == null) {
-            // Not yet initialized
-            return
-        }
+    private compareSettingChanges (oldConfiguration: Settings, newConfiguration: Settings): void {
+        const keys = Object.keys(oldConfiguration)
 
-        for (let i = 0; i < SETTING_NAMES.length; i++) {
-            const settingName = SETTING_NAMES[i]
+        for (let i = 0; i < keys.length; i++) {
+            const settingName = keys[i]
             const oldValue = oldConfiguration[settingName]
             const newValue = newConfiguration[settingName]
 

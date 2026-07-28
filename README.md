@@ -3,7 +3,7 @@
 
 MATLAB&reg; language server implements the Microsoft&reg; [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) for the MATLAB language.
 
-MATLAB language server requires MATLAB version R2021b or later.
+MATLAB language server requires MATLAB version R2021b or later. Run the language server only in trusted workspaces.
 
 ## Features Implemented
 MATLAB language server implements several Language Server Protocol features and their related services:

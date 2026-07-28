@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.13] - 2026-07-28
+
+### Added
+- Support for discovering and running MATLAB unit tests (Addresses [mathworks/MATLAB-extension-for-vscode#138](https://github.com/mathworks/MATLAB-extension-for-vscode/issues/138))
+- Improved logic for launching MATLAB on macOS systems
+
+### Fixed
+- Resolves errors that occur when the language server sends requests for features not supported by the client (Addresses [mathworks/MATLAB-language-server#88](https://github.com/mathworks/MATLAB-language-server/issues/88))
+
 ## [1.3.12] - 2026-06-15
 
 ### Added
