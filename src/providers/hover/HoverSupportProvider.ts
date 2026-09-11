@@ -6,10 +6,18 @@ import MatlabLifecycleManager from '../../lifecycle/MatlabLifecycleManager'
 import MVM from '../../mvm/impl/MVM'
 import Logger from '../../logging/Logger'
 import * as fs from 'fs'
+import * as os from 'os'
 import * as path from 'path'
 import { URI } from 'vscode-uri'
 
+interface ISqliteDatabase {
+    prepare: (query: string) => { get: (param: string) => unknown }
+    close?: () => void
+}
+
 class HoverSupportProvider {
+    private db: ISqliteDatabase | null | undefined = undefined
+
     constructor (
         private readonly matlabLifecycleManager: MatlabLifecycleManager,
         private readonly mvm: MVM
@@ -55,7 +63,27 @@ class HoverSupportProvider {
             }
         }
 
-        // 2. Check for user-defined function (.m file) in workspace/directory
+        // 2. Query local persistent SQLite database if available (Offline fast mode)
+        const database = this.getDatabase()
+        if (database != null) {
+            try {
+                const stmt = database.prepare('SELECT doc FROM docs WHERE name = ?')
+                const row = stmt.get(word) as { doc?: string } | undefined
+                if (row != null && typeof row.doc === 'string' && row.doc.trim() !== '') {
+                    return {
+                        contents: {
+                            kind: MarkupKind.Markdown,
+                            value: `### MATLAB Help: \`${word}\`\n\n\`\`\`matlab\n${row.doc.trim()}\n\`\`\``
+                        },
+                        range
+                    }
+                }
+            } catch (err) {
+                Logger.error(`Error querying local SQLite docs db: ${String(err)}`)
+            }
+        }
+
+        // 3. Check for user-defined function (.m file) in workspace/directory
         const filePath = URI.parse(params.textDocument.uri).fsPath
         const fileDir = path.dirname(filePath)
         const candidateFile = path.join(fileDir, `${word}.m`)
@@ -78,7 +106,7 @@ class HoverSupportProvider {
             }
         }
 
-        // 3. Check if symbol is a variable defined in the current document
+        // 4. Check if symbol is a variable defined in the current document
         const varDoc = this.findVariableInDocument(document, word)
         if (varDoc != null && varDoc !== '') {
             return {
@@ -90,6 +118,28 @@ class HoverSupportProvider {
             }
         }
 
+        return null
+    }
+
+    /**
+     * Lazily opens and caches connection to local SQLite documentation database.
+     */
+    private getDatabase (): ISqliteDatabase | null {
+        if (this.db !== undefined) {
+            return this.db
+        }
+        try {
+            const dbPath = path.join(os.homedir(), '.cache', 'matlabls', 'matlab_docs.db')
+            if (fs.existsSync(dbPath)) {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const sqlite = require('node:sqlite')
+                this.db = new sqlite.DatabaseSync(dbPath, { open: true, readOnly: true }) as ISqliteDatabase
+                return this.db
+            }
+        } catch (err) {
+            Logger.log(`SQLite database could not be loaded: ${String(err)}`)
+        }
+        this.db = null
         return null
     }
 

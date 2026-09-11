@@ -65,8 +65,13 @@ describe('HoverSupportProvider', () => {
             assert.equal(res, null, 'Result should be null when hovering on whitespace')
         })
 
-        it('should return null for built-in functions when MATLAB is offline and not connected', async () => {
+        it('should return documentation from local SQLite database when offline', async () => {
             sinon.stub(matlabLifecycleManager, 'isMatlabConnected').returns(false)
+            sinon.stub(hoverSupportProvider as any, 'getDatabase').returns({
+                prepare: () => ({
+                    get: (name: string) => (name === 'plot' ? { doc: 'plot(X, Y) 2-D line plot' } : undefined)
+                })
+            })
 
             const params: HoverParams = {
                 textDocument: { uri: 'file:///test.m' },
@@ -74,7 +79,22 @@ describe('HoverSupportProvider', () => {
             }
             const res = await hoverSupportProvider.handleHoverRequest(params, documentManager)
 
-            assert.equal(res, null, 'Result should be null when MATLAB engine is offline')
+            assert.notEqual(res, null, 'Result should not be null when found in SQLite db')
+            const contents = res?.contents as { kind: string, value: string }
+            assert.ok(contents.value.includes('plot(X, Y) 2-D line plot'), 'Should contain doc from db')
+        })
+
+        it('should return null for built-in functions when MATLAB is offline and database is unavailable', async () => {
+            sinon.stub(matlabLifecycleManager, 'isMatlabConnected').returns(false)
+            sinon.stub(hoverSupportProvider as any, 'getDatabase').returns(null)
+
+            const params: HoverParams = {
+                textDocument: { uri: 'file:///test.m' },
+                position: Position.create(1, 5) // over 'plot'
+            }
+            const res = await hoverSupportProvider.handleHoverRequest(params, documentManager)
+
+            assert.equal(res, null, 'Result should be null when MATLAB engine is offline and db is null')
         })
 
         it('should return variable definition when hovering over a local variable', async () => {
