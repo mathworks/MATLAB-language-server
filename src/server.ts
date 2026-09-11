@@ -23,6 +23,7 @@ import PathResolver from './providers/navigation/PathResolver'
 import Indexer from './indexing/Indexer'
 import RenameSymbolProvider from './providers/rename/RenameSymbolProvider'
 import HighlightSymbolProvider from './providers/highlighting/HighlightSymbolProvider'
+import HoverSupportProvider from './providers/hover/HoverSupportProvider'
 import SemanticTokensProvider, { SEMANTIC_TOKEN_TYPES, SEMANTIC_TOKEN_MODIFIERS, setupSemanticTokensRefresh } from './providers/semanticTokens/SemanticTokensProvider'
 import { RequestType } from './indexing/SymbolSearchService'
 import { cacheAndClearProxyEnvironmentVariables } from './utils/ProxyUtils'
@@ -81,6 +82,7 @@ export async function startServer (): Promise<void> {
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
     const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, indexer, fileInfoIndex)
     const semanticTokensProvider = new SemanticTokensProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
+    const hoverSupportProvider = new HoverSupportProvider(matlabLifecycleManager, mvm)
 
     const projectEventNotifier = new ProjectEventNotifier(matlabLifecycleManager)
 
@@ -151,6 +153,7 @@ export async function startServer (): Promise<void> {
                     prepareProvider: true
                 },
                 documentHighlightProvider: true,
+                hoverProvider: true,
                 semanticTokensProvider: {
                     legend: {
                         tokenTypes: SEMANTIC_TOKEN_TYPES,
@@ -396,6 +399,11 @@ export async function startServer (): Promise<void> {
     /** -------------- SEMANTIC TOKENS SUPPORT --------------- **/
     connection.onRequest(SemanticTokensRequest.method, async (params: SemanticTokensParams) => {
         return await semanticTokensProvider.handleSemanticTokensRequest(params, documentManager)
+    })
+
+    /** --------------------  HOVER SUPPORT   -------------------- **/
+    connection.onHover(async params => {
+        return await hoverSupportProvider.handleHoverRequest(params, documentManager)
     })
 }
 
