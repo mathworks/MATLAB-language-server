@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 import { URI } from 'vscode-uri'
+import { formatMatlabHelpToMarkdown } from './HoverMarkdownUtils'
 
 interface ISqliteDatabase {
     prepare: (query: string) => { get: (param: string) => unknown }
@@ -52,7 +53,7 @@ class HoverSupportProvider {
                         return {
                             contents: {
                                 kind: MarkupKind.Markdown,
-                                value: `### MATLAB Help: \`${word}\`\n\n\`\`\`matlab\n${helpText}\n\`\`\``
+                                value: formatMatlabHelpToMarkdown(helpText, word)
                             },
                             range
                         }
@@ -73,7 +74,7 @@ class HoverSupportProvider {
                     return {
                         contents: {
                             kind: MarkupKind.Markdown,
-                            value: `### MATLAB Help: \`${word}\`\n\n\`\`\`matlab\n${row.doc.trim()}\n\`\`\``
+                            value: formatMatlabHelpToMarkdown(row.doc, word)
                         },
                         range
                     }
