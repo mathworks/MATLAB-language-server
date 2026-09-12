@@ -91,16 +91,22 @@ functionList.forEach((fn, idx) => {
     chunks[idx % numWorkers].push(fn);
 });
 
-console.clear();
-console.log('\x1b[1;36m========================================================================\x1b[0m');
-console.log('\x1b[1;32m       MATLAB Language Server - Parallel Documentation Indexer          \x1b[0m');
-console.log('\x1b[1;36m========================================================================\x1b[0m');
-console.log(` \x1b[1mSystem CPU Cores:\x1b[0m     ${cpuCount} (${os.cpus()[0].model})`);
-console.log(` \x1b[1mAllocated Workers:\x1b[0m    ${numWorkers} parallel workers`);
-console.log(` \x1b[1mMATLAB Path:\x1b[0m          ${matlabRoot}`);
-console.log(` \x1b[1mUnique Functions:\x1b[0m     ${totalFunctions}`);
-console.log(` \x1b[1mSQLite Target:\x1b[0m        ${dbPath}`);
-console.log('\x1b[1;36m------------------------------------------------------------------------\x1b[0m\n');
+const isQuiet = process.argv.includes('--quiet') || !process.stdout.isTTY;
+
+if (!isQuiet) {
+    console.clear();
+    console.log('\x1b[1;36m========================================================================\x1b[0m');
+    console.log('\x1b[1;32m       MATLAB Language Server - Parallel Documentation Indexer          \x1b[0m');
+    console.log('\x1b[1;36m========================================================================\x1b[0m');
+    console.log(` \x1b[1mSystem CPU Cores:\x1b[0m     ${cpuCount} (${os.cpus()[0].model})`);
+    console.log(` \x1b[1mAllocated Workers:\x1b[0m    ${numWorkers} parallel workers`);
+    console.log(` \x1b[1mMATLAB Path:\x1b[0m          ${matlabRoot}`);
+    console.log(` \x1b[1mUnique Functions:\x1b[0m     ${totalFunctions}`);
+    console.log(` \x1b[1mSQLite Target:\x1b[0m        ${dbPath}`);
+    console.log('\x1b[1;36m------------------------------------------------------------------------\x1b[0m\n');
+} else {
+    console.log(`[matlabls-indexer] Indexing ${totalFunctions} canonical MATLAB functions into ${dbPath} using ${numWorkers} workers.`);
+}
 
 let processedCount = 0;
 const startTime = Date.now();
@@ -108,6 +114,7 @@ const workerStatus = Array.from({ length: numWorkers }, () => 'Initializing');
 const activeWorkers = new Set();
 
 function renderDashboard() {
+    if (isQuiet) return;
     const elapsedSec = (Date.now() - startTime) / 1000;
     const speed = elapsedSec > 0 ? (processedCount / elapsedSec) : 0;
     const remaining = totalFunctions - processedCount;
@@ -230,10 +237,14 @@ Promise.all(workerPromises).then((outFiles) => {
     const dbStat = fs.statSync(dbPath);
     const dbSizeMb = (dbStat.size / (1024 * 1024)).toFixed(2);
 
-    console.log('\x1b[1;32m✔ Indexing and SQLite insertion complete!\x1b[0m');
-    console.log(` \x1b[1mTotal Functions Indexed:\x1b[0m ${recordCount}`);
-    console.log(` \x1b[1mDatabase Size:\x1b[0m           ${dbSizeMb} MB`);
-    console.log(` \x1b[1mTotal Time Elapsed:\x1b[0m      ${totalElapsedSec} seconds`);
-    console.log(` \x1b[1mDatabase File Location:\x1b[0m  ${dbPath}`);
-    console.log('\x1b[1;36m========================================================================\x1b[0m');
+    if (isQuiet) {
+        console.log(`[matlabls-indexer] Indexing complete! ${recordCount} functions indexed in ${totalElapsedSec}s (${dbSizeMb} MB) -> ${dbPath}`);
+    } else {
+        console.log('\x1b[1;32m✔ Indexing and SQLite insertion complete!\x1b[0m');
+        console.log(` \x1b[1mTotal Functions Indexed:\x1b[0m ${recordCount}`);
+        console.log(` \x1b[1mDatabase Size:\x1b[0m           ${dbSizeMb} MB`);
+        console.log(` \x1b[1mTotal Time Elapsed:\x1b[0m      ${totalElapsedSec} seconds`);
+        console.log(` \x1b[1mDatabase File Location:\x1b[0m  ${dbPath}`);
+        console.log('\x1b[1;36m========================================================================\x1b[0m');
+    }
 });

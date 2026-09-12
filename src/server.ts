@@ -4,6 +4,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { InitializeParams, InitializeResult, TextDocuments, SemanticTokensRequest, SemanticTokensParams } from 'vscode-languageserver/node'
 import DocumentIndexer from './indexing/DocumentIndexer'
 import WorkspaceIndexer from './indexing/WorkspaceIndexer'
+import documentationIndexer from './indexing/DocumentationIndexer'
 import ClientCapabilitiesManager from './lifecycle/ClientCapabilitiesManager'
 import ConfigurationManager, { ConnectionTiming } from './lifecycle/ConfigurationManager'
 import MatlabLifecycleManager from './lifecycle/MatlabLifecycleManager'
@@ -76,13 +77,16 @@ export async function startServer (): Promise<void> {
     const formatSupportProvider = new FormatSupportProvider(matlabLifecycleManager, mvm)
     const foldingSupportProvider = new FoldingSupportProvider(matlabLifecycleManager, mvm)
     const lintingSupportProvider = new LintingSupportProvider(matlabLifecycleManager, mvm)
-    const executeCommandProvider = new ExecuteCommandProvider(lintingSupportProvider)
+    const hoverSupportProvider = new HoverSupportProvider(matlabLifecycleManager, mvm)
+    documentationIndexer.eventEmitter.on('indexed', () => {
+        hoverSupportProvider.resetDatabaseConnection()
+    })
+    const executeCommandProvider = new ExecuteCommandProvider(lintingSupportProvider, documentationIndexer)
     const completionSupportProvider = new CompletionSupportProvider(matlabLifecycleManager, mvm)
     const navigationSupportProvider = new NavigationSupportProvider(matlabLifecycleManager, fileInfoIndex, indexer, documentIndexer, pathResolver)
     const renameSymbolProvider = new RenameSymbolProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
     const highlightSymbolProvider = new HighlightSymbolProvider(matlabLifecycleManager, documentIndexer, indexer, fileInfoIndex)
     const semanticTokensProvider = new SemanticTokensProvider(matlabLifecycleManager, documentIndexer, fileInfoIndex)
-    const hoverSupportProvider = new HoverSupportProvider(matlabLifecycleManager, mvm)
 
     const projectEventNotifier = new ProjectEventNotifier(matlabLifecycleManager)
 
@@ -102,7 +106,7 @@ export async function startServer (): Promise<void> {
     mvm.on(IMVM.Events.stateChange, (state: MatlabMVMConnectionState) => {
         if (state === MatlabMVMConnectionState.CONNECTED) {
             // Handle when the MVM has connected
-            mvm.feval('matlabls.utils.startupHelper', 0, [])
+            void mvm.feval('matlabls.utils.startupHelper', 0, [])
 
             // Initiate workspace indexing
             void workspaceIndexer.indexWorkspace()
@@ -176,6 +180,7 @@ export async function startServer (): Promise<void> {
         ConfigurationManager.addSettingCallback('signIn', handleSignInChanged)
         ConfigurationManager.addSettingCallback('installPath', handleInstallPathSettingChanged)
         ConfigurationManager.addSettingCallback('defaultEditor', configuration => handleDefaultEditorConfigChange(configuration, mvm))
+        ConfigurationManager.addSettingCallback('indexDocumentation', () => { void documentationIndexer.startIndexing() })
 
         const configuration = await ConfigurationManager.getConfiguration()
 
@@ -203,9 +208,10 @@ export async function startServer (): Promise<void> {
         }
 
         void startMatlabIfOnStartLaunch()
+        void documentationIndexer.startIndexing()
 
         // Connect to Workspace Browser
-        matlabLifecycleManager.eventEmitter.on('connected', async ()=> {
+        matlabLifecycleManager.eventEmitter.on('connected', async () => {
             const connection = await matlabLifecycleManager.getMatlabConnection();
             connection?.subscribe('/MobileWSB/ServerMsg', (data) => {
                 NotificationService.sendNotification(Notification.WSBServerMessage, data);
@@ -298,7 +304,7 @@ export async function startServer (): Promise<void> {
         reportFileOpened(params.document)
         void lintingSupportProvider.lintDocument(params.document)
         void documentIndexer.indexDocument(params.document)
-        
+
         void navigationSupportProvider.handleDocumentSymbol(params.document.uri, documentManager, RequestType.DocumentSymbol)
     })
 

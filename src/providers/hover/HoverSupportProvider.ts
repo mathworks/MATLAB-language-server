@@ -126,7 +126,7 @@ class HoverSupportProvider {
      * Lazily opens and caches connection to local SQLite documentation database.
      */
     private getDatabase (): ISqliteDatabase | null {
-        if (this.db !== undefined) {
+        if (this.db != null) {
             return this.db
         }
         try {
@@ -142,6 +142,20 @@ class HoverSupportProvider {
         }
         this.db = null
         return null
+    }
+
+    /**
+     * Resets SQLite database connection so it can be re-opened after indexing.
+     */
+    public resetDatabaseConnection (): void {
+        if (this.db?.close != null) {
+            try {
+                this.db.close()
+            } catch {
+                // ignore
+            }
+        }
+        this.db = null
     }
 
     /**

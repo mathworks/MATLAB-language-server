@@ -13,6 +13,7 @@ export enum Argument {
     MatlabConnectionTiming = 'matlabConnectionTiming',
 
     ShouldIndexWorkspace = 'indexWorkspace',
+    IndexDocumentation = 'indexDocumentation',
 
     // Advanced arguments
     MatlabUrl = 'matlabUrl',
@@ -26,6 +27,22 @@ export enum ConnectionTiming {
     Never = 'never'
 }
 
+export enum DocumentationIndexTiming {
+    OnMissing = 'onMissing',
+    Never = 'never',
+    Always = 'always'
+}
+
+export function normalizeDocumentationIndexTiming (value: unknown): DocumentationIndexTiming {
+    if (value === false || value === 'never' || value === 'Never') {
+        return DocumentationIndexTiming.Never
+    }
+    if (value === 'always' || value === 'Always') {
+        return DocumentationIndexTiming.Always
+    }
+    return DocumentationIndexTiming.OnMissing
+}
+
 interface CliArguments {
     [Argument.MatlabLaunchCommandArguments]: string
     [Argument.MatlabUrl]: string
@@ -36,6 +53,7 @@ export interface Settings {
     installPath: string
     matlabConnectionTiming: ConnectionTiming
     indexWorkspace: boolean
+    indexDocumentation: DocumentationIndexTiming
     telemetry: boolean
     maxFileSizeForAnalysis: number
     signIn: boolean
@@ -48,6 +66,7 @@ const DEFAULT_SETTINGS: Settings = {
     installPath: '',
     matlabConnectionTiming: ConnectionTiming.OnStart,
     indexWorkspace: false,
+    indexDocumentation: DocumentationIndexTiming.OnMissing,
     telemetry: true,
     maxFileSizeForAnalysis: 0,
     signIn: false,
@@ -76,6 +95,9 @@ export class ConfigurationManager {
             installPath: cliArgs[Argument.MatlabInstallationPath] ?? DEFAULT_SETTINGS.installPath,
             matlabConnectionTiming: cliArgs[Argument.MatlabConnectionTiming] as ConnectionTiming ?? DEFAULT_SETTINGS.matlabConnectionTiming,
             indexWorkspace: cliArgs[Argument.ShouldIndexWorkspace] ?? DEFAULT_SETTINGS.indexWorkspace,
+            indexDocumentation: cliArgs[Argument.IndexDocumentation] != null
+                ? normalizeDocumentationIndexTiming(cliArgs[Argument.IndexDocumentation])
+                : DEFAULT_SETTINGS.indexDocumentation,
             telemetry: DEFAULT_SETTINGS.telemetry,
             maxFileSizeForAnalysis: DEFAULT_SETTINGS.maxFileSizeForAnalysis,
             signIn: DEFAULT_SETTINGS.signIn,
@@ -147,6 +169,9 @@ export class ConfigurationManager {
     private async fetchConfiguration (): Promise<void> {
         const connection = ClientConnection.getConnection()
         const configuration = await connection.workspace.getConfiguration('MATLAB') as Settings
+        if (configuration?.indexDocumentation !== undefined) {
+            configuration.indexDocumentation = normalizeDocumentationIndexTiming(configuration.indexDocumentation)
+        }
         Object.assign(this.settings, configuration)
         this.hasFetchedInitialConfiguration = true
     }
@@ -176,7 +201,11 @@ export class ConfigurationManager {
         if (this.hasConfigurationCapability) {
             await this.fetchConfiguration()
         } else {
-            this.settings = params.settings?.MATLAB ?? this.settings
+            const rawSettings = params.settings?.MATLAB ?? this.settings
+            if (rawSettings?.indexDocumentation !== undefined) {
+                rawSettings.indexDocumentation = normalizeDocumentationIndexTiming(rawSettings.indexDocumentation)
+            }
+            this.settings = rawSettings
         }
 
         if (shouldCompare) {
