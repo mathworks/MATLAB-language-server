@@ -3,6 +3,7 @@
 import { ExecuteCommandParams, Range, TextDocuments } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import LintingSupportProvider from '../linting/LintingSupportProvider'
+import { DocumentationIndexer } from '../../indexing/DocumentationIndexer'
 
 interface LintSuppressionArgs {
     id: string
@@ -12,14 +13,18 @@ interface LintSuppressionArgs {
 
 export const MatlabLSCommands = {
     MLINT_SUPPRESS_ON_LINE: 'matlabls.lint.suppress.line',
-    MLINT_SUPPRESS_IN_FILE: 'matlabls.lint.suppress.file'
+    MLINT_SUPPRESS_IN_FILE: 'matlabls.lint.suppress.file',
+    INDEX_DOCUMENTATION: 'matlabls.indexDocumentation'
 }
 
 /**
  * Handles requests to execute commands
  */
 class ExecuteCommandProvider {
-    constructor (private readonly lintingSupportProvider: LintingSupportProvider) {}
+    constructor (
+        private readonly lintingSupportProvider: LintingSupportProvider,
+        private readonly documentationIndexer?: DocumentationIndexer
+    ) {}
 
     /**
      * Handles command execution requests.
@@ -33,6 +38,10 @@ class ExecuteCommandProvider {
             case MatlabLSCommands.MLINT_SUPPRESS_ON_LINE:
             case MatlabLSCommands.MLINT_SUPPRESS_IN_FILE:
                 void this.handleLintingSuppression(params, documentManager)
+                break
+            case MatlabLSCommands.INDEX_DOCUMENTATION:
+                void this.documentationIndexer?.startIndexing(true)
+                break
         }
     }
 

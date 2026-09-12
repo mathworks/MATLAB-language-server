@@ -8,6 +8,7 @@ export interface CliArgs {
     [Argument.MatlabInstallationPath]?: string
     [Argument.MatlabConnectionTiming]?: string
     [Argument.ShouldIndexWorkspace]?: boolean
+    [Argument.IndexDocumentation]?: string
     [Argument.MatlabUrl]?: string
     [Argument.SnippetIgnoreList]?: string
 }
@@ -35,6 +36,12 @@ function makeParser (): yargs.Argv<CliArgs> {
         boolean: true,
         default: false,
         description: 'Whether or not the user\'s workspace should be indexed.',
+        requiresArg: false
+    }).option(Argument.IndexDocumentation, {
+        type: 'string',
+        default: 'onMissing',
+        choices: ['onMissing', 'never', 'always'],
+        description: 'When the language server should index MATLAB documentation into the SQLite cache.',
         requiresArg: false
     }).option(Argument.MatlabUrl, {
         type: 'string',
