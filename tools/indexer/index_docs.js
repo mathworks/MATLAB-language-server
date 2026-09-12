@@ -109,6 +109,8 @@ if (!isQuiet) {
 }
 
 let processedCount = 0;
+let lastReportedCount = 0;
+let lastReportedPct = -1;
 const startTime = Date.now();
 const workerStatus = Array.from({ length: numWorkers }, () => 'Initializing');
 const activeWorkers = new Set();
@@ -171,6 +173,15 @@ const workerPromises = chunks.map((chunk, workerIdx) => {
                     processedCount++;
                     workerStatus[workerIdx] = fn;
                     renderDashboard();
+
+                    if (isQuiet) {
+                        const pct = totalFunctions > 0 ? Math.floor((processedCount / totalFunctions) * 100) : 0;
+                        if (processedCount - lastReportedCount >= 40 || pct >= lastReportedPct + 4 || processedCount === totalFunctions) {
+                            lastReportedCount = processedCount;
+                            lastReportedPct = pct;
+                            console.log(`LSP_PROGRESS:${processedCount}:${totalFunctions}:${pct}`);
+                        }
+                    }
                 }
             }
         });
@@ -199,6 +210,9 @@ Promise.all(workerPromises).then((outFiles) => {
     renderDashboard();
 
     const importStartTime = Date.now();
+    if (isQuiet) {
+        console.log('LSP_STAGE:Writing documentation records to SQLite database...');
+    }
     console.log('\n\x1b[1;36m------------------------------------------------------------------------\x1b[0m');
     console.log(' \x1b[1;33mWriting documentation records to SQLite database...\x1b[0m');
 

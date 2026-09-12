@@ -5,6 +5,9 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
+import { WorkDoneProgressServerReporter } from 'vscode-languageserver'
+import ClientConnection from '../ClientConnection'
+import ClientCapabilitiesManager from '../lifecycle/ClientCapabilitiesManager'
 import ConfigurationManager, { DocumentationIndexTiming } from '../lifecycle/ConfigurationManager'
 import Logger from '../logging/Logger'
 
@@ -101,15 +104,49 @@ export class DocumentationIndexer {
         Logger.log(`Spawning background documentation indexer: ${scriptPath}`)
         this.isIndexing = true
 
+        let progressReporter: WorkDoneProgressServerReporter | null = null
+        if (ClientCapabilitiesManager.hasWorkDoneProgress()) {
+            try {
+                const connection = ClientConnection.getConnection()
+                const progressPromise = connection.window.createWorkDoneProgress()
+                const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000))
+                progressReporter = await Promise.race([progressPromise, timeoutPromise])
+                progressReporter?.begin('Indexing MATLAB Documentation', 0, 'Initializing indexer...')
+            } catch (err) {
+                Logger.log(`Failed to create workDoneProgress reporter: ${String(err)}`)
+                progressReporter = null
+            }
+        }
+
         const child = spawn(process.execPath, [scriptPath, '--quiet'], {
             env,
             stdio: ['ignore', 'pipe', 'pipe']
         })
 
+        let stdoutBuffer = ''
         child.stdout?.on('data', (chunk: Buffer) => {
-            const msg = chunk.toString().trim()
-            if (msg.length > 0) {
-                Logger.log(`[Indexer] ${msg}`)
+            stdoutBuffer += chunk.toString()
+            const lines = stdoutBuffer.split('\n')
+            stdoutBuffer = lines.pop() ?? ''
+
+            for (const rawLine of lines) {
+                const line = rawLine.trim()
+                if (line.length === 0) continue
+
+                if (line.startsWith('LSP_PROGRESS:')) {
+                    const parts = line.split(':')
+                    const current = parseInt(parts[1], 10)
+                    const total = parseInt(parts[2], 10)
+                    const pct = parseInt(parts[3], 10)
+                    if (!isNaN(pct)) {
+                        progressReporter?.report(pct, `${current}/${total} functions (${pct}%)`)
+                    }
+                } else if (line.startsWith('LSP_STAGE:')) {
+                    const stage = line.substring('LSP_STAGE:'.length)
+                    progressReporter?.report(95, stage)
+                } else {
+                    Logger.log(`[Indexer] ${line}`)
+                }
             }
         })
 
@@ -124,14 +161,17 @@ export class DocumentationIndexer {
             this.isIndexing = false
             if (code === 0) {
                 Logger.log('MATLAB documentation indexing completed successfully.')
+                progressReporter?.done()
                 this.eventEmitter.emit('indexed')
             } else {
                 Logger.warn(`MATLAB documentation indexer exited with code ${code ?? 'unknown'}`)
+                progressReporter?.done()
             }
         })
 
         child.on('error', (err: Error) => {
             this.isIndexing = false
+            progressReporter?.done()
             Logger.error(`Failed to execute MATLAB documentation indexer: ${err.message}`)
         })
 

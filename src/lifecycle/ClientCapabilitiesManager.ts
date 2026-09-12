@@ -47,6 +47,11 @@ class ClientCapabilitiesManager {
         return this.getCapabilities()?.workspace?.semanticTokens?.refreshSupport === true
     }
 
+    /** Whether the client supports workDoneProgress notifications in the status line / UI. */
+    hasWorkDoneProgress (): boolean {
+        return this.getCapabilities()?.window?.workDoneProgress === true
+    }
+
     /** Private getter which allows for logging a warning if not yet initialized. */
     private getCapabilities (): ClientCapabilities | null {
         if (this.clientCapabilities == null) {
