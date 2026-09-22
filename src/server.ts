@@ -201,14 +201,22 @@ export async function startServer (): Promise<void> {
 
         void startMatlabIfOnStartLaunch()
 
-        // Connect to Workspace Browser
         matlabLifecycleManager.eventEmitter.on('connected', async ()=> {
             const connection = await matlabLifecycleManager.getMatlabConnection();
+            // Connect to Workspace Browser
             connection?.subscribe('/MobileWSB/ServerMsg', (data) => {
                 NotificationService.sendNotification(Notification.WSBServerMessage, data);
             });
             NotificationService.registerNotificationListener(Notification.WSBClientMessage, (data) => {
                 connection?.publish('/MobileWSB/ClientMsg', data);
+            });
+
+            // Connect to Variable Viewer
+            connection?.subscribe('/VariableViewer/ServerMsg', (data) => {
+                NotificationService.sendNotification(Notification.VVServerMessage, data);
+            });
+            NotificationService.registerNotificationListener(Notification.VVClientMessage, (data) => {
+                connection?.publish('/VariableViewer/ClientMsg', data);
             });
         });
     })
@@ -404,3 +412,4 @@ function reportFileOpened (document: TextDocument): void {
     const roughSize = Math.ceil(document.getText().length / 1024) // in KB
     reportTelemetryAction(Actions.OpenFile, roughSize.toString())
 }
+

@@ -17,7 +17,7 @@ classdef tGetCompletions < matlab.unittest.TestCase
             fileName = 'myFileName.m';
             cursorPosition = 17;
 
-            result = matlabls.handlers.completions.getCompletions(code, fileName, cursorPosition);
+            result = matlabls.internal.getCompletions(code, fileName, cursorPosition);
 
             testCase.verifyEqual(result.widgetType, 'completion');
             testCase.verifyEqual(result.widgetData.choices.matchType, 'mFile');
@@ -30,7 +30,7 @@ classdef tGetCompletions < matlab.unittest.TestCase
             fileName = 'myFileName.m';
             cursorPosition = 22;
 
-            result = matlabls.handlers.completions.getCompletions(code, fileName, cursorPosition);
+            result = matlabls.internal.getCompletions(code, fileName, cursorPosition);
 
             testCase.verifyTrue(isfield(result, 'signatures'));
             testCase.verifyEqual(numel(result.signatures), 2);
@@ -74,13 +74,13 @@ classdef tGetCompletions < matlab.unittest.TestCase
         % Test that the appropriate error is thrown when non-M file paths are provided
         function testErrorOnInvalidFile (testCase)
             % Case 1: File with .m extension - this should not error
-            matlabls.handlers.completions.getCompletions('', 'myFile.m', 0);
+            matlabls.internal.getCompletions('', 'myFile.m', 0);
 
             % Case 2: Empty file path - this should not error
-            matlabls.handlers.completions.getCompletions('', '', 0);
+            matlabls.internal.getCompletions('', '', 0);
 
             % Case 3: File with non-m extension - this should error
-            fcnHandle = @() matlabls.handlers.completions.getCompletions('', 'myFile.txt', 0);
+            fcnHandle = @() matlabls.internal.getCompletions('', 'myFile.txt', 0);
             testCase.verifyError(fcnHandle, 'MATLAB:vscode:invalidFileExtension');
         end
     end

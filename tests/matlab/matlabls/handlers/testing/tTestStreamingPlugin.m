@@ -165,5 +165,21 @@ classdef tTestStreamingPlugin < matlab.unittest.TestCase
             testCase.verifyEqual(numel(startEvents), 2);
             testCase.verifyEqual(numel(finishedEvents), 2);
         end
+
+        function testEventsCarryRealPathForNamespacedTest(testCase)
+            suite = matlab.unittest.TestSuite.fromFile(...
+                fullfile(pwd, 'testData', '+someNs', '+sub', 'SomeNsTest.m'));
+
+            runner = matlab.unittest.TestRunner.withNoPlugins();
+            runner.addPlugin(testCase.Spy);
+            runner.run(suite);
+
+            expected = fullfile('+someNs', '+sub', 'SomeNsTest.m');
+            startEvents = testCase.Spy.filterByType('started');
+            finishedEvents = testCase.Spy.filterByType('finished');
+            testCase.verifyTrue(contains(startEvents{1}.testFile, expected));
+            testCase.verifyTrue(contains(finishedEvents{1}.testFile, expected));
+            testCase.verifyTrue(isfile(startEvents{1}.testFile));
+        end
     end
 end

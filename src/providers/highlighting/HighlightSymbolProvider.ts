@@ -9,28 +9,33 @@ import Indexer from '../../indexing/Indexer'
 import { areRangesEqual } from '../../utils/RangeUtils'
 import * as SymbolSearchService from '../../indexing/SymbolSearchService'
 import FileInfoIndex from '../../indexing/FileInfoIndex'
+import BlockMatchingProvider from './BlockMatchingProvider'
 
 /**
  * Handles requests for document highlights, given a position in a file.
- * 
+ *
  * Will report which ranges within a document should be highlighted, and as which
  * type of reference, given the user's cursor position in that document.
  */
 class HighlightSymbolProvider {
+    private readonly blockMatchingProvider: BlockMatchingProvider
+
     constructor (
         protected readonly matlabLifecycleManager: MatlabLifecycleManager,
         protected readonly documentIndexer: DocumentIndexer,
         protected readonly indexer: Indexer,
         protected readonly fileInfoIndex: FileInfoIndex
-    ) {}
+    ) {
+        this.blockMatchingProvider = new BlockMatchingProvider(fileInfoIndex)
+    }
 
     /**
      * Handles a request for document highlights.
-     * 
+     *
      * Document highlights reflect which ranges within a document should be
      * highlighted (to mark references to a symbol), and as which type of
      * reference each range should be highlighted.
-     * 
+     *
      * @param params Parameters for the onDocumentHighlight request (including
      *     the user's current cursor position)
      * @param documentManager The text document manager
@@ -51,7 +56,6 @@ class HighlightSymbolProvider {
         }
 
         const currentDocumentUri = params.textDocument.uri
-
         const textDocument = documentManager.get(currentDocumentUri)
         if (textDocument == null) {
             reportTelemetry(RequestType.DocumentHighlight, 'No document')
@@ -59,6 +63,11 @@ class HighlightSymbolProvider {
         }
 
         await this.documentIndexer.ensureDocumentIndexIsUpdated(textDocument)
+
+        const blockHighlights = this.blockMatchingProvider.getBlockHighlights(textDocument, params.position)
+        if (blockHighlights != null) {
+            return blockHighlights
+        }
 
         /* All references to the selected identifier component that are in the current
          * file will be highlighted. If a reference coincides with a definition - e.g.,

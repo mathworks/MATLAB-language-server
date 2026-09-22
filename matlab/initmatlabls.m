@@ -2,7 +2,7 @@ function initmatlabls (outFile)
     % Initializes a MATLAB® session to talk to a MATLAB language server.
     % Writes connection info to the outFile specified by the client
 
-    % Copyright 2022 - 2025 The MathWorks, Inc.
+    % Copyright 2022 - 2026 The MathWorks, Inc.
 
     try
         disp('matlabls: Beginning initialization')
@@ -32,7 +32,10 @@ function initmatlabls (outFile)
 
         % Initialize communication manager
         matlabls.internal.CommunicationManager.initialize();
-        
+
+        % Initialize Variable Viewer pub/sub service
+        matlabls.variableviewer.VariableViewerService.setupListeners();
+
         if nargin == 1
             logConnectionData(outFile)
         end

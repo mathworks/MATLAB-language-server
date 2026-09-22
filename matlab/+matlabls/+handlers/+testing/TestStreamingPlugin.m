@@ -47,11 +47,12 @@ function testFile = getTestFile(pluginData)
     ts = pluginData.TestSuite;
     tc = ts.TestClass;
     if strlength(tc) > 0
-        testFile = fullfile(char(ts.BaseFolder), [char(tc) '.m']);
+        qualifiedName = char(tc);
     else
         parts = strsplit(char(pluginData.Name), '/');
-        testFile = fullfile(char(ts.BaseFolder), [parts{1} '.m']);
+        qualifiedName = parts{1};
     end
+    testFile = matlabls.handlers.testing.qualifiedNameToPath(char(ts.BaseFolder), qualifiedName);
 end
 
 

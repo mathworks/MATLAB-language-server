@@ -1,4 +1,4 @@
-// Copyright 2022 - 2025 The MathWorks, Inc.
+// Copyright 2022 - 2026 The MathWorks, Inc.
 
 import { Range } from 'vscode-languageserver'
 import Logger from '../logging/Logger'
@@ -9,6 +9,16 @@ import { URI } from 'vscode-uri'
 // referred to by the identifier as a whole, is a variable or function
 
 /**
+ * Representation of a conditional block's keyword ranges from computeCodeData
+ */
+interface RawConditionalBlock {
+    range: RangeArray
+    startKeywordRange: RangeArray
+    endKeywordRange: RangeArray
+    middleKeywordRanges: RangeArray[]
+}
+
+/**
  * Representation of a file's code data
  */
 export interface CodeInfo {
@@ -16,6 +26,7 @@ export interface CodeInfo {
     sections: RawSectionInfo[]
     classReferences: RawNamedRange[]
     globalScope: GlobalScope
+    conditionalBlocks: RawConditionalBlock[]
     hasClassInfo: boolean
     classDefFolder?: string
     errorInfo?: string
@@ -47,6 +58,7 @@ interface ClassDefinition extends NamedScope {
     propertiesBlocks: RawNamedRange[]
     enumerationsBlocks: RawNamedRange[]
     methodsBlocks: RawNamedRange[]
+    eventsBlocks: RawNamedRange[]
     properties: RawScopedNamedRange[]
     enumerations: RawScopedNamedRange[]
     nestedScopes: FunctionDefinition[]
@@ -55,6 +67,10 @@ interface ClassDefinition extends NamedScope {
 /**
  * Representation of a function
  */
+interface RawArgumentsBlock {
+    range: RangeArray
+}
+
 interface FunctionDefinition extends NamedScope {
     isPrototype: boolean
     variableDefinitions: RawIdentifier[]
@@ -66,6 +82,7 @@ interface FunctionDefinition extends NamedScope {
     isStaticMethod: boolean
     inputArgs: string[]
     outputArgs: string[]
+    argumentsBlocks: RawArgumentsBlock[]
 }
 
 /**** Define "Raw" interfaces to define the structure coming from `computeCodeData` ****/
@@ -90,6 +107,16 @@ interface RawScopedNamedRange extends RawNamedRange {
 
 interface RawSectionInfo extends RawNamedRange {
     isExplicit: boolean
+}
+
+/**
+ * Parsed conditional block with LSP ranges
+ */
+export interface ConditionalBlockInfo {
+    range: Range
+    startKeywordRange: Range
+    endKeywordRange: Range
+    middleKeywordRanges: Range[]
 }
 
 /**** Define standard interfaces which adhere to LSP ranges ****/
@@ -225,6 +252,7 @@ export class MatlabCodeInfo {
     readonly sections: SectionInfo[]
     readonly classReferences: IdentifierMap<MatlabClassReferenceInfo> = new Map()
     readonly globalScopeInfo: MatlabGlobalScopeInfo
+    readonly conditionalBlocks: ConditionalBlockInfo[]
     readonly classDefFolder?: string
 
     constructor (readonly uri: string, rawCodeInfo: CodeInfo, readonly associatedClassInfo?: MatlabClassInfo) {
@@ -235,6 +263,13 @@ export class MatlabCodeInfo {
         parseClassReferences(rawCodeInfo.classReferences.map(convertNamedRange), this.classReferences)
 
         this.globalScopeInfo = new MatlabGlobalScopeInfo(rawCodeInfo.globalScope, associatedClassInfo, this)
+
+        this.conditionalBlocks = (rawCodeInfo.conditionalBlocks ?? []).map(block => ({
+            range: convertRange(block.range),
+            startKeywordRange: convertRange(block.startKeywordRange),
+            endKeywordRange: convertRange(block.endKeywordRange),
+            middleKeywordRanges: (block.middleKeywordRanges ?? []).map(convertRange)
+        }))
     }
 }
 
@@ -292,6 +327,7 @@ export class MatlabFunctionScopeInfo {
     readonly functionScopes = new Map<string, MatlabFunctionInfo>()
     readonly inputArgs: Set<string>
     readonly outputArgs: Set<string>
+    readonly argumentsBlocks: Range[]
 
     constructor (rawFunctionInfo: FunctionDefinition, readonly parentScope: FunctionParentScope, readonly functionInfo: MatlabFunctionInfo) {
         this.declarationNameId = convertNamedRange(rawFunctionInfo.declarationNameId)
@@ -299,6 +335,7 @@ export class MatlabFunctionScopeInfo {
         this.globals = new Set(rawFunctionInfo.globals)
         this.inputArgs = new Set(rawFunctionInfo.inputArgs)
         this.outputArgs = new Set(rawFunctionInfo.outputArgs)
+        this.argumentsBlocks = (rawFunctionInfo.argumentsBlocks ?? []).map(b => convertRange(b.range))
 
         this.parseFunctions(rawFunctionInfo.nestedScopes)
         parseVariableReferences(rawFunctionInfo.variableReferences.map(convertIdentifier), this.variables)
@@ -359,6 +396,7 @@ export class MatlabClassdefInfo {
     readonly propertiesBlocks: NamedRange[]
     readonly enumerationsBlocks: NamedRange[]
     readonly methodsBlocks: NamedRange[]
+    readonly eventsBlocks: NamedRange[]
 
     constructor (rawClassDefinition: ClassDefinition, readonly parentScope: MatlabGlobalScopeInfo, readonly classInfo: MatlabClassInfo) {
         this.declarationNameId = convertNamedRange(rawClassDefinition.declarationNameId)
@@ -368,6 +406,7 @@ export class MatlabClassdefInfo {
         this.propertiesBlocks = rawClassDefinition.propertiesBlocks.map(convertNamedRange)
         this.enumerationsBlocks = rawClassDefinition.enumerationsBlocks.map(convertNamedRange)
         this.methodsBlocks = rawClassDefinition.methodsBlocks.map(convertNamedRange)
+        this.eventsBlocks = (rawClassDefinition.eventsBlocks ?? []).map(convertNamedRange)
     }
 }
 
