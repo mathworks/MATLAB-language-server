@@ -13,6 +13,7 @@ interface MCompletionData {
     widgetData?: MWidgetData
     widgetType?: string
     signatures?: MSignatureData | MSignatureData[] // If there is only one signature, it is not given as an array
+    bounds?: Bounds
 }
 
 interface MWidgetData {
@@ -40,7 +41,32 @@ interface MArgumentData {
     status?: string
     purpose?: string
     valueSummary?: string
+    bounds?: Bounds
 }
+
+interface Bounds {
+    left: number
+    right: number
+}
+
+interface ExtraData {
+    bounds?: Bounds
+    rawCompletion: string
+}
+
+interface AugmentedCompletionItem extends CompletionItem {
+    extraData?: ExtraData
+}
+
+interface CompletionMapValue {
+    kind: CompletionItemKind
+    doc: string
+    insertText: string
+    extraData?: ExtraData
+}
+
+type CompletionMap = Map<string,  CompletionMapValue>
+
 
 // Maps the completion type, as returned by MATLAB®, to the corresponding CompletionItemKind
 const MatlabCompletionToKind: { [index: string]: CompletionItemKind } = {
@@ -167,7 +193,7 @@ class CompletionSupportProvider {
 
         try {
             const response = await this.mvm.feval(
-                'matlabls.handlers.completions.getCompletions',
+                'matlabls.internal.getCompletions',
                 1,
                 [code, fileName, cursorPosition]
             )
@@ -196,7 +222,7 @@ class CompletionSupportProvider {
     private parseCompletionItems (completionData: MCompletionData): CompletionList {
         const completionItems: CompletionItem[] = []
 
-        const completionsMap = new Map<string, { kind: CompletionItemKind, doc: string, insertText: string }>()
+        const completionsMap = new Map<string, CompletionMapValue>()
 
         // Gather completions from top-level object. This should find function completions.
         this.gatherCompletions(completionData, completionsMap)
@@ -225,7 +251,7 @@ class CompletionSupportProvider {
             // Preserve the sorting from MATLAB
             const sortText = String(index).padStart(10, '0')
 
-            const completionItem = CompletionItem.create(completionName)
+            const completionItem : AugmentedCompletionItem = CompletionItem.create(completionName)
             completionItem.kind = completionData.kind
             completionItem.detail = completionData.doc
             completionItem.data = index++
@@ -234,6 +260,9 @@ class CompletionSupportProvider {
                 completionItem.insertText = completionData.insertText
                 completionItem.insertTextFormat = InsertTextFormat.Snippet
             }
+
+            completionItem.extraData = completionData.extraData;
+
             completionItems.push(completionItem)
         })
 
@@ -246,7 +275,7 @@ class CompletionSupportProvider {
      * @param completionDataObj Raw completion or argument data
      * @param completionMap A map in which to store info about possible completions
      */
-    private gatherCompletions (completionDataObj: MCompletionData | MArgumentData, completionMap: Map<string, { kind: CompletionItemKind, doc: string, insertText: string }>): void {
+    private gatherCompletions (completionDataObj: MCompletionData | MArgumentData, completionMap: CompletionMap): void {
         let choices = completionDataObj.widgetData?.choices
         if (choices == null) {
             return
@@ -256,8 +285,11 @@ class CompletionSupportProvider {
 
         choices = this.filterSnippetChoices(choices);
 
+        const bounds = completionDataObj.bounds;
+
         choices.forEach(choice => {
             let completion: string = choice.completion
+            let rawCompletion: string = choice.completion;
             let isPath = false
 
             switch (choice.matchType) {
@@ -286,7 +318,11 @@ class CompletionSupportProvider {
             completionMap.set(completion, {
                 kind: MatlabCompletionToKind[choice.matchType] ?? CompletionItemKind.Function,
                 doc: choice.purpose,
-                insertText: choice.completion ?? ''
+                insertText: choice.completion ?? '',
+                extraData: {
+                    bounds: bounds,
+                    rawCompletion: rawCompletion
+                }
             })
         })
     }

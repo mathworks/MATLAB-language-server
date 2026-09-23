@@ -25,7 +25,7 @@ classdef tDiscoverTests < matlab.unittest.TestCase
             result = matlabls.handlers.testing.discoverTests({testFolder}, 'folder');
 
             testCase.verifyEmpty(result.error);
-            testCase.verifyEqual(numel(result.names), 7);
+            testCase.verifyEqual(numel(result.names), 9);
             testCase.verifyTrue(any(contains(result.filenames, 'SampleTestClass.m')));
             testCase.verifyTrue(any(contains(result.filenames, 'ParameterizedTestClass.m')));
         end
@@ -100,6 +100,43 @@ classdef tDiscoverTests < matlab.unittest.TestCase
             % Function-based tests should have functionBasedTest as parent name
             testCase.verifyTrue(all(contains(result.testParentNames, 'functionBasedTest')));
             testCase.verifyTrue(all(contains(result.filenames, 'functionBasedTest.m')));
+        end
+
+        function testDiscoverNamespacedClassFromFile(testCase)
+            testFile = fullfile(pwd, 'testData', '+someNs', '+sub', 'SomeNsTest.m');
+
+            result = matlabls.handlers.testing.discoverTests({testFile}, 'file');
+
+            testCase.verifyEmpty(result.error);
+            testCase.verifyEqual(numel(result.names), 1);
+            expected = fullfile('+someNs', '+sub', 'SomeNsTest.m');
+            testCase.verifyTrue(all(contains(result.filenames, expected)));
+            testCase.verifyTrue(all(cellfun(@isfile, result.filenames)));
+        end
+
+        function testDiscoverNamespacedFunctionFromFile(testCase)
+            testFile = fullfile(pwd, 'testData', '+someNs', '+sub', 'fcnNsTest.m');
+
+            result = matlabls.handlers.testing.discoverTests({testFile}, 'file');
+
+            testCase.verifyEmpty(result.error);
+            testCase.verifyEqual(numel(result.names), 1);
+            expected = fullfile('+someNs', '+sub', 'fcnNsTest.m');
+            testCase.verifyTrue(all(contains(result.filenames, expected)));
+            testCase.verifyTrue(all(cellfun(@isfile, result.filenames)));
+        end
+
+        function testDiscoverNamespacedTestsFromFolder(testCase)
+            testFolder = fullfile(pwd, 'testData');
+
+            result = matlabls.handlers.testing.discoverTests({testFolder}, 'folder');
+
+            testCase.verifyEmpty(result.error);
+            classPath = fullfile('+someNs', '+sub', 'SomeNsTest.m');
+            fcnPath = fullfile('+someNs', '+sub', 'fcnNsTest.m');
+            testCase.verifyTrue(any(contains(result.filenames, classPath)));
+            testCase.verifyTrue(any(contains(result.filenames, fcnPath)));
+            testCase.verifyTrue(all(cellfun(@isfile, result.filenames)));
         end
     end
 end

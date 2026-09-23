@@ -26,6 +26,13 @@ function result = discoverTests(paths, mode)
             end
         end
         suite = [suites{:}];
+
+        % Before R2022a, TestSuite.fromFolder does not descend into namespace
+        % ("+") folders, so supplement the suite with any namespaced tests.
+        if strcmp(mode, 'folder') && isMATLABReleaseOlderThan('R2022a')
+            suite = [suite, discoverNamespacedTests(paths)];
+        end
+
         warnMsg = lastwarn;
         warnMsg = regexprep(warnMsg, '<a[^>]*>', '');
         warnMsg = strrep(warnMsg, '</a>', '');
@@ -45,11 +52,11 @@ function result = discoverTests(paths, mode)
             tc = suite(i).TestClass;
             if strlength(tc) > 0
                 testParentNames{i} = char(tc);
-                filenames{i} = fullfile(char(suite(i).BaseFolder), [char(tc) '.m']);
+                filenames{i} = matlabls.handlers.testing.qualifiedNameToPath(char(suite(i).BaseFolder), char(tc));
             else
                 parts = strsplit(fullName, '/');
                 testParentNames{i} = parts{1};
-                filenames{i} = fullfile(char(suite(i).BaseFolder), [parts{1} '.m']);
+                filenames{i} = matlabls.handlers.testing.qualifiedNameToPath(char(suite(i).BaseFolder), parts{1});
             end
 
             parenIdx = strfind(fullName, '(');
@@ -75,5 +82,19 @@ function result = discoverTests(paths, mode)
         result.parameterizations = {};
         result.error = ME.message;
         result.warning = '';
+    end
+end
+
+function suite = discoverNamespacedTests(paths)
+    % Build a suite from every test file within namespace ("+") folders under
+    % the given paths, adding each file directly since fromFolder skips them
+    % on releases before R2022a.
+    suite = matlab.unittest.Test.empty(1, 0);
+    for i = 1:numel(paths)
+        nsFiles = dir(fullfile(paths{i}, '**', '+*', '*.m'));
+        for j = 1:numel(nsFiles)
+            file = fullfile(nsFiles(j).folder, nsFiles(j).name);
+            suite = [suite, matlab.unittest.TestSuite.fromFile(file)]; %#ok<AGROW>
+        end
     end
 end

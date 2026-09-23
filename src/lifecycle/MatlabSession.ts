@@ -1,6 +1,6 @@
 // Copyright 2024-2026 The MathWorks, Inc.
 
-import { ChildProcess, execFile, ExecFileException } from 'child_process'
+import { ChildProcess, exec, execFile, ExecFileException } from 'child_process'
 import Logger from '../logging/Logger'
 import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils'
 import NotificationService, { Notification } from '../notifications/NotificationService'
@@ -525,6 +525,13 @@ async function getMatlabExecutablePath (matlabroot: string): Promise<string> {
 
                         // Response is of the format "app_path:<path_to_MATLAB.app>"
                         const appPath = stdout.substring(9).trim() // Strip away "app_path:"
+
+                        if (appPath.length === 0) {
+                            Logger.error('Missing app path. Falling back to \'bin/matlab\'')
+                            resolve(executablePath)
+                            return
+                        }
+
                         executablePath = path.normalize(path.join(
                             appPath, 'Contents', 'MacOS', 'MATLAB'
                         ))
