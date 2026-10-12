@@ -532,10 +532,19 @@ async function getMatlabExecutablePath (matlabroot: string): Promise<string> {
                             return
                         }
 
-                        executablePath = path.normalize(path.join(
+                        // In some releases, the locator executable may return an invalid path.
+                        // Verify that the path is absolute and that the MATLAB executable exists.
+                        const appExecutablePath = path.normalize(path.join(
                             appPath, 'Contents', 'MacOS', 'MATLAB'
                         ))
-                        resolve(executablePath)
+
+                        if (!path.isAbsolute(appPath) || !fs.existsSync(appExecutablePath)) {
+                            Logger.error(`Invalid app path: '${appPath}'. Falling back to 'bin/matlab'`)
+                            resolve(executablePath)
+                            return
+                        }
+
+                        resolve(appExecutablePath)
                     }
                 )
             })
