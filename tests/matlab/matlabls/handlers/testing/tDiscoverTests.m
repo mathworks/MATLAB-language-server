@@ -61,7 +61,10 @@ classdef tDiscoverTests < matlab.unittest.TestCase
         end
 
         function testDiscoverNonexistentPathReturnsError(testCase)
-            result = matlabls.handlers.testing.discoverTests({'/nonexistent/path'}, 'folder');
+            missingFolder = tempname;
+            testCase.assertFalse(isfolder(missingFolder));
+
+            result = matlabls.handlers.testing.discoverTests({missingFolder}, 'folder');
 
             testCase.verifyNotEmpty(result.error);
         end

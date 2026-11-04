@@ -13,7 +13,7 @@ function response = getVariablePage(varName, startRow, startCol, workspace)
         workspace = "base";
     end
 
-    if ~isMATLABReleaseOlderThan("R2027b")
+    if ~isMATLABReleaseOlderThan("R2027a")
         response = getPage(varName, startRow, startCol, workspace);
     else
         response = getPageLegacy(varName, startRow, startCol, workspace);

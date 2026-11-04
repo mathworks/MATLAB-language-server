@@ -1,6 +1,6 @@
 // Copyright 2024-2026 The MathWorks, Inc.
 
-import { ChildProcess, exec, execFile, ExecFileException } from 'child_process'
+import { ChildProcess, execFile, ExecFileException } from 'child_process'
 import Logger from '../logging/Logger'
 import { Actions, reportTelemetryAction } from '../logging/TelemetryUtils'
 import NotificationService, { Notification } from '../notifications/NotificationService'
